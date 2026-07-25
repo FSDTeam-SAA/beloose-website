@@ -73,10 +73,10 @@ export type InventoryData = Pick<
 export type InventoryField = Exclude<keyof InventoryData, "shelfes">;
 
 export const inputClassName =
-  "h-[50px] w-full rounded-[12px] border border-[#6f5528] bg-[#3B2D16]/80 px-4 text-sm text-white outline-none transition placeholder:text-[#B7A887] focus:border-[#CBA24A]";
+  "h-11 w-full rounded-[7px] border border-[#6f5528] bg-[#3B2D16]/65 px-3.5 text-sm text-white outline-none transition placeholder:text-[#9E9277] hover:border-[#8B6A32] focus:border-[#CBA24A] focus:ring-2 focus:ring-[#CBA24A]/20";
 
 export const labelClassName =
-  "mb-1.5 block text-xs font-medium uppercase tracking-[0.04em] text-[#D6C9A7]";
+  "mb-1.5 block text-[11px] font-medium uppercase tracking-[0.06em] text-[#D6C9A7]";
 
 export const textareaClassName =
-  "min-h-[104px] w-full resize-none rounded-[12px] border border-[#6f5528] bg-[#3B2D16]/80 px-4 py-3 text-sm text-white outline-none transition placeholder:text-[#B7A887] focus:border-[#CBA24A]";
+  "min-h-[104px] w-full resize-y rounded-[7px] border border-[#6f5528] bg-[#3B2D16]/65 px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-[#9E9277] hover:border-[#8B6A32] focus:border-[#CBA24A] focus:ring-2 focus:ring-[#CBA24A]/20";

@@ -8,7 +8,7 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { LoaderCircle, LockKeyhole, X } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type StripePaymentFormProps = {
@@ -51,6 +51,15 @@ const StripePaymentForm = ({
   const elements = useElements();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isSubmitting) onClose();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isSubmitting, onClose]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -101,50 +110,59 @@ const StripePaymentForm = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0b0a]/95 px-4 py-8"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 py-8 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="payment-title"
     >
-      <div className="relative w-full max-w-[448px] rounded-[17px] border border-[#393532] bg-[#191716] px-8 py-9 shadow-2xl sm:px-10">
+      <div className="relative w-full max-w-[480px] rounded-[14px] border border-[#CBA24A] bg-[rgba(19,15,9,0.96)] px-6 py-8 shadow-[0_20px_70px_rgba(0,0,0,0.65)] sm:px-10">
         <button
           type="button"
           onClick={onClose}
           disabled={isSubmitting}
           aria-label="Close payment form"
-          className="absolute right-4 top-4 text-[#8f8b87] transition hover:text-white disabled:cursor-not-allowed"
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-[#B7A887] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <X className="h-5 w-5" />
         </button>
 
         <h2
           id="payment-title"
-          className="text-center font-playfair text-[28px] font-normal text-[#eee9e4]"
+          className="text-center font-playfair text-[30px] font-semibold text-[#D5AB48]"
         >
-          Payment
+          Secure Checkout
         </h2>
         <p className="mt-1 text-center text-sm text-[#9c9894]">
-          Selected plan:{" "}
-          <span className="font-semibold text-[#d3a84f]">{planName}</span>
+          <span className="font-semibold text-[#F5E7C2]">{planName}</span>
         </p>
         <p className="mt-1 text-center text-xs text-[#77736f]">
-          Amount due: ${amount.toFixed(2)}
+          Total due today: <span className="font-semibold text-white">${amount.toFixed(2)}</span>
         </p>
 
         <form className="mt-7" onSubmit={handleSubmit}>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#9c9894]">
             Card number
           </label>
-          <div className="h-[52px] rounded-[13px] border border-[#373330] bg-[#1b1918] px-4">
+          <div className="h-[52px] rounded-[7px] border border-[#6f5528] bg-[#3B2D16]/55 px-4 focus-within:border-[#CBA24A]">
             <CardNumberElement options={elementOptions} />
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-4">
-            <div className="h-[52px] rounded-[13px] border border-[#373330] bg-[#1b1918] px-4">
-              <CardExpiryElement options={elementOptions} />
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#9c9894]">
+                Expiry date
+              </label>
+              <div className="h-[52px] rounded-[7px] border border-[#6f5528] bg-[#3B2D16]/55 px-4 focus-within:border-[#CBA24A]">
+                <CardExpiryElement options={elementOptions} />
+              </div>
             </div>
-            <div className="h-[52px] rounded-[13px] border border-[#373330] bg-[#1b1918] px-4">
-              <CardCvcElement options={elementOptions} />
+            <div>
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#9c9894]">
+                Security code
+              </label>
+              <div className="h-[52px] rounded-[7px] border border-[#6f5528] bg-[#3B2D16]/55 px-4 focus-within:border-[#CBA24A]">
+                <CardCvcElement options={elementOptions} />
+              </div>
             </div>
           </div>
 
@@ -157,7 +175,7 @@ const StripePaymentForm = ({
           <button
             type="submit"
             disabled={!stripe || isSubmitting}
-            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[#d0a653] text-sm font-semibold text-black transition hover:bg-[#dfb661] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[7px] bg-[#D5AB48] text-sm font-semibold text-[#241A0C] transition hover:bg-[#E2BA5A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5E7C2] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? (
               <>
@@ -167,6 +185,15 @@ const StripePaymentForm = ({
             ) : (
               `Pay $${amount.toFixed(2)}`
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="mt-3 h-9 w-full text-xs text-[#B7A887] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Back to plans
           </button>
 
           <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-[#77736f]">

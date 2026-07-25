@@ -12,8 +12,9 @@ const AuthLayoutDesign = ({ children }: { children: React.ReactNode }) => {
         fill
         priority
         sizes="100vw"
-        className="object-fill"
+        className="object-cover"
       />
+      <div className="absolute inset-0 bg-black/40" />
 
       <div className="relative z-10 flex min-h-screen w-full items-center justify-center">
         {children}
