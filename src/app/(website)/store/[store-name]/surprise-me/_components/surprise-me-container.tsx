@@ -40,7 +40,8 @@ const SurpriseMeContainer = () => {
         image: item.image,
         origin: item.location.humidorName,
         description:
-          item.flavorNotes.join(", ") || [item.wrapper, item.size].filter(Boolean).join(" · "),
+          item.flavorNotes?.join(", ") ||
+          [item.wrapper, item.size].filter(Boolean).join(" · "),
         badges: [{ label: "Surprise Pick", variant: "gold" }],
       }
     : null;
@@ -123,7 +124,10 @@ const SurpriseMeContainer = () => {
 
         {!query.isLoading && !query.isError && product && item && (
           <div className="mx-auto grid max-w-4xl items-center gap-8 md:grid-cols-[300px_1fr] md:gap-12">
-            <ProductCard product={product} />
+            <ProductCard
+              product={product}
+              href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(product.id)}`}
+            />
 
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#CBA24A]">

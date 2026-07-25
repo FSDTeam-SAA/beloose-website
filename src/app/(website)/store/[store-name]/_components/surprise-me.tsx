@@ -33,7 +33,8 @@ const SurpriseMe = () => {
         image: item.image,
         origin: item.location.humidorName,
         description:
-          item.flavorNotes.join(", ") || [item.wrapper, item.size].filter(Boolean).join(" · "),
+          item.flavorNotes?.join(", ") ||
+          [item.wrapper, item.size].filter(Boolean).join(" · "),
         badges: [{ label: "Surprise Pick", variant: "gold" }],
       }
     : null;
@@ -85,7 +86,12 @@ const SurpriseMe = () => {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
             {query.isLoading && <ProductCardSkeleton />}
-            {product && <ProductCard product={product} />}
+            {product && (
+              <ProductCard
+                product={product}
+                href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(product.id)}`}
+              />
+            )}
             {!query.isLoading && !item && (
               <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-[#CBA24A]/25 bg-[#CBA24A]/[0.04] p-6 text-center">
                 <Dices className="h-8 w-8 text-[#CBA24A]" />

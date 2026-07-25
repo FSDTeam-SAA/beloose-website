@@ -26,6 +26,14 @@ export type StoreInventoryData = {
   };
 };
 
+export type StoreInventoryFilters = {
+  searchTerm?: string;
+  brand?: string;
+  strength?: string;
+  wrapper?: string;
+  size?: string;
+};
+
 type StoreInventoryResponse = {
   statusCode: number;
   success: boolean;
@@ -39,12 +47,16 @@ export async function getStoreInventory(
   page: number,
   limit: number,
   signal?: AbortSignal,
+  filters: StoreInventoryFilters = {},
 ): Promise<StoreInventoryData> {
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
   const query = new URLSearchParams({
     page: String(page),
     limit: String(limit),
+  });
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value?.trim()) query.set(key, value.trim());
   });
   const response = await fetch(
     `${apiUrl}/inventory/${encodeURIComponent(storeName)}/inventory-list?${query}`,

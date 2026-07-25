@@ -99,7 +99,11 @@ const NewArrivals = () => {
               : query.data?.data
                   .slice(0, 4)
                   .map((item) => (
-                    <ProductCard key={item._id} product={toProductCard(item)} />
+                    <ProductCard
+                      key={item._id}
+                      product={toProductCard(item)}
+                      href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(item._id)}`}
+                    />
                   ))}
           </div>
         )}

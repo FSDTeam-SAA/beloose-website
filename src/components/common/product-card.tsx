@@ -2,6 +2,7 @@
 
 import { Heart } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export type ProductBadge = {
   label: string;
@@ -26,6 +27,7 @@ type ProductCardProps = {
   onFavoriteChange?: (product: ProductCardData, favorite: boolean) => void;
   favoriteDisabled?: boolean;
   className?: string;
+  href?: string;
 };
 
 const strengthStyles: Record<string, string> = {
@@ -53,6 +55,7 @@ export default function ProductCard({
   onFavoriteChange,
   favoriteDisabled = false,
   className = "",
+  href,
 }: ProductCardProps) {
   const strength = product.strength?.toLowerCase() || "medium";
   const disabled = favoriteDisabled || !onFavoriteChange;
@@ -62,6 +65,13 @@ export default function ProductCard({
       className={`group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-[#393532] bg-[#211F1D] transition duration-300 hover:-translate-y-1 hover:border-[#CBA24A]/45 hover:shadow-[0_18px_45px_rgba(0,0,0,0.35)] ${className}`}
     >
       <div className="relative flex aspect-[4/5] max-h-[250px] items-center justify-center overflow-hidden bg-[#242220]">
+        {href && (
+          <Link
+            href={href}
+            aria-label={`View details for ${product.name}`}
+            className="absolute inset-0 z-[5]"
+          />
+        )}
         {product.image ? (
           <>
             <Image
@@ -108,9 +118,15 @@ export default function ProductCard({
         <p className="truncate text-[10px] uppercase tracking-[0.12em] text-[#99938A]">
           {product.brand || "Premium selection"}
         </p>
-        <h3 className="mt-1 truncate font-playfair text-base text-[#E8E3DD]">
-          {product.name}
-        </h3>
+        {href ? (
+          <Link href={href} className="mt-1 truncate font-playfair text-base text-[#E8E3DD] transition hover:text-[#D7AA46]">
+            {product.name}
+          </Link>
+        ) : (
+          <h3 className="mt-1 truncate font-playfair text-base text-[#E8E3DD]">
+            {product.name}
+          </h3>
+        )}
         <p className="mt-1 min-h-4 truncate text-xs text-[#8F8983]">
           {product.description || "\u00A0"}
         </p>

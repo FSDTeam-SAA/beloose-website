@@ -6,7 +6,7 @@ export type SurprisePickItem = {
   wrapper: string;
   size: string;
   image?: string;
-  flavorNotes: string[];
+  flavorNotes?: string[];
   price: number;
   quantity: number;
   location: {
