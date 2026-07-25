@@ -1,8 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Dices, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { Dices, RefreshCw, Sparkles } from "lucide-react";
 import { useParams } from "next/navigation";
 import ProductCard, {
   ProductCardSkeleton,
@@ -60,18 +59,15 @@ const SurpriseMe = () => {
             </div>
           </div>
 
-          <Link
-            href={`/store/${encodeURIComponent(storeName)}/surprise-me`}
-            className="group inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-[#CBA24A] transition hover:text-[#E0B44F] sm:text-sm"
-          >
-            View all
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
         </div>
 
         {query.isError ? (
           <div className="rounded-2xl border border-red-400/20 bg-red-400/[0.06] px-5 py-10 text-center">
-            <p className="text-sm text-[#D9CFC1]">
+            <RefreshCw className="mx-auto h-7 w-7 text-red-300/80" />
+            <h3 className="mt-3 font-playfair text-lg text-[#F5E7D0]">
+              We couldn’t choose your surprise
+            </h3>
+            <p className="mt-2 text-sm text-[#D9CFC1]">
               {query.error instanceof Error
                 ? query.error.message
                 : "We couldn’t choose a surprise cigar."}
@@ -93,12 +89,17 @@ const SurpriseMe = () => {
               />
             )}
             {!query.isLoading && !item && (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-[#CBA24A]/25 bg-[#CBA24A]/[0.04] p-6 text-center">
+              <div className="col-span-full flex min-h-56 flex-col items-center justify-center rounded-2xl border border-dashed border-[#CBA24A]/25 bg-[#CBA24A]/[0.04] p-6 text-center">
                 <Dices className="h-8 w-8 text-[#CBA24A]" />
-                <p className="mt-3 text-sm text-[#C9BFB2]">
+                <h3 className="mt-3 font-playfair text-lg text-[#F5E7D0]">
                   {query.data?.limitReached
-                    ? "You’ve used today’s surprise picks."
-                    : "No surprise pick is available right now."}
+                    ? "That’s all your picks for today"
+                    : "No surprise is available right now"}
+                </h3>
+                <p className="mt-1 text-xs text-[#9D958B]">
+                  {query.data?.limitReached
+                    ? "Come back later for another discovery."
+                    : "The humidor doesn’t have an eligible surprise pick yet."}
                 </p>
               </div>
             )}

@@ -54,7 +54,7 @@ const Testimonial = () => {
       <div className="absolute inset-0 z-[-2] bg-[#1A0D05]/65" />
       <div className="absolute inset-0 z-[-1] bg-[radial-gradient(circle_at_center,rgba(81,47,21,0.12),rgba(16,8,3,0.42))]" />
 
-      <div className="container mx-auto max-w-5xl">
+      <div className="container">
         <Quote
           aria-hidden="true"
           className="mx-auto h-8 w-8 fill-[#CBA24A] text-[#CBA24A] sm:h-9 sm:w-9"

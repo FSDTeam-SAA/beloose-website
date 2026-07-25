@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, PackageOpen, Sparkles } from "lucide-react";
+import { ArrowRight, PackageOpen, RefreshCw, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import ProductCard, {
@@ -44,8 +44,6 @@ const NewArrivals = () => {
     staleTime: 60_000,
   });
 
-  if (!query.isLoading && !query.isError && !query.data?.data.length) return null;
-
   return (
     <section className="bg-[#0F0E0D] py-14 text-white sm:py-20" id="collection">
       <div className="container">
@@ -67,18 +65,24 @@ const NewArrivals = () => {
             </div>
           </div>
 
-          <Link
-            href={`/store/${encodeURIComponent(storeName)}/new-arrivals`}
-            className="group inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-[#CBA24A] transition hover:text-[#E0B44F] sm:text-sm"
-          >
-            View all
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
+          {(query.data?.count || 0) > 4 && (
+            <Link
+              href={`/store/${encodeURIComponent(storeName)}/new-arrivals`}
+              className="group inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-[#CBA24A] transition hover:text-[#E0B44F] sm:text-sm"
+            >
+              View all
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          )}
         </div>
 
         {query.isError ? (
           <div className="rounded-2xl border border-red-400/20 bg-red-400/[0.06] px-5 py-10 text-center">
-            <p className="text-sm text-[#D9CFC1]">
+            <RefreshCw className="mx-auto h-7 w-7 text-red-300/80" />
+            <h3 className="mt-3 font-playfair text-lg text-[#F5E7D0]">
+              New arrivals are unavailable
+            </h3>
+            <p className="mt-2 text-sm text-[#D9CFC1]">
               {query.error instanceof Error
                 ? query.error.message
                 : "We couldn’t load the new arrivals."}
@@ -90,21 +94,31 @@ const NewArrivals = () => {
               Try again
             </button>
           </div>
-        ) : (
+        ) : query.isLoading ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-            {query.isLoading
-              ? Array.from({ length: 4 }).map((_, index) => (
-                  <ProductCardSkeleton key={index} />
-                ))
-              : query.data?.data
-                  .slice(0, 4)
-                  .map((item) => (
-                    <ProductCard
-                      key={item._id}
-                      product={toProductCard(item)}
-                      href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(item._id)}`}
-                    />
-                  ))}
+            {Array.from({ length: 4 }).map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : query.data?.data.length ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+            {query.data.data.slice(0, 4).map((item) => (
+              <ProductCard
+                key={item._id}
+                product={toProductCard(item)}
+                href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(item._id)}`}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex min-h-56 flex-col items-center justify-center rounded-2xl border border-dashed border-[#CBA24A]/25 bg-[#CBA24A]/[0.04] px-6 py-10 text-center">
+            <PackageOpen className="h-8 w-8 text-[#CBA24A]" />
+            <h3 className="mt-3 font-playfair text-lg text-[#F5E7D0]">
+              More arrivals are on the way
+            </h3>
+            <p className="mt-1 text-xs text-[#9D958B]">
+              Check back soon for fresh additions to the humidor.
+            </p>
           </div>
         )}
       </div>
