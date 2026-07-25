@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowRight, CircleCheck } from "lucide-react";
+import { ArrowRight, CircleCheck, LoaderCircle, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -104,6 +104,8 @@ const SubscriptionContainer = () => {
     data: subscriptions = [],
     isLoading,
     error,
+    refetch,
+    isFetching,
   } = useQuery({
     queryKey: ["subscriptions"],
     queryFn: getSubscriptions,
@@ -182,60 +184,82 @@ const SubscriptionContainer = () => {
   });
 
   return (
-    <section className="relative isolate flex min-h-screen w-full items-center justify-center overflow-x-hidden px-4 py-8 sm:px-6">
+    <section className="relative isolate flex min-h-screen w-full items-center justify-center overflow-x-hidden px-4 py-10 sm:px-6">
       <Image
         src="/assets/images/auth_bg.png"
         alt="Premium cigar lounge"
         fill
         priority
         sizes="100vw"
-        className="-z-20 object-fill"
+        className="-z-20 object-cover"
       />
-      <div className="absolute inset-0 -z-10 bg-black/10" />
+      <div className="absolute inset-0 -z-10 bg-black/55" />
 
-      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-center">
+      <div className="mx-auto w-full max-w-[1200px]">
         {isLoading ? (
-          <div className="rounded-lg border border-[#CBA24A]/70 bg-[#130f09]/85 px-8 py-6 text-sm text-[#F5E7C2] backdrop-blur-md">
+          <div
+            className="mx-auto flex max-w-md items-center justify-center gap-3 rounded-xl border border-[#CBA24A]/70 bg-[#130f09]/85 px-8 py-7 text-sm text-[#F5E7C2] backdrop-blur-md"
+            role="status"
+          >
+            <LoaderCircle className="h-5 w-5 animate-spin text-[#D5AB48]" />
             Loading subscription plans...
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-red-400/60 bg-[#130f09]/90 px-8 py-6 text-center text-sm text-white backdrop-blur-md">
-            {error instanceof Error
-              ? error.message
-              : "Could not load subscription plans"}
+          <div className="mx-auto max-w-md rounded-xl border border-red-400/60 bg-[#130f09]/90 px-8 py-7 text-center text-sm text-white backdrop-blur-md">
+            <p>
+              {error instanceof Error
+                ? error.message
+                : "Could not load subscription plans"}
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+              className="mx-auto mt-5 flex h-10 items-center justify-center gap-2 rounded-md bg-[#D5AB48] px-5 text-xs font-semibold text-[#241A0C] hover:bg-[#E2BA5A] disabled:opacity-60"
+            >
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+              Try Again
+            </button>
           </div>
         ) : subscriptions.length === 0 ? (
-          <div className="rounded-lg border border-[#CBA24A]/70 bg-[#130f09]/85 px-8 py-6 text-sm text-[#F5E7C2] backdrop-blur-md">
+          <div className="mx-auto max-w-md rounded-xl border border-[#CBA24A]/70 bg-[#130f09]/85 px-8 py-7 text-center text-sm text-[#F5E7C2] backdrop-blur-md">
             No subscription plans are available right now.
           </div>
         ) : (
-          <div className="flex w-full flex-wrap items-center justify-center gap-7">
-            {subscriptions.map((subscription) => (
-              <article
-                key={subscription._id}
-                className="flex min-h-[500px] w-full max-w-[560px] flex-col rounded-[9px] border border-[#CBA24A] bg-[rgba(18,12,7,0.82)] px-5 py-5 shadow-[0_12px_35px_rgba(0,0,0,0.55)] backdrop-blur-[7px]"
-              >
-                <div className="mb-2 flex items-center justify-center">
-                  <Link href="/">
-                    <Image
-                      src="/assets/images/logo.png"
-                      alt="Logo"
-                      width={76}
-                      height={76}
-                      className="h-[76px] w-[76px] object-contain"
-                      priority
-                    />
-                  </Link>
-                </div>
+          <>
+            <div className="mb-8 text-center">
+              <Link href="/" aria-label="Go to home" className="inline-flex">
+                <Image
+                  src="/assets/images/logo.png"
+                  alt="Humidor411"
+                  width={76}
+                  height={76}
+                  className="h-[76px] w-[76px] object-contain"
+                  priority
+                />
+              </Link>
+              <h1 className="mt-2 font-playfair text-[30px] font-semibold text-[#D5AB48] sm:text-4xl">
+                Choose Your Plan
+              </h1>
+              <p className="mx-auto mt-2 max-w-md text-sm text-white/80">
+                Select the plan that fits your shop. Secure payment powered by Stripe.
+              </p>
+            </div>
 
-                <h1 className="mt-4 text-center font-playfair text-[30px] font-semibold leading-tight text-[#D5AB48]">
+            <div className="flex w-full flex-wrap items-stretch justify-center gap-6">
+              {subscriptions.map((subscription) => (
+                <article
+                  key={subscription._id}
+                  className="flex min-h-[390px] w-full max-w-[440px] flex-col rounded-[14px] border border-[#CBA24A] bg-[rgba(18,12,7,0.84)] px-6 py-7 shadow-[0_16px_50px_rgba(0,0,0,0.55)] backdrop-blur-[7px] sm:px-8"
+                >
+                <h2 className="text-center font-playfair text-[28px] font-semibold leading-tight text-[#D5AB48]">
                   {subscription.planName}
-                </h1>
+                </h2>
                 <p className="mt-0.5 text-center text-xs text-white/80">
                   Perfect for getting started.
                 </p>
 
-                <div className="mt-6 flex items-end gap-1 text-[#FFF8E7]">
+                <div className="mt-6 flex items-end justify-center gap-1 text-[#FFF8E7]">
                   <span className="text-[42px] font-bold leading-none">
                     ${subscription.price}
                   </span>
@@ -264,16 +288,26 @@ const SubscriptionContainer = () => {
                   type="button"
                   disabled={status === "loading" || isPending}
                   onClick={() => createPayment(subscription._id)}
-                  className="mt-6 flex h-10 w-full items-center justify-center gap-2 rounded-[5px] bg-[#D5AB48] text-xs font-semibold text-[#241A0C] transition-colors hover:bg-[#E2BA5A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFF4D6] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="mt-7 flex h-11 w-full items-center justify-center gap-2 rounded-[7px] bg-[#D5AB48] text-sm font-semibold text-[#241A0C] transition-colors hover:bg-[#E2BA5A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFF4D6] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isPending && selectedPlanId === subscription._id
-                    ? "Starting Payment..."
-                    : "Get Started"}
-                  <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                    ? (
+                      <>
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                        Preparing Checkout...
+                      </>
+                    )
+                    : (
+                      <>
+                        Choose This Plan
+                        <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                      </>
+                    )}
                 </button>
               </article>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -288,7 +322,7 @@ const SubscriptionContainer = () => {
             clientSecret={paymentDetails.clientSecret}
             customerName={session?.user?.name}
             customerEmail={session?.user?.email}
-            onClose={() => router.replace("/payment-cancel")}
+            onClose={() => setPaymentDetails(null)}
             onSuccess={() => router.replace("/payment-success")}
           />
         </Elements>

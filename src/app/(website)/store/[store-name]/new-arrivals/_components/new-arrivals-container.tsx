@@ -16,7 +16,13 @@ const groups: { key: "today" | "thisWeek" | "thisMonth"; label: string }[] = [
   { key: "thisMonth", label: "Earlier This Month" },
 ];
 
-function ArrivalGrid({ items }: { items: NewArrival[] }) {
+function ArrivalGrid({
+  items,
+  storeName,
+}: {
+  items: NewArrival[];
+  storeName: string;
+}) {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {items.map((item) => {
@@ -32,7 +38,13 @@ function ArrivalGrid({ items }: { items: NewArrival[] }) {
           badges: [{ label: "New Arrival", variant: "blue" }],
         };
 
-        return <ProductCard key={item._id} product={product} />;
+        return (
+          <ProductCard
+            key={item._id}
+            product={product}
+            href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(item._id)}`}
+          />
+        );
       })}
     </div>
   );
@@ -146,7 +158,7 @@ const NewArrivalsContainer = () => {
                   </span>
                   <div className="h-px flex-1 bg-white/[0.07]" />
                 </div>
-                <ArrivalGrid items={items} />
+                <ArrivalGrid items={items} storeName={storeName} />
               </section>
             );
           })}

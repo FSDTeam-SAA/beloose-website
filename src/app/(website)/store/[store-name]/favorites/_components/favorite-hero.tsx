@@ -3,7 +3,7 @@ import Image from "next/image";
 const FavoriteHero = () => {
   return (
     <section className="bg-[#1B0F06] px-4 pb-14 pt-28 sm:px-6 sm:pb-16 sm:pt-32 lg:px-8 lg:pb-20 lg:pt-36">
-      <div className="container mx-auto max-w-[1180px]">
+      <div className="container">
         <div className="relative isolate flex min-h-[190px] items-center justify-center overflow-hidden rounded-lg bg-[#100A08] px-5 py-10 text-center sm:min-h-[210px] sm:px-8 lg:min-h-[220px]">
           <Image
             src="/assets/images/favorite-hero.jpg"

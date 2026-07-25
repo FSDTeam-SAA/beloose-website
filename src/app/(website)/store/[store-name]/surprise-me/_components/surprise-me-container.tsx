@@ -40,7 +40,8 @@ const SurpriseMeContainer = () => {
         image: item.image,
         origin: item.location.humidorName,
         description:
-          item.flavorNotes.join(", ") || [item.wrapper, item.size].filter(Boolean).join(" · "),
+          item.flavorNotes?.join(", ") ||
+          [item.wrapper, item.size].filter(Boolean).join(" · "),
         badges: [{ label: "Surprise Pick", variant: "gold" }],
       }
     : null;
@@ -91,13 +92,10 @@ const SurpriseMeContainer = () => {
 
       <div className="container py-10 sm:py-14">
         {query.isLoading && (
-          <div className="mx-auto grid max-w-4xl items-center gap-8 md:grid-cols-[300px_1fr]">
-            <ProductCardSkeleton />
-            <div className="space-y-4">
-              <div className="h-7 w-2/3 animate-pulse rounded bg-white/[0.06]" />
-              <div className="h-24 animate-pulse rounded-xl bg-white/[0.04]" />
-              <div className="h-11 w-44 animate-pulse rounded-lg bg-white/[0.06]" />
-            </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
           </div>
         )}
 
@@ -113,6 +111,7 @@ const SurpriseMeContainer = () => {
                 : "Something went wrong. Please try again."}
             </p>
             <button
+              type="button"
               onClick={() => query.refetch()}
               className="mt-5 rounded-lg bg-[#CBA24A] px-5 py-2.5 text-xs font-semibold text-[#171109] transition hover:bg-[#E0B44F]"
             >
@@ -122,57 +121,78 @@ const SurpriseMeContainer = () => {
         )}
 
         {!query.isLoading && !query.isError && product && item && (
-          <div className="mx-auto grid max-w-4xl items-center gap-8 md:grid-cols-[300px_1fr] md:gap-12">
-            <ProductCard product={product} />
-
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#CBA24A]">
-                Why this cigar?
-              </p>
-              <h2 className="mt-2 font-playfair text-2xl text-[#F5E7D0] sm:text-3xl">
-                A pick worth discovering
+          <section>
+            <div className="mb-5 flex items-center gap-3">
+              <h2 className="font-playfair text-xl text-[#F5E7D0] sm:text-2xl">
+                Your Surprise Pick
               </h2>
-              <p className="mt-4 text-sm leading-7 text-[#B1A89D]">
-                {item.whyThisCigar}
-              </p>
+              <span className="rounded-full border border-[#CBA24A]/20 bg-[#CBA24A]/10 px-2.5 py-0.5 text-[10px] text-[#D7AA46]">
+                1
+              </span>
+              <div className="h-px flex-1 bg-white/[0.07]" />
+            </div>
 
-              <div className="mt-6 grid gap-3 text-xs text-[#A49C92] sm:grid-cols-2">
-                <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-[#191715] p-4">
-                  <MapPin className="h-4 w-4 shrink-0 text-[#CBA24A]" />
-                  <span>
-                    {[item.location.humidorName, item.location.shelfName]
-                      .filter(Boolean)
-                      .join(" · ") || "Ask staff for location"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-[#191715] p-4">
-                  <Package className="h-4 w-4 shrink-0 text-[#CBA24A]" />
-                  <span>
-                    {item.quantity > 0
-                      ? `${item.quantity} currently available`
-                      : "Currently unavailable"}
-                  </span>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <ProductCard
+                product={product}
+                href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(product.id)}`}
+              />
+            </div>
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <button
-                  onClick={() => query.refetch()}
-                  disabled={limitReached || query.isFetching}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#CBA24A] px-5 text-xs font-semibold text-[#171109] transition hover:bg-[#E0B44F] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Dices
-                    className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`}
-                  />
-                  {query.isFetching ? "Choosing..." : "Surprise me again"}
-                </button>
-                <p className="text-xs text-[#918A82]">
-                  {query.data?.triesRemaining} of {query.data?.maxTries} picks
-                  remaining
-                </p>
+            <div className="mt-7 rounded-2xl border border-white/[0.08] bg-[#191715] p-5 sm:p-6">
+              <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+                <div className="max-w-2xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#CBA24A]">
+                    Why this cigar?
+                  </p>
+                  <h3 className="mt-2 font-playfair text-xl text-[#F5E7D0] sm:text-2xl">
+                    A pick worth discovering
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-[#B1A89D]">
+                    {item.whyThisCigar}
+                  </p>
+                  <div className="mt-5 grid gap-3 text-xs text-[#A49C92] sm:grid-cols-2">
+                    <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-[#0F0E0D]/60 p-4">
+                      <MapPin className="h-4 w-4 shrink-0 text-[#CBA24A]" />
+                      <span>
+                        {[item.location.humidorName, item.location.shelfName]
+                          .filter(Boolean)
+                          .join(" · ") || "Ask staff for location"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-[#0F0E0D]/60 p-4">
+                      <Package className="h-4 w-4 shrink-0 text-[#CBA24A]" />
+                      <span>
+                        {item.quantity > 0
+                          ? `${item.quantity} currently available`
+                          : "Currently unavailable"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => query.refetch()}
+                    disabled={limitReached || query.isFetching}
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#CBA24A] px-5 text-xs font-semibold text-[#171109] transition hover:bg-[#E0B44F] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  >
+                    <Dices
+                      className={`h-4 w-4 ${
+                        query.isFetching ? "animate-spin" : ""
+                      }`}
+                    />
+                    {query.isFetching ? "Choosing..." : "Surprise me again"}
+                  </button>
+                  <p className="mt-2 text-center text-[10px] text-[#918A82]">
+                    {query.data?.triesRemaining} of {query.data?.maxTries} picks
+                    remaining
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
         {!query.isLoading && !query.isError && !item && (

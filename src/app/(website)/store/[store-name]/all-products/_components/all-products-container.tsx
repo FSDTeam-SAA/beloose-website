@@ -5,12 +5,15 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
+  Filter,
   PackageOpen,
   RefreshCw,
+  Search,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import ProductCard, {
   ProductCardSkeleton,
   type ProductBadge,
@@ -18,10 +21,21 @@ import ProductCard, {
 } from "@/components/common/product-card";
 import {
   getStoreInventory,
+  type StoreInventoryFilters,
   type StoreInventoryItem,
 } from "@/lib/storeInventory";
 
 const PAGE_SIZE = 12;
+const FACET_LIMIT = 500;
+
+type FilterKey = "strength" | "brand" | "wrapper" | "size";
+
+const filterLabels: Record<FilterKey, string> = {
+  strength: "Strength",
+  brand: "Brand",
+  wrapper: "Wrapper",
+  size: "Size",
+};
 
 function productBadges(item: StoreInventoryItem): ProductBadge[] {
   const badges: ProductBadge[] = [];
@@ -59,16 +73,63 @@ const AllProductsContainer = () => {
   const params = useParams<{ "store-name": string }>();
   const storeName = params["store-name"];
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<StoreInventoryFilters>({});
+  const deferredSearch = useDeferredValue(search.trim());
+  const appliedFilters = { ...filters, searchTerm: deferredSearch };
   const query = useQuery({
-    queryKey: ["store", storeName, "inventory-list", page, PAGE_SIZE],
+    queryKey: [
+      "store",
+      storeName,
+      "inventory-list",
+      page,
+      PAGE_SIZE,
+      appliedFilters,
+    ],
     queryFn: ({ signal }) =>
-      getStoreInventory(storeName, page, PAGE_SIZE, signal),
+      getStoreInventory(
+        storeName,
+        page,
+        PAGE_SIZE,
+        signal,
+        appliedFilters,
+      ),
     enabled: Boolean(storeName),
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   });
+  const facetsQuery = useQuery({
+    queryKey: ["store", storeName, "inventory-filter-options"],
+    queryFn: ({ signal }) =>
+      getStoreInventory(storeName, 1, FACET_LIMIT, signal),
+    enabled: Boolean(storeName),
+    staleTime: 5 * 60_000,
+  });
 
   const items = query.data?.items || [];
+  const filterOptions = useMemo(
+    () =>
+      (["strength", "brand", "wrapper", "size"] as FilterKey[]).reduce(
+        (options, key) => {
+          options[key] = Array.from(
+            new Set(
+              (facetsQuery.data?.items || [])
+                .map((item) => item[key]?.trim())
+                .filter(Boolean) as string[],
+            ),
+          ).sort((a, b) => a.localeCompare(b));
+          return options;
+        },
+        {} as Record<FilterKey, string[]>,
+      ),
+    [facetsQuery.data?.items],
+  );
+  const activeFilterCount =
+    (deferredSearch ? 1 : 0) +
+    (["strength", "brand", "wrapper", "size"] as FilterKey[]).filter(
+      (key) => filters[key],
+    ).length;
   const meta = query.data?.meta;
   const total = meta?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / (meta?.limit || PAGE_SIZE)));
@@ -86,6 +147,20 @@ const AllProductsContainer = () => {
         block: "start",
       }),
     );
+  };
+
+  const updateFilter = (key: FilterKey, value: string) => {
+    setPage(1);
+    setFilters((current) => ({
+      ...current,
+      [key]: current[key] === value ? undefined : value,
+    }));
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setFilters({});
+    setPage(1);
   };
 
   return (
@@ -130,6 +205,145 @@ const AllProductsContainer = () => {
       </div>
 
       <div className="container py-10 sm:py-14">
+        <section aria-label="Search and filter products" className="mb-8">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <label className="relative flex-1">
+              <span className="sr-only">
+                Search products by name, brand, or description
+              </span>
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#837B72]" />
+              <input
+                // type="search"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search by name, brand, or description..."
+                className="h-12 w-full rounded-xl border border-white/[0.1] bg-[#191715] pl-11 pr-10 text-sm text-[#F5E7D0] outline-none transition placeholder:text-[#777068] focus:border-[#CBA24A]/60 focus:ring-2 focus:ring-[#CBA24A]/10"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setPage(1);
+                  }}
+                  aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#837B72] transition hover:bg-white/[0.06] hover:text-[#F5E7D0]"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </label>
+            <button
+              type="button"
+              aria-expanded={showFilters}
+              aria-controls="product-filters"
+              onClick={() => setShowFilters((visible) => !visible)}
+              className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-5 text-xs font-medium transition ${
+                showFilters || activeFilterCount
+                  ? "border-[#CBA24A]/55 bg-[#CBA24A]/10 text-[#E1B957]"
+                  : "border-white/[0.1] bg-[#191715] text-[#AAA299] hover:border-[#CBA24A]/35 hover:text-[#D7AA46]"
+              }`}
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[#CBA24A] px-1 text-[10px] font-bold text-[#171109]">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {showFilters && (
+            <div
+              id="product-filters"
+              className="mt-3 rounded-xl border border-white/[0.1] bg-[#191715] p-4 sm:p-5"
+            >
+              {facetsQuery.isLoading && (
+                <p className="text-xs text-[#8F877E]">
+                  Loading filter options...
+                </p>
+              )}
+              {facetsQuery.isError && (
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-xs text-[#A69D93]">
+                    Filter options couldn’t be loaded.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => facetsQuery.refetch()}
+                    className="text-xs font-medium text-[#D7AA46] transition hover:text-[#E7C270]"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+              <div className="space-y-5">
+                {(Object.keys(filterLabels) as FilterKey[]).map((key) => {
+                  const options = filterOptions[key];
+                  if (!options.length) return null;
+                  return (
+                    <fieldset key={key}>
+                      <legend className="mb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[#837B72]">
+                        {filterLabels[key]}
+                      </legend>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPage(1);
+                            setFilters((current) => ({
+                              ...current,
+                              [key]: undefined,
+                            }));
+                          }}
+                          className={`rounded-full px-3 py-1.5 text-[10px] transition ${
+                            !filters[key]
+                              ? "bg-[#CBA24A] font-semibold text-[#171109]"
+                              : "bg-white/[0.06] text-[#9D958B] hover:bg-white/[0.1] hover:text-[#E4D8C8]"
+                          }`}
+                        >
+                          All
+                        </button>
+                        {options.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            aria-pressed={filters[key] === option}
+                            onClick={() => updateFilter(key, option)}
+                            className={`rounded-full px-3 py-1.5 text-[10px] capitalize transition ${
+                              filters[key] === option
+                                ? "bg-[#CBA24A] font-semibold text-[#171109]"
+                                : "bg-white/[0.06] text-[#9D958B] hover:bg-white/[0.1] hover:text-[#E4D8C8]"
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+                  );
+                })}
+              </div>
+              {activeFilterCount > 0 && (
+                <div className="mt-5 flex justify-end border-t border-white/[0.07] pt-4">
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#B7AEA3] transition hover:text-[#E1B957]"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Clear all
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
         {query.isLoading && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
@@ -162,12 +376,24 @@ const AllProductsContainer = () => {
           <div className="mx-auto flex max-w-lg flex-col items-center rounded-2xl border border-dashed border-[#CBA24A]/25 bg-[#CBA24A]/[0.04] px-6 py-16 text-center">
             <PackageOpen className="h-9 w-9 text-[#CBA24A]" />
             <h2 className="mt-4 font-playfair text-xl text-[#F5E7D0]">
-              No products available
+              {activeFilterCount
+                ? "No matching products"
+                : "No products available"}
             </h2>
             <p className="mt-2 text-sm text-[#9D958B]">
-              This store&apos;s collection will appear here once inventory is
-              added.
+              {activeFilterCount
+                ? "Try another search term or clear a filter to see more products."
+                : "This store’s collection will appear here once inventory is added."}
             </p>
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-5 rounded-lg bg-[#CBA24A] px-5 py-2.5 text-xs font-semibold text-[#171109] transition hover:bg-[#E0B44F]"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         )}
 
@@ -184,6 +410,7 @@ const AllProductsContainer = () => {
                 <ProductCard
                   key={item._id}
                   product={toProductCard(item)}
+                  href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(item._id)}`}
                 />
               ))}
             </div>

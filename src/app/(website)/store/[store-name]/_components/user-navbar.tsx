@@ -29,8 +29,8 @@ const UserNavbar = () => {
   const navItems: NavItem[] = [
     { label: "Home", href: storePath },
     { label: "All Cigars", href: `${storePath}/all-products` },
-    // { label: "Daily Featured", href: `${storePath}/daily-featured` },
-    // { label: "Staff Picks", href: `${storePath}/staff-picks` },
+    { label: "Daily Featured", href: `${storePath}/daily-featured` },
+    { label: "Staff Picks", href: `${storePath}/staff-picks` },
     { label: "New Arrivals", href: `${storePath}/new-arrivals` },
     {
       label: "Surprise Me",
@@ -106,7 +106,7 @@ const UserNavbar = () => {
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Link
-            href="#"
+            href={`${storePath}/all-products`}
             aria-label="Search cigars"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#A49D95] transition hover:bg-white/[0.05] hover:text-[#D7AA46]"
           >

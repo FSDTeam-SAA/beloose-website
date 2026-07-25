@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Box, Layers3, Plus, Trash2 } from "lucide-react";
 import type { ChangeEvent } from "react";
 import {
   inputClassName,
@@ -17,6 +17,8 @@ type FirstHumidorStepProps = OnboardingStepProps & {
   onRemoveShelf: (index: number) => void;
 };
 
+const Required = () => <span className="text-[#D5AB48]">*</span>;
+
 const FirstHumidorStep = ({
   data,
   onChange,
@@ -25,64 +27,62 @@ const FirstHumidorStep = ({
   onRemoveShelf,
 }: FirstHumidorStepProps) => (
   <div className="space-y-5">
-    <label>
-      <span className={labelClassName}>Humidor name</span>
-      <input
-        className={inputClassName}
-        name="humidorName"
-        value={data.humidorName}
-        onChange={onChange}
-        placeholder="Main Humidor"
-      />
-    </label>
-
-    <label>
-      <span className={labelClassName}>Location</span>
-      <input
-        className={inputClassName}
-        name="humidorLocation"
-        value={data.humidorLocation}
-        onChange={onChange}
-        placeholder="Front of Store"
-      />
-    </label>
-
-    <label>
-      <span className={labelClassName}>Description</span>
-      <textarea
-        className={textareaClassName}
-        name="humidorDescription"
-        value={data.humidorDescription}
-        onChange={onChange}
-        placeholder="Temperature Controlled Humidor"
-      />
-    </label>
-
-    <div>
-      <div className="mb-3 flex items-center justify-between">
+    <section className="rounded-xl border border-[#6f5528]/80 bg-black/10 p-4 sm:p-5">
+      <div className="mb-4 flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#D5AB48]/15 text-[#D5AB48]">
+          <Box className="h-4 w-4" />
+        </span>
         <div>
-          <h2 className="text-sm font-medium text-[#e5e1dc]">Shelves</h2>
-          <p className="mt-0.5 text-xs text-[#8f8a85]">
-            Add the shelves available inside this humidor.
+          <h2 className="text-sm font-semibold text-[#F5E7C2]">Humidor details</h2>
+          <p className="mt-0.5 text-xs text-[#B7A887]">
+            Create the storage area for your first inventory items.
           </p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <label>
+          <span className={labelClassName}>Humidor name <Required /></span>
+          <input className={inputClassName} name="humidorName" value={data.humidorName} onChange={onChange} placeholder="e.g. Main Walk-in Humidor" required />
+        </label>
+        <label>
+          <span className={labelClassName}>Location <Required /></span>
+          <input className={inputClassName} name="humidorLocation" value={data.humidorLocation} onChange={onChange} placeholder="e.g. Front of store" required />
+        </label>
+        <label>
+          <span className={labelClassName}>Description <Required /></span>
+          <textarea className={textareaClassName} name="humidorDescription" value={data.humidorDescription} onChange={onChange} placeholder="Describe this humidor and what it stores..." required />
+        </label>
+      </div>
+    </section>
+
+    <section className="rounded-xl border border-[#6f5528]/80 bg-black/10 p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#D5AB48]/15 text-[#D5AB48]">
+            <Layers3 className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold text-[#F5E7C2]">Shelves</h2>
+            <p className="mt-0.5 text-xs text-[#B7A887]">
+              Add and label the shelves inside this humidor.
+            </p>
+          </div>
         </div>
         <button
           type="button"
           onClick={onAddShelf}
-          className="flex h-9 items-center gap-1.5 rounded-lg border border-[#d0a653]/60 px-3 text-xs font-medium text-[#d0a653] transition hover:bg-[#d0a653]/10"
+          className="flex h-9 shrink-0 items-center gap-1.5 rounded-[7px] border border-[#D5AB48]/60 px-3 text-xs font-medium text-[#D5AB48] transition hover:bg-[#D5AB48]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]"
         >
-          <Plus className="h-4 w-4" /> Add Shelf
+          <Plus className="h-4 w-4" /> Add shelf
         </button>
       </div>
 
       <div className="space-y-3">
         {data.shelfes.map((shelf, index) => (
-          <div
-            key={index}
-            className="relative rounded-xl border border-[#6f5528] bg-[#3B2D16]/55 p-4"
-          >
+          <div key={index} className="rounded-lg border border-[#6f5528] bg-[#3B2D16]/35 p-4">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[#d0a653]">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#D5AB48]">
                 Shelf {index + 1}
               </span>
               {data.shelfes.length > 1 ? (
@@ -90,36 +90,26 @@ const FirstHumidorStep = ({
                   type="button"
                   onClick={() => onRemoveShelf(index)}
                   aria-label={`Remove shelf ${index + 1}`}
-                  className="text-[#8f8a85] transition hover:text-red-400"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-[#B7A887] transition hover:bg-red-400/10 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               ) : null}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                className={inputClassName}
-                value={shelf.name}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  onShelfChange(index, "name", event.target.value)
-                }
-                placeholder="Top Shelf"
-                aria-label={`Shelf ${index + 1} name`}
-              />
-              <input
-                className={inputClassName}
-                value={shelf.description}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  onShelfChange(index, "description", event.target.value)
-                }
-                placeholder="Premium Cigars"
-                aria-label={`Shelf ${index + 1} description`}
-              />
+              <label>
+                <span className={labelClassName}>Shelf name <Required /></span>
+                <input className={inputClassName} value={shelf.name} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "name", event.target.value)} placeholder="e.g. Top shelf" required />
+              </label>
+              <label>
+                <span className={labelClassName}>Contents <Required /></span>
+                <input className={inputClassName} value={shelf.description} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "description", event.target.value)} placeholder="e.g. Premium cigars" required />
+              </label>
             </div>
           </div>
         ))}
       </div>
-    </div>
+    </section>
   </div>
 );
 

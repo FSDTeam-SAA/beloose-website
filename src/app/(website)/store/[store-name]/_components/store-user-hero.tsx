@@ -24,8 +24,8 @@ const StoreUserHero = () => {
       <div className="absolute inset-0 z-[-2] bg-[#160B05]/55" />
       <div className="absolute inset-0 z-[-1] bg-[radial-gradient(circle_at_center,rgba(35,17,7,0.12)_0%,rgba(13,6,3,0.22)_48%,rgba(8,3,1,0.58)_100%)]" />
 
-      <div className="container mx-auto px-4 py-20 text-center sm:py-24">
-        <div className="mx-auto max-w-[850px]">
+      <div className="container py-20 text-center sm:py-24">
+        <div>
           <p className="mb-2 text-[10px] font-normal uppercase tracking-[0.08em] text-[#F2DFC1] sm:text-xs">
             Welcome to
           </p>
@@ -36,7 +36,7 @@ const StoreUserHero = () => {
             <span className="text-[#D0A33E]">Premium Cigars</span>
           </h1>
 
-          <p className="mx-auto mt-4 max-w-[700px] text-xs leading-relaxed text-[#F5E7D0] drop-shadow-[0_2px_8px_rgba(0,0,0,0.75)] sm:text-sm">
+          <p className="mt-4 text-xs leading-relaxed text-[#F5E7D0] drop-shadow-[0_2px_8px_rgba(0,0,0,0.75)] sm:text-sm">
             Scan, search, locate, discover, enjoy. Your guide to
             <br className="hidden sm:block" /> finding the perfect cigar on the
             shelf.
@@ -52,7 +52,7 @@ const StoreUserHero = () => {
             </Link>
 
             <Link
-              href="#"
+              href={`${storePath}/quiz`}
               className="inline-flex h-10 w-full items-center justify-center gap-3 rounded-[3px] border border-[#CBA24A]/80 bg-black/15 px-6 text-xs font-medium text-[#F7E4C5] backdrop-blur-[2px] transition-colors hover:bg-[#CBA24A]/15 sm:w-auto"
             >
               Guided Discovery

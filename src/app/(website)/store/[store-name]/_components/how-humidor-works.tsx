@@ -31,7 +31,7 @@ const HowHumidorWorks = () => {
       aria-labelledby="how-humidor-works-title"
       className="overflow-hidden bg-[#1B0F06] px-4 py-10 text-[#E9D09C] sm:py-11 lg:py-10"
     >
-      <div className="container mx-auto max-w-[1180px]">
+      <div className="container">
         <header className="text-center">
           <p className="text-[8px] font-medium uppercase tracking-[0.08em] text-[#B58A2F] sm:text-[9px]">
             How Humidor411 Works

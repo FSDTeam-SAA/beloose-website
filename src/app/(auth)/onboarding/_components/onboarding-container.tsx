@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
@@ -91,16 +92,6 @@ const normalizePhoneNumber = (value: string) => {
   return phoneNumber;
 };
 
-const isValidPhoneNumber = (value: string) => {
-  const phoneNumber = normalizePhoneNumber(value);
-
-  if (phoneNumber.startsWith("+880")) {
-    return /^\+8801[3-9]\d{8}$/.test(phoneNumber);
-  }
-
-  return /^\+[1-9]\d{7,14}$/.test(phoneNumber);
-};
-
 const OnboardingContainer = () => {
   const router = useRouter();
   const { data: session, status: sessionStatus, update: updateSession } = useSession();
@@ -111,6 +102,8 @@ const OnboardingContainer = () => {
   const [data, setData] = useState<OnboardingData>(initialData);
   const [inventoryImage, setInventoryImage] = useState<File | null>(null);
   const [qrReady, setQrReady] = useState(false);
+  const hasInitializedStep = useRef(false);
+  const hasUserNavigated = useRef(false);
 
   useEffect(() => {
     if (sessionStatus === "unauthenticated") {
@@ -118,6 +111,11 @@ const OnboardingContainer = () => {
       return;
     }
     if (sessionStatus !== "authenticated" || !sessionUser) return;
+    if (hasInitializedStep.current) return;
+
+    // Backend status chooses the initial step once. After that, navigation
+    // remains user-controlled so Back/Continue cannot be overwritten.
+    hasInitializedStep.current = true;
 
     setStep(getOnboardingStep(sessionUser));
 
@@ -133,7 +131,7 @@ const OnboardingContainer = () => {
         if (!response.ok || !result.data) return;
 
         const currentStep = getOnboardingStep(result.data);
-        setStep(currentStep);
+        if (!hasUserNavigated.current) setStep(currentStep);
         await updateSession(result.data);
 
         if (currentStep === 2) {
@@ -382,13 +380,6 @@ const OnboardingContainer = () => {
       return;
     }
 
-    if (step === 0 && !isValidPhoneNumber(data.phoneNumber)) {
-      toast.error(
-        "Enter a valid phone number, for example 01712345678 or +8801712345678",
-      );
-      return;
-    }
-
     if (
       step === 1 &&
       data.shelfes.some((shelf) => !shelf.name.trim() || !shelf.description.trim())
@@ -466,7 +457,25 @@ const OnboardingContainer = () => {
       }
     }
 
-    setStep((current) => Math.min(current + 1, steps.length - 1));
+    // Use the step captured by this submit. If the same submit fires twice,
+    // both calls resolve to the same next step instead of skipping one.
+    hasUserNavigated.current = true;
+    setStep(Math.min(step + 1, steps.length - 1));
+  };
+
+  const goBack = () => {
+    hasUserNavigated.current = true;
+    if (step === 0) {
+      router.back();
+      return;
+    }
+    setStep((current) => Math.max(current - 1, 0));
+  };
+
+  const goToCompletedStep = (targetStep: number) => {
+    if (targetStep > step) return;
+    hasUserNavigated.current = true;
+    setStep(targetStep);
   };
 
   const submit = (event: FormEvent) => {
@@ -482,7 +491,7 @@ const OnboardingContainer = () => {
 
   const CurrentIcon = steps[step].icon;
   return (
-    <main className="relative isolate min-h-screen overflow-hidden text-white">
+    <main className="relative isolate flex h-screen h-dvh flex-col overflow-hidden text-white">
       <Image
         src="/assets/images/auth_bg.png"
         alt="Premium cigar lounge"
@@ -491,26 +500,37 @@ const OnboardingContainer = () => {
         sizes="100vw"
         className="-z-20 object-cover"
       />
-      <div className="absolute inset-0 -z-10 bg-black/45" />
+      <div className="absolute inset-0 -z-10 bg-black/55" />
 
-      <header className="flex h-[68px] items-center justify-between border-b border-[#CBA24A]/30 bg-[#130f09]/75 px-5 backdrop-blur-md sm:px-10">
-        <div className="font-playfair text-2xl font-semibold text-[#D5AB48]">
-          Humidor411
-        </div>
-        <div className="text-sm text-[#9e9994]">
+      <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-[#CBA24A]/30 bg-[#130f09]/90 px-4 backdrop-blur-md sm:px-10">
+        <Link href="/" aria-label="Go to home" className="flex items-center gap-2">
+          <Image
+            src="/assets/images/logo.png"
+            alt="Humidor411"
+            width={54}
+            height={54}
+            priority
+            className="h-[54px] w-[54px] object-contain"
+          />
+          <span className="hidden font-playfair text-xl font-semibold text-[#D5AB48] sm:block">
+            Humidor411
+          </span>
+        </Link>
+        <div className="text-xs text-[#B7A887] sm:text-sm">
           Onboarding · Step {step + 1} of {steps.length}
         </div>
       </header>
 
-      <div className="px-5 pb-14 pt-6 sm:px-10">
-        <div className="h-1.5 overflow-hidden rounded-full bg-[#3B2D16]/80">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="shrink-0 border-b border-[#CBA24A]/20 bg-[#130f09]/45 px-4 pb-3 pt-4 backdrop-blur-sm sm:px-10 sm:pb-4 sm:pt-5">
+          <div className="mx-auto h-1.5 max-w-[1100px] overflow-hidden rounded-full bg-[#3B2D16]/80">
           <div
             className="h-full rounded-full bg-[#D5AB48] transition-all duration-300"
             style={{ width: `${((step + 1) / steps.length) * 100}%` }}
           />
-        </div>
+          </div>
 
-        <nav className="mx-auto mt-10 flex max-w-[1000px] items-start overflow-x-auto pb-3">
+          <nav aria-label="Onboarding progress" className="mx-auto mt-4 flex max-w-[1000px] items-start overflow-x-auto pb-1 sm:mt-6">
           {steps.map((item, index) => {
             const Icon = item.icon;
             const active = index === step;
@@ -519,8 +539,10 @@ const OnboardingContainer = () => {
               <div key={item.title} className="flex min-w-0 flex-1 items-start">
                 <button
                   type="button"
-                  onClick={() => index <= step && setStep(index)}
-                  className="flex min-w-[92px] flex-col items-center"
+                  onClick={() => goToCompletedStep(index)}
+                  aria-current={active ? "step" : undefined}
+                  aria-label={`${item.title}${complete ? ", completed" : active ? ", current step" : ""}`}
+                  className="flex min-w-[58px] flex-col items-center sm:min-w-[92px]"
                 >
                   <span
                     className={`flex h-10 w-10 items-center justify-center rounded-full border ${
@@ -533,7 +555,7 @@ const OnboardingContainer = () => {
                   >
                     {complete ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
                   </span>
-                  <span className={`mt-2 text-center text-xs ${active ? "text-[#F5E7C2]" : "text-[#B7A887]"}`}>
+                  <span className={`mt-2 hidden text-center text-xs sm:block ${active ? "text-[#F5E7C2]" : "text-[#B7A887]"}`}>
                     {item.title}
                   </span>
                 </button>
@@ -543,16 +565,18 @@ const OnboardingContainer = () => {
               </div>
             );
           })}
-        </nav>
+          </nav>
+        </div>
 
-        <form
-          onSubmit={submit}
-          className="mx-auto mt-10 w-full max-w-[672px] rounded-[15px] border border-[#CBA24A] bg-[rgba(19,15,9,0.86)] px-6 py-10 shadow-[0_12px_35px_rgba(0,0,0,0.55)] backdrop-blur-[7px] sm:px-10"
-        >
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 [scrollbar-color:#8B6A32_transparent] sm:px-10 sm:py-8">
+          <form
+            onSubmit={submit}
+            className="mx-auto w-full max-w-[672px] rounded-[14px] border border-[#CBA24A] bg-[rgba(19,15,9,0.84)] px-5 py-7 shadow-[0_16px_50px_rgba(0,0,0,0.55)] backdrop-blur-[7px] sm:px-10 sm:py-9"
+          >
           <div className="flex items-center gap-4">
             <CurrentIcon className="h-8 w-8 text-[#D5AB48]" />
             <div>
-              <h1 className="font-playfair text-[28px] text-[#F5E7C2]">{steps[step].title}</h1>
+              <h1 className="font-playfair text-2xl font-semibold text-[#D5AB48] sm:text-[28px]">{steps[step].title}</h1>
               <p className="text-sm text-[#B7A887]">
                 {step === 0
                   ? "Tell us about your shop"
@@ -591,18 +615,18 @@ const OnboardingContainer = () => {
             {step === 4 && <ReadyToLaunchStep />}
           </div>
 
-          <div className="mt-8 flex items-center justify-between">
+          <div className="mt-8 flex items-center justify-between gap-4">
             <button
               type="button"
-              onClick={() => (step === 0 ? router.back() : setStep((current) => current - 1))}
-              className="flex items-center gap-2 text-sm text-[#B7A887] hover:text-[#F5E7C2]"
+              onClick={goBack}
+              className="flex h-11 items-center gap-2 rounded-md px-2 text-sm text-[#B7A887] transition hover:text-[#F5E7C2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]"
             >
               <ArrowLeft className="h-4 w-4" /> Back
             </button>
             <button
               type="submit"
               disabled={isCreatingRetailer || isCreatingHumidor || isCreatingInventory}
-              className="flex h-11 items-center justify-center gap-2 rounded-[12px] bg-[#D5AB48] px-7 text-sm font-semibold text-[#241A0C] hover:bg-[#E2BA5A] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-11 items-center justify-center gap-2 rounded-[7px] bg-[#D5AB48] px-5 text-sm font-semibold text-[#241A0C] transition hover:bg-[#E2BA5A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5E7C2] disabled:cursor-not-allowed disabled:opacity-60 sm:px-7"
             >
               {isCreatingRetailer || isCreatingHumidor || isCreatingInventory
                 ? "Saving..."
@@ -612,7 +636,8 @@ const OnboardingContainer = () => {
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
-        </form>
+          </form>
+        </div>
       </div>
     </main>
   );
