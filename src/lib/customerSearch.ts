@@ -7,6 +7,7 @@ export type CustomerSearchItem = {
   size?: string;
   image?: string;
   price?: number;
+  pairingSuggestions?: string[];
   quantity: number;
   inStock: boolean;
   shelfName?: string;

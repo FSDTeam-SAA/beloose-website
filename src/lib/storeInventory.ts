@@ -5,8 +5,10 @@ export type StoreInventoryItem = {
   strength: string;
   wrapper: string;
   size: string;
+  smokingTime?: string;
   image?: string;
   description?: string;
+  pairingSuggestions?: string[];
   shelfName?: string;
   quantity: number;
   price: number;

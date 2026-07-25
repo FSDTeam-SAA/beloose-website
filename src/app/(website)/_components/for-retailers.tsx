@@ -1,24 +1,59 @@
+"use client";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import LandingContentState from "@/components/website/landing-content-state";
+import LandingImage from "@/components/website/landing-image";
+import { getRetailerAbout } from "@/lib/retailerLanding";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Check } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 
-const retailerFeatures = [
-  "Organize cigars by humidor, shelf, and row",
-  "Real-time inventory tracking and alerts",
-  "QR codes generated per product location",
-  "Staff management and role-based access",
-  "Sales analytics and trending product reports",
-  "Multi-location humidor management",
-];
+const fallbackAbout = {
+  image: "/assets/images/ForRetailers.png",
+  title: "Run Your Shop Smarter",
+  description:
+    "Manage cigars, humidors, and inventory with precision. Humidor411 gives your team the tools to organize every product, every shelf, and every walk-in with confidence.",
+  features: [
+    "Organize cigars by humidor, shelf, and row",
+    "Real-time inventory tracking and alerts",
+    "QR codes generated per product location",
+    "Staff management and role-based access",
+    "Sales analytics and trending product reports",
+    "Multi-location humidor management",
+  ],
+};
 
 const ForRetailers = () => {
+  const query = useQuery({
+    queryKey: ["retailer-landing", "about"],
+    queryFn: ({ signal }) => getRetailerAbout(signal),
+    staleTime: 5 * 60_000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+
+  if (query.isLoading) return <ForRetailersSkeleton />;
+
+  const live = query.data;
+  const features =
+    live?.features?.filter((feature) => feature?.trim()) || [];
+  const content = {
+    image: live?.image?.trim() || fallbackAbout.image,
+    title: live?.title?.trim() || fallbackAbout.title,
+    description: live?.description?.trim() || fallbackAbout.description,
+    features: features.length ? features : fallbackAbout.features,
+  };
+  const titleParts = content.title.split(/\s+/);
+  const highlightedTitle = titleParts.pop();
+
   return (
     <section className="bg-[#150b04] py-14 text-[#d4bd86] sm:py-16 lg:py-[76px]">
       <div className="container px-4 sm:px-6 lg:px-8 xl:px-10">
-        <div className=" grid items-center gap-9 md:grid-cols-[1.08fr_0.92fr] lg:gap-12 xl:gap-14">
+        <div className="grid items-center gap-9 md:grid-cols-[1.08fr_0.92fr] lg:gap-12 xl:gap-14">
           <div className="relative overflow-hidden rounded-[5px] bg-[#241408] shadow-[0_28px_60px_rgba(0,0,0,0.22)]">
-            <Image
-              src="/assets/images/ForRetailers.png"
+            <LandingImage
+              src={content.image}
+              fallbackSrc={fallbackAbout.image}
               alt="Cigar retailer holding a tray of cigars"
               width={755}
               height={520}
@@ -32,19 +67,21 @@ const ForRetailers = () => {
               For Retailers
             </p>
 
-            <h2 className="max-w-[420px] font-serif text-[38px] font-bold leading-[0.95] text-[#f5dfaa] sm:text-[48px] lg:text-[56px]">
-              Run Your Shop{" "}
-              <span className="block text-[#d1a13c]">Smarter</span>
+            <h2 className="max-w-[480px] font-serif text-[38px] font-bold leading-[0.95] text-[#f5dfaa] sm:text-[48px] lg:text-[56px]">
+              {titleParts.join(" ")}{" "}
+              {highlightedTitle && (
+                <span className="block text-[#d1a13c]">
+                  {highlightedTitle}
+                </span>
+              )}
             </h2>
 
             <p className="mt-5 max-w-[560px] text-[13px] leading-[1.45] text-[#b79b67] sm:text-sm">
-              Manage cigars, humidors, and inventory with precision.
-              Humidor411 gives your team the tools to organize every product,
-              every shelf, and every walk-in with confidence.
+              {content.description}
             </p>
 
             <ul className="mt-8 space-y-3">
-              {retailerFeatures.map((feature) => (
+              {content.features.map((feature) => (
                 <li
                   key={feature}
                   className="flex items-start gap-3 text-[13px] leading-none text-[#c3aa78]"
@@ -64,9 +101,45 @@ const ForRetailers = () => {
             </Link>
           </div>
         </div>
+
+        {(query.isError || !live) && (
+          <LandingContentState
+            type={query.isError ? "error" : "empty"}
+            message={
+              query.isError
+                ? "Live retailer content could not be loaded. Showing the default content."
+                : "No retailer content was found. Showing the default content."
+            }
+            onRetry={query.isError ? () => void query.refetch() : undefined}
+          />
+        )}
       </div>
     </section>
   );
 };
+
+function ForRetailersSkeleton() {
+  return (
+    <section
+      className="bg-[#150b04] py-14 sm:py-16 lg:py-[76px]"
+      aria-label="Loading retailer information"
+    >
+      <div className="container grid items-center gap-9 px-4 sm:px-6 md:grid-cols-[1.08fr_0.92fr] lg:gap-12 lg:px-8 xl:px-10">
+        <Skeleton className="aspect-[755/520] w-full rounded-[5px] bg-[#34200e]" />
+        <div className="space-y-5">
+          <Skeleton className="h-3 w-28 bg-[#513719]" />
+          <Skeleton className="h-24 w-full bg-[#513719]" />
+          <Skeleton className="h-16 w-full bg-[#34200e]" />
+          <div className="space-y-3">
+            {Array.from({ length: 6 }, (_, index) => (
+              <Skeleton key={index} className="h-4 w-full bg-[#34200e]" />
+            ))}
+          </div>
+          <Skeleton className="h-10 w-48 bg-[#513719]" />
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default ForRetailers;

@@ -1,6 +1,7 @@
 "use client";
 
-import { changePassword, getProfileSettings } from "@/lib/profileInfo";
+import { changePassword } from "@/lib/profileInfo";
+import { getMyRetailer } from "@/lib/retailer";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Eye, EyeOff, X } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -16,7 +17,7 @@ export default function PasswordForm() {
   const { data: session, status } = useSession();
   const sessionUser = session?.user as { accessToken?: string; fullName?: string; profilePicture?: string } | undefined;
   const token = sessionUser?.accessToken;
-  const query = useQuery({ queryKey: ["profile-settings"], queryFn: () => getProfileSettings(token!), enabled: Boolean(token) });
+  const query = useQuery({ queryKey: ["retailer", "me"], queryFn: ({ signal }) => getMyRetailer(token!, signal), enabled: Boolean(token) });
   const [values, setValues] = useState(emptyValues);
   const mutation = useMutation({
     mutationFn: () => changePassword(token!, values),
@@ -36,10 +37,10 @@ export default function PasswordForm() {
   if (!token) return <DashboardState type="error" message="Your session token is missing. Please log in again."/>;
   if (query.isError) return <DashboardState type="error" message={query.error instanceof Error ? query.error.message : "Something went wrong while loading your profile."} onRetry={() => query.refetch()}/>;
   const profile = query.data;
-  const name = profile?.fullName || sessionUser?.fullName || "Retailer";
+  const name = profile?.storeName || sessionUser?.fullName || "Retailer";
 
   return <div className="min-h-[calc(100vh-72px)] bg-[#3b2918] p-3 sm:p-4">
-    <ProfileHero name={name} businessName={profile?.businessName} profilePicture={profile?.profilePicture || sessionUser?.profilePicture}/>
+    <ProfileHero name={name} profilePicture={profile?.logo || sessionUser?.profilePicture} banner={profile?.banner}/>
     <form onSubmit={submit} className="mt-4 rounded-lg border border-[#d5c39b] bg-[#543b1f] p-4">
       <div className="grid grid-cols-1 gap-x-2 gap-y-4 sm:grid-cols-2">
         <PasswordField label="Current Password" value={values.oldPassword} onChange={oldPassword => setValues(current => ({ ...current, oldPassword }))}/>
