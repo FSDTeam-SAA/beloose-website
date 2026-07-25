@@ -1,13 +1,17 @@
+import { prepareImageUpload } from "./imageUpload";
+
 export type InventoryItem = {
   _id: string;
   masterCigarId?: string;
   name?: string;
   brand?: string;
-  strength?: "mild" | "medium" | "full";
+  strength?: "mild" | "medium" | "medium-full" | "full";
   wrapper?: string;
   size?: string;
+  smokingTime?: "30" | "60" | "90" | "120+";
   image?: string;
   description?: string;
+  pairingSuggestions?: string[];
   humidorId: string;
   shelfName: string;
   quantity: number;
@@ -31,10 +35,12 @@ export type InventoryInput = {
   masterCigarId: string;
   name: string;
   brand: string;
-  strength: "" | "mild" | "medium" | "full";
+  strength: "" | "mild" | "medium" | "medium-full" | "full";
   wrapper: string;
   size: string;
+  smokingTime: "" | "30" | "60" | "90" | "120+";
   description: string;
+  pairingSuggestions: string[];
   humidorId: string;
   shelfName: string;
   quantity: string;
@@ -54,9 +60,10 @@ export type MasterCigar = {
   _id: string;
   name: string;
   brand: string;
-  strength?: "mild" | "medium" | "full";
+  strength?: "mild" | "medium" | "medium-full" | "full";
   wrapper?: string;
   size?: string;
+  smokingTime?: string;
   image?: string;
   description?: string;
 };
@@ -94,23 +101,23 @@ export async function getInventoryOpportunities(token: string, days: number, sig
   return result.data;
 }
 
-function toFormData(input: InventoryInput) {
+async function toFormData(input: InventoryInput) {
   const body = new FormData();
-  const values: Record<string, string | boolean | File | undefined> = { ...input };
+  const values: Record<string, string | string[] | boolean | File | undefined> = { ...input };
   for (const [key, value] of Object.entries(values)) {
-    if (value === undefined || value === "") continue;
-    body.append(key, value instanceof File ? value : String(value));
+    if (value === undefined || value === "" || (Array.isArray(value) && value.length === 0)) continue;
+    body.append(key, value instanceof File ? await prepareImageUpload(value) : Array.isArray(value) ? value.join(",") : String(value));
   }
   return body;
 }
 
 export async function createInventory(token: string, input: InventoryInput) {
-  const result = await request<{ data: InventoryItem }>("/inventory", token, { method: "POST", body: toFormData(input) });
+  const result = await request<{ data: InventoryItem }>("/inventory", token, { method: "POST", body: await toFormData(input) });
   return result.data;
 }
 
 export async function updateInventory(token: string, id: string, input: InventoryInput) {
-  const result = await request<{ data: InventoryItem }>(`/inventory/${id}`, token, { method: "PUT", body: toFormData(input) });
+  const result = await request<{ data: InventoryItem }>(`/inventory/${id}`, token, { method: "PUT", body: await toFormData(input) });
   return result.data;
 }
 

@@ -7,6 +7,7 @@ export type SurprisePickItem = {
   size: string;
   image?: string;
   flavorNotes: string[];
+  pairingSuggestions?: string[];
   price: number;
   quantity: number;
   location: {

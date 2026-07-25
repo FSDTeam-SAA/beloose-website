@@ -7,7 +7,9 @@ export type FeatureInventoryItem = {
   strength?: string;
   wrapper?: string;
   size?: string;
+  smokingTime?: string;
   image?: string;
+  pairingSuggestions?: string[];
   price?: number;
   quantity?: number;
   status?: string;

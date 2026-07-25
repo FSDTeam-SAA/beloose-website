@@ -4,7 +4,9 @@ export type NewArrival = {
   brand: string;
   strength: string;
   size: string;
+  smokingTime?: string;
   image?: string;
+  pairingSuggestions?: string[];
   price: number;
   quantity: number;
   arrivalDate: string;
