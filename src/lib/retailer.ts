@@ -31,6 +31,14 @@ export type RetailerProfileInput = Pick<
   "storeName" | "address" | "phoneNumber" | "city" | "description"
 >;
 
+export type PublicRetailerProfile = RetailerProfile & {
+  userId?: {
+    fullName?: string;
+    businessName?: string;
+    profilePicture?: string;
+  };
+};
+
 type ApiResponse<T> = {
   data?: T;
   message?: string;
@@ -75,6 +83,30 @@ export function getMyRetailer(token: string, signal?: AbortSignal) {
     undefined,
     signal,
   );
+}
+
+export async function getRetailerBySlug(
+  slug: string,
+  signal?: AbortSignal,
+): Promise<PublicRetailerProfile> {
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8089/api/v1";
+  const response = await fetch(
+    `${apiUrl}/retailer/slug/${encodeURIComponent(slug)}`,
+    { headers: { Accept: "*/*" }, signal },
+  );
+  const result = (await response.json().catch(() => null)) as
+    | ApiResponse<PublicRetailerProfile>
+    | null;
+
+  if (!response.ok || !result?.data) {
+    throw new RetailerApiError(
+      result?.message || "Store information is unavailable.",
+      response.status,
+    );
+  }
+
+  return result.data;
 }
 
 export async function updateRetailerProfile(

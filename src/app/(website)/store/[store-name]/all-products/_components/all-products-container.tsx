@@ -25,7 +25,7 @@ import {
   type StoreInventoryItem,
 } from "@/lib/storeInventory";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 8;
 const FACET_LIMIT = 500;
 
 type FilterKey = "strength" | "brand" | "wrapper" | "size";
@@ -63,10 +63,28 @@ function toProductCard(item: StoreInventoryItem): ProductCardData {
   };
 }
 
-function getPageNumbers(currentPage: number, totalPages: number) {
-  const start = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
-  const end = Math.min(totalPages, Math.max(currentPage + 1, 3));
-  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+type PaginationItem = number | "start-ellipsis" | "end-ellipsis";
+
+function getPaginationItems(
+  currentPage: number,
+  totalPages: number,
+): PaginationItem[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const items: PaginationItem[] = [1];
+  const rangeStart = Math.max(2, currentPage - 1);
+  const rangeEnd = Math.min(totalPages - 1, currentPage + 1);
+
+  if (rangeStart > 2) items.push("start-ellipsis");
+  for (let pageNumber = rangeStart; pageNumber <= rangeEnd; pageNumber += 1) {
+    items.push(pageNumber);
+  }
+  if (rangeEnd < totalPages - 1) items.push("end-ellipsis");
+  items.push(totalPages);
+
+  return items;
 }
 
 const AllProductsContainer = () => {
@@ -415,48 +433,76 @@ const AllProductsContainer = () => {
               ))}
             </div>
 
-            <div className="mt-10 flex flex-col items-center justify-between gap-5 border-t border-white/[0.07] pt-7 sm:flex-row">
-              <p className="text-xs text-[#918A82]">
-                Showing{" "}
-                <span className="text-[#D0C6B9]">
-                  {startItem}–{endItem}
-                </span>{" "}
-                of <span className="text-[#D0C6B9]">{total}</span> products
-              </p>
+            {total > PAGE_SIZE && (
+            <div className="mt-10 flex flex-col items-center justify-between gap-5 rounded-xl border border-white/[0.08] bg-[#191715]/70 px-4 py-4 sm:flex-row sm:px-5">
+              <div className="text-center sm:text-left">
+                <p className="text-xs text-[#918A82]">
+                  Showing{" "}
+                  <span className="font-medium text-[#D0C6B9]">
+                    {startItem}–{endItem}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium text-[#D0C6B9]">{total}</span>{" "}
+                  products
+                </p>
+                {totalPages > 1 && (
+                  <p className="mt-1 text-[10px] text-[#746E67]">
+                    Page {currentPage} of {totalPages}
+                  </p>
+                )}
+              </div>
 
               {totalPages > 1 && (
                 <nav
-                  className="flex items-center gap-2"
+                  className="flex max-w-full items-center gap-1.5"
                   aria-label="Product pages"
                 >
                   <button
                     type="button"
                     disabled={currentPage === 1 || query.isFetching}
                     onClick={() => changePage(currentPage - 1)}
-                    className="inline-flex h-9 items-center gap-1 rounded-lg border border-white/[0.1] px-3 text-xs text-[#B2AAA0] transition hover:border-[#CBA24A]/40 hover:text-[#D7AA46] disabled:cursor-not-allowed disabled:opacity-35"
+                    aria-label="Go to previous page"
+                    className="inline-flex h-10 items-center gap-1 rounded-lg border border-white/[0.1] px-3 text-xs text-[#B2AAA0] transition hover:border-[#CBA24A]/40 hover:bg-[#CBA24A]/[0.06] hover:text-[#D7AA46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]/50 disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <ChevronLeft className="h-4 w-4" />
                     <span className="hidden sm:inline">Previous</span>
                   </button>
 
-                  {getPageNumbers(currentPage, totalPages).map((pageNumber) => (
-                    <button
-                      key={pageNumber}
-                      type="button"
-                      disabled={query.isFetching}
-                      aria-current={
-                        pageNumber === currentPage ? "page" : undefined
-                      }
-                      onClick={() => changePage(pageNumber)}
-                      className={`h-9 min-w-9 rounded-lg px-2 text-xs font-medium transition ${
-                        pageNumber === currentPage
-                          ? "bg-[#CBA24A] text-[#171109]"
-                          : "border border-white/[0.1] text-[#B2AAA0] hover:border-[#CBA24A]/40 hover:text-[#D7AA46]"
-                      } disabled:cursor-not-allowed`}
-                    >
-                      {pageNumber}
-                    </button>
-                  ))}
+                  <div className="hidden items-center gap-1.5 sm:flex">
+                    {getPaginationItems(currentPage, totalPages).map((item) =>
+                      typeof item === "number" ? (
+                        <button
+                          key={item}
+                          type="button"
+                          disabled={query.isFetching || item === currentPage}
+                          aria-current={
+                            item === currentPage ? "page" : undefined
+                          }
+                          aria-label={`Go to page ${item}`}
+                          onClick={() => changePage(item)}
+                          className={`h-10 min-w-10 rounded-lg px-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]/50 ${
+                            item === currentPage
+                              ? "bg-[#CBA24A] text-[#171109] shadow-[0_5px_16px_rgba(203,162,74,0.18)]"
+                              : "border border-white/[0.1] text-[#B2AAA0] hover:border-[#CBA24A]/40 hover:bg-[#CBA24A]/[0.06] hover:text-[#D7AA46]"
+                          } disabled:cursor-not-allowed`}
+                        >
+                          {item}
+                        </button>
+                      ) : (
+                        <span
+                          key={item}
+                          aria-hidden="true"
+                          className="grid h-10 min-w-6 place-items-center text-xs text-[#746E67]"
+                        >
+                          …
+                        </span>
+                      ),
+                    )}
+                  </div>
+
+                  <span className="min-w-16 text-center text-xs font-medium text-[#D0C6B9] sm:hidden">
+                    {currentPage} / {totalPages}
+                  </span>
 
                   <button
                     type="button"
@@ -464,7 +510,8 @@ const AllProductsContainer = () => {
                       currentPage === totalPages || query.isFetching
                     }
                     onClick={() => changePage(currentPage + 1)}
-                    className="inline-flex h-9 items-center gap-1 rounded-lg border border-white/[0.1] px-3 text-xs text-[#B2AAA0] transition hover:border-[#CBA24A]/40 hover:text-[#D7AA46] disabled:cursor-not-allowed disabled:opacity-35"
+                    aria-label="Go to next page"
+                    className="inline-flex h-10 items-center gap-1 rounded-lg border border-white/[0.1] px-3 text-xs text-[#B2AAA0] transition hover:border-[#CBA24A]/40 hover:bg-[#CBA24A]/[0.06] hover:text-[#D7AA46] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]/50 disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <span className="hidden sm:inline">Next</span>
                     <ChevronRight className="h-4 w-4" />
@@ -472,6 +519,7 @@ const AllProductsContainer = () => {
                 </nav>
               )}
             </div>
+            )}
           </>
         )}
       </div>

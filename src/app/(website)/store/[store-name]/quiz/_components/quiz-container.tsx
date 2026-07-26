@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ChevronDown,
   Heart,
   MapPin,
   RefreshCw,
@@ -15,6 +16,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { useFavorites } from "@/hooks/use-favorites";
 import {
   getGuidedDiscoveryResults,
   type GuidedDiscoveryAnswers,
@@ -27,7 +29,6 @@ type Option = {
   title: string;
   description: string;
   icon: string;
-  extra?: Partial<GuidedDiscoveryAnswers>;
 };
 
 type Question = {
@@ -70,36 +71,84 @@ const questions: Question[] = [
     ],
   },
   {
+    key: "wrapper",
+    title: "Which wrapper do you prefer?",
+    subtitle: "Choose the wrapper style that best suits your taste.",
+    options: [
+      { value: "Connecticut", title: "Connecticut", description: "Creamy, mild & smooth", icon: "🍃" },
+      { value: "Connecticut Broadleaf", title: "Connecticut Broadleaf", description: "Earthy, sweet & robust", icon: "🍂" },
+      { value: "Natural", title: "Natural", description: "Balanced & approachable", icon: "🌿" },
+      { value: "Maduro", title: "Maduro", description: "Dark, rich & naturally sweet", icon: "🍫" },
+      { value: "Habano", title: "Habano", description: "Spicy, aromatic & full-flavored", icon: "🔥" },
+      { value: "Corojo", title: "Corojo", description: "Peppery, bold & complex", icon: "🌶️" },
+      { value: "Cameroon", title: "Cameroon", description: "Toasty, sweet & distinctive", icon: "🌰" },
+      { value: "Sumatra", title: "Sumatra", description: "Earthy, mellow & subtly sweet", icon: "☕" },
+      { value: "Oscuro", title: "Oscuro", description: "Very dark, intense & bold", icon: "🌑" },
+      { value: "Candela", title: "Candela", description: "Fresh, grassy & mild", icon: "🌱" },
+      { value: "Colorado", title: "Colorado", description: "Rich, balanced & aromatic", icon: "🪵" },
+      { value: "Criollo", title: "Criollo", description: "Nutty, spicy & refined", icon: "✨" },
+      { value: "San Andrés", title: "San Andrés", description: "Earthy, bold & chocolatey", icon: "🏔️" },
+    ],
+  },
+  {
+    key: "pairingSuggestions",
+    title: "What would you pair it with?",
+    subtitle: "Choose one companion for your cigar.",
+    options: [
+      {
+        value: "Cigar + Whisky",
+        title: "Cigar + Whisky",
+        description: "Classic pairing for medium or full-bodied cigars",
+        icon: "🥃",
+      },
+      {
+        value: "Cigar + Aged Rum",
+        title: "Cigar + Aged Rum",
+        description: "Sweet caramel and vanilla notes",
+        icon: "🍹",
+      },
+      {
+        value: "Cigar + Cognac / Brandy",
+        title: "Cigar + Cognac / Brandy",
+        description: "Smooth, premium pairing",
+        icon: "🍷",
+      },
+      {
+        value: "Cigar + Port",
+        title: "Cigar + Port",
+        description: "Sweetness balances tobacco spice and earthiness",
+        icon: "🍇",
+      },
+      {
+        value: "Cigar + Coffee / Espresso",
+        title: "Cigar + Coffee / Espresso",
+        description: "Non-alcoholic pairing for creamy or nutty cigars",
+        icon: "☕",
+      },
+      {
+        value: "Cigar + Dark Beer / Stout",
+        title: "Cigar + Dark Beer / Stout",
+        description: "Rich pairing for bold cigars",
+        icon: "🍺",
+      },
+    ],
+  },
+  {
     key: "profile",
     title: "What are you in the mood for?",
-    subtitle: "Choose a flavor direction, or keep your options open.",
+    subtitle: "Something familiar or a new adventure?",
     options: [
       {
         value: "familiar",
-        title: "Smooth & Familiar",
-        description: "Connecticut wrapper · Coffee pairing",
+        title: "Something Familiar",
+        description: "Trusted, well-known blends",
         icon: "🤝",
-        extra: {
-          wrapper: "Connecticut",
-          pairingSuggestions: "Cigar + Coffee / Espresso",
-        },
-      },
-      {
-        value: "rich",
-        title: "Rich & Relaxed",
-        description: "Maduro wrapper · Aged rum pairing",
-        icon: "🥃",
-        extra: {
-          wrapper: "Maduro",
-          pairingSuggestions: "Cigar + Aged Rum",
-        },
       },
       {
         value: "adventurous",
         title: "Try Something New",
-        description: "Explore any wrapper or pairing",
+        description: "Discover a new favorite",
         icon: "⭐",
-        extra: { wrapper: "", pairingSuggestions: "" },
       },
     ],
   },
@@ -114,7 +163,8 @@ export default function QuizContainer() {
   const [submittedAnswers, setSubmittedAnswers] =
     useState<GuidedDiscoveryAnswers | null>(null);
   const [resultLimit, setResultLimit] = useState(5);
-  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [showAllWrappers, setShowAllWrappers] = useState(false);
+  const favorites = useFavorites(storeName);
   const showingResults = step === questions.length;
   const question = questions[step];
 
@@ -141,9 +191,6 @@ export default function QuizContainer() {
     setAnswers((current) => ({
       ...current,
       [question.key]: option.value,
-      ...(question.key === "profile"
-        ? { wrapper: "", pairingSuggestions: "", ...option.extra }
-        : {}),
     }));
   };
 
@@ -151,7 +198,7 @@ export default function QuizContainer() {
     setAnswers({});
     setSubmittedAnswers(null);
     setResultLimit(5);
-    setSavedIds([]);
+    setShowAllWrappers(false);
     setStep(0);
   };
 
@@ -230,7 +277,7 @@ export default function QuizContainer() {
             <>
               <div className="mx-auto mt-9 max-w-3xl space-y-3">
                 {resultsQuery.data.items.map((item) => {
-                  const isSaved = savedIds.includes(item._id);
+                  const isSaved = favorites.isFavorite(item._id);
 
                   return (
                     <article
@@ -287,10 +334,26 @@ export default function QuizContainer() {
                           }
                           aria-pressed={isSaved}
                           onClick={() =>
-                            setSavedIds((current) =>
-                              isSaved
-                                ? current.filter((id) => id !== item._id)
-                                : [...current, item._id],
+                            favorites.setFavorite(
+                              {
+                                id: item._id,
+                                name: item.name,
+                                brand: item.brand,
+                                price: item.price,
+                                strength: item.strength,
+                                image: item.image,
+                                origin: item.wrapper,
+                                description: [item.size, item.shelfName]
+                                  .filter(Boolean)
+                                  .join(" · "),
+                                badges: [
+                                  {
+                                    label: "Guided Match",
+                                    variant: "gold",
+                                  },
+                                ],
+                              },
+                              !isSaved,
                             )
                           }
                           className={`flex h-9 w-9 items-center justify-center rounded border transition ${
@@ -357,6 +420,11 @@ export default function QuizContainer() {
 
   const selectedValue = answers[question.key];
   const progress = ((step + 1) / questions.length) * 100;
+  const wrapperOptionsCollapsed =
+    question.key === "wrapper" && !showAllWrappers;
+  const visibleOptions = wrapperOptionsCollapsed
+    ? question.options.slice(0, 4)
+    : question.options;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#160D06] px-4 py-10 text-white sm:py-16">
@@ -403,7 +471,7 @@ export default function QuizContainer() {
           <p className="mt-1 text-xs text-[#92795D]">{question.subtitle}</p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {question.options.map((option) => {
+            {visibleOptions.map((option) => {
               const selected = selectedValue === option.value;
               return (
                 <button
@@ -437,6 +505,21 @@ export default function QuizContainer() {
               );
             })}
           </div>
+
+          {wrapperOptionsCollapsed && question.options.length > 4 && (
+            <button
+              type="button"
+              onClick={() => setShowAllWrappers(true)}
+              aria-expanded={false}
+              className="mx-auto mt-5 flex h-10 items-center justify-center gap-2 rounded-lg border border-[#CBA24A]/45 px-5 text-xs font-medium text-[#D9AD4A] transition hover:border-[#D5A744] hover:bg-[#D5A744]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D5A744]"
+            >
+              Show more wrappers
+              <span className="rounded-full bg-[#D5A744]/15 px-2 py-0.5 text-[10px]">
+                +{question.options.length - 4}
+              </span>
+              <ChevronDown className="h-4 w-4" />
+            </button>
+          )}
         </section>
 
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">

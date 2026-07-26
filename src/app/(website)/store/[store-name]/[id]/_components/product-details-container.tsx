@@ -14,15 +14,14 @@ import {
   MapPin,
   Package,
   RefreshCw,
-  Share2,
   Sparkles,
   Wine,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useFavorites } from "@/hooks/use-favorites";
+import SocialShareContent from "@/components/ui/social-share-content";
 import {
   getInventoryDetails,
   InventoryDetailsError,
@@ -55,8 +54,8 @@ const ProductDetailsContainer = () => {
   const storeName = params["store-name"];
   const id = params.id;
   const storePath = `/store/${encodeURIComponent(storeName)}`;
-  const favoritesKey = `humidor411-favorites:${storeName}`;
-  const [isFavorite, setIsFavorite] = useState(false);
+  const favorites = useFavorites(storeName);
+  const isFavorite = favorites.isFavorite(id);
   const query = useQuery({
     queryKey: ["inventory-details", id],
     queryFn: ({ signal }) => getInventoryDetails(id, signal),
@@ -67,69 +66,25 @@ const ProductDetailsContainer = () => {
       count < 2,
   });
 
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(
-        window.localStorage.getItem(favoritesKey) || "[]",
-      ) as { id: string }[];
-      setIsFavorite(saved.some((item) => item.id === id));
-    } catch {
-      setIsFavorite(false);
-    }
-  }, [favoritesKey, id]);
-
-  const shareProduct = async () => {
-    const shareData = {
-      title: query.data?.name || "Cigar",
-      text: query.data
-        ? `Take a look at ${query.data.name} from ${query.data.brand}.`
-        : undefined,
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share) await navigator.share(shareData);
-      else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success("Product link copied");
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      toast.error("Could not share this product");
-    }
-  };
-
   const toggleFavorite = () => {
     if (!query.data) return;
-    try {
-      const saved = JSON.parse(
-        window.localStorage.getItem(favoritesKey) || "[]",
-      ) as { id: string }[];
-      const next = isFavorite
-        ? saved.filter((item) => item.id !== id)
-        : [
-            ...saved.filter((item) => item.id !== id),
-            {
-              id,
-              name: query.data.name,
-              brand: query.data.brand,
-              price:
-                query.data.displayPrice ??
-                query.data.featuredPrice ??
-                query.data.discountPrice ??
-                query.data.price,
-              strength: query.data.strength,
-              image: query.data.image,
-              origin: query.data.humidorName,
-              description: query.data.description,
-            },
-          ];
-      window.localStorage.setItem(favoritesKey, JSON.stringify(next));
-      setIsFavorite(!isFavorite);
-      toast.success(isFavorite ? "Removed from favorites" : "Added to favorites");
-    } catch {
-      toast.error("Could not update favorites");
-    }
+    favorites.setFavorite(
+      {
+        id,
+        name: query.data.name,
+        brand: query.data.brand,
+        price:
+          query.data.displayPrice ??
+          query.data.featuredPrice ??
+          query.data.discountPrice ??
+          query.data.price,
+        strength: query.data.strength,
+        image: query.data.image,
+        origin: query.data.humidorName,
+        description: query.data.description,
+      },
+      !isFavorite,
+    );
   };
 
   if (query.isLoading) {
@@ -305,9 +260,9 @@ const ProductDetailsContainer = () => {
                 type="button"
                 onClick={toggleFavorite}
                 aria-pressed={isFavorite}
-                className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-4 text-xs transition ${
+                className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-4 text-xs font-medium transition ${
                   isFavorite
-                    ? "border-[#CBA24A]/45 bg-[#CBA24A]/10 text-[#D7AA46]"
+                    ? "border-[#D5AB48] bg-[#D5AB48] text-[#241A0C] shadow-[0_6px_18px_rgba(213,171,72,0.16)] hover:border-[#E2BA5A] hover:bg-[#E2BA5A]"
                     : "border-white/[0.09] bg-[#2C2927] text-[#A9A095] hover:border-[#CBA24A]/35 hover:text-[#D7AA46]"
                 }`}
               >
@@ -316,9 +271,11 @@ const ProductDetailsContainer = () => {
                 />
                 {isFavorite ? "Saved" : "Favorite"}
               </button>
-              <button type="button" onClick={() => void shareProduct()} aria-label={`Share ${product.name}`} className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/[0.09] bg-[#2C2927] text-[#A9A095] transition hover:border-[#CBA24A]/35 hover:text-[#D7AA46]">
-                <Share2 className="h-4 w-4" />
-              </button>
+              <SocialShareContent
+                storeName={storeName}
+                productId={id}
+                title={product.name}
+              />
             </div>
           </div>
         </section>

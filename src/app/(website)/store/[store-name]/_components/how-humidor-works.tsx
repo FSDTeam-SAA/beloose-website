@@ -18,7 +18,7 @@ const steps = [
       "Customers scan the QR code attached to any product in your humidor with their smartphone.",
   },
   {
-    number: "03",
+    number: "04",
     title: "Enjoy",
     description:
       "Staff-free discovery transforms the shopping experience into a curated, premium journey.",
@@ -29,7 +29,7 @@ const HowHumidorWorks = () => {
   return (
     <section
       aria-labelledby="how-humidor-works-title"
-      className="overflow-hidden bg-[#1B0F06] px-4 py-10 text-[#E9D09C] sm:py-11 lg:py-10"
+      className="overflow-hidden bg-[#1E1409] px-4 py-10 text-[#E9D09C] sm:py-11 lg:py-10"
     >
       <div className="container">
         <header className="text-center">
