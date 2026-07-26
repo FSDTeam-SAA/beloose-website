@@ -41,15 +41,15 @@ const FirstHumidorStep = ({
       </div>
 
       <div className="space-y-4">
-        <label>
+        <label className="block">
           <span className={labelClassName}>Humidor name <Required /></span>
           <input className={inputClassName} name="humidorName" value={data.humidorName} onChange={onChange} placeholder="e.g. Main Walk-in Humidor" required />
         </label>
-        <label>
+        <label className="block">
           <span className={labelClassName}>Location <Required /></span>
           <input className={inputClassName} name="humidorLocation" value={data.humidorLocation} onChange={onChange} placeholder="e.g. Front of store" required />
         </label>
-        <label>
+        <label className="block">
           <span className={labelClassName}>Description <Required /></span>
           <textarea className={textareaClassName} name="humidorDescription" value={data.humidorDescription} onChange={onChange} placeholder="Describe this humidor and what it stores..." required />
         </label>
@@ -97,11 +97,11 @@ const FirstHumidorStep = ({
               ) : null}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <label>
+              <label className="block">
                 <span className={labelClassName}>Shelf name <Required /></span>
                 <input className={inputClassName} value={shelf.name} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "name", event.target.value)} placeholder="e.g. Top shelf" required />
               </label>
-              <label>
+              <label className="block">
                 <span className={labelClassName}>Contents <Required /></span>
                 <input className={inputClassName} value={shelf.description} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "description", event.target.value)} placeholder="e.g. Premium cigars" required />
               </label>

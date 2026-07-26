@@ -5,6 +5,7 @@ export type InventoryDetails = {
   strength: string;
   wrapper: string;
   size: string;
+  smokingTime?: string;
   image?: string;
   description?: string;
   flavorNotes?: string[];

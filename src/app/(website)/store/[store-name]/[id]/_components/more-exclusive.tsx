@@ -4,21 +4,27 @@ import { useQuery } from "@tanstack/react-query";
 import { Gem } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { getStoreInventory } from "@/lib/storeInventory";
+import { getExclusivePicks } from "@/lib/exclusivePicks";
 
 const MoreExclusive = () => {
   const params = useParams<{ "store-name": string; id: string }>();
   const storeName = params["store-name"];
   const currentId = params.id;
   const query = useQuery({
-    queryKey: ["store", storeName, "exclusive-products"],
-    queryFn: ({ signal }) => getStoreInventory(storeName, 1, 12, signal),
-    enabled: Boolean(storeName),
+    queryKey: ["store", storeName, currentId, "exclusive-picks"],
+    queryFn: ({ signal }) =>
+      getExclusivePicks(storeName, currentId, signal),
+    enabled: Boolean(storeName && currentId),
     staleTime: 60_000,
   });
 
-  const products = query.data?.items
-    .filter((product) => product._id !== currentId && product.quantity > 0)
+  const products = query.data
+    ?.filter(
+      (product) =>
+        product._id !== currentId &&
+        product.quantity > 0 &&
+        product.status === "active",
+    )
     .slice(0, 3);
 
   if (query.isError || (!query.isLoading && !products?.length)) return null;

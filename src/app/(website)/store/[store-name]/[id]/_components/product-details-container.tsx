@@ -3,26 +3,31 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Beer,
   Check,
+  Coffee,
+  GlassWater,
+  Grape,
   Heart,
   ImageOff,
+  Martini,
   MapPin,
   Package,
   RefreshCw,
-  Share2,
   Sparkles,
+  Wine,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useFavorites } from "@/hooks/use-favorites";
+import SocialShareContent from "@/components/ui/social-share-content";
 import {
   getInventoryDetails,
   InventoryDetailsError,
 } from "@/lib/inventoryDetails";
 import MoreExclusive from "./more-exclusive";
-import PerfectPairings from "./perfect-pairings";
+import SimilarCigars from "./similar-cigars";
 
 const titleCase = (value: string) =>
   value
@@ -31,13 +36,26 @@ const titleCase = (value: string) =>
     .map((word) => word[0]?.toUpperCase() + word.slice(1))
     .join(" ");
 
+const getPairingIcon = (pairing: string) => {
+  const value = pairing.toLowerCase();
+
+  if (value.includes("whisky")) return GlassWater;
+  if (value.includes("aged rum")) return Martini;
+  if (value.includes("cognac") || value.includes("brandy")) return Wine;
+  if (value.includes("port")) return Grape;
+  if (value.includes("coffee") || value.includes("espresso")) return Coffee;
+  if (value.includes("dark beer") || value.includes("stout")) return Beer;
+
+  return Wine;
+};
+
 const ProductDetailsContainer = () => {
   const params = useParams<{ "store-name": string; id: string }>();
   const storeName = params["store-name"];
   const id = params.id;
   const storePath = `/store/${encodeURIComponent(storeName)}`;
-  const favoritesKey = `humidor411-favorites:${storeName}`;
-  const [isFavorite, setIsFavorite] = useState(false);
+  const favorites = useFavorites(storeName);
+  const isFavorite = favorites.isFavorite(id);
   const query = useQuery({
     queryKey: ["inventory-details", id],
     queryFn: ({ signal }) => getInventoryDetails(id, signal),
@@ -48,69 +66,25 @@ const ProductDetailsContainer = () => {
       count < 2,
   });
 
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(
-        window.localStorage.getItem(favoritesKey) || "[]",
-      ) as { id: string }[];
-      setIsFavorite(saved.some((item) => item.id === id));
-    } catch {
-      setIsFavorite(false);
-    }
-  }, [favoritesKey, id]);
-
-  const shareProduct = async () => {
-    const shareData = {
-      title: query.data?.name || "Cigar",
-      text: query.data
-        ? `Take a look at ${query.data.name} from ${query.data.brand}.`
-        : undefined,
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share) await navigator.share(shareData);
-      else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success("Product link copied");
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      toast.error("Could not share this product");
-    }
-  };
-
   const toggleFavorite = () => {
     if (!query.data) return;
-    try {
-      const saved = JSON.parse(
-        window.localStorage.getItem(favoritesKey) || "[]",
-      ) as { id: string }[];
-      const next = isFavorite
-        ? saved.filter((item) => item.id !== id)
-        : [
-            ...saved.filter((item) => item.id !== id),
-            {
-              id,
-              name: query.data.name,
-              brand: query.data.brand,
-              price:
-                query.data.displayPrice ??
-                query.data.featuredPrice ??
-                query.data.discountPrice ??
-                query.data.price,
-              strength: query.data.strength,
-              image: query.data.image,
-              origin: query.data.humidorName,
-              description: query.data.description,
-            },
-          ];
-      window.localStorage.setItem(favoritesKey, JSON.stringify(next));
-      setIsFavorite(!isFavorite);
-      toast.success(isFavorite ? "Removed from favorites" : "Added to favorites");
-    } catch {
-      toast.error("Could not update favorites");
-    }
+    favorites.setFavorite(
+      {
+        id,
+        name: query.data.name,
+        brand: query.data.brand,
+        price:
+          query.data.displayPrice ??
+          query.data.featuredPrice ??
+          query.data.discountPrice ??
+          query.data.price,
+        strength: query.data.strength,
+        image: query.data.image,
+        origin: query.data.humidorName,
+        description: query.data.description,
+      },
+      !isFavorite,
+    );
   };
 
   if (query.isLoading) {
@@ -286,9 +260,9 @@ const ProductDetailsContainer = () => {
                 type="button"
                 onClick={toggleFavorite}
                 aria-pressed={isFavorite}
-                className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-4 text-xs transition ${
+                className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-4 text-xs font-medium transition ${
                   isFavorite
-                    ? "border-[#CBA24A]/45 bg-[#CBA24A]/10 text-[#D7AA46]"
+                    ? "border-[#D5AB48] bg-[#D5AB48] text-[#241A0C] shadow-[0_6px_18px_rgba(213,171,72,0.16)] hover:border-[#E2BA5A] hover:bg-[#E2BA5A]"
                     : "border-white/[0.09] bg-[#2C2927] text-[#A9A095] hover:border-[#CBA24A]/35 hover:text-[#D7AA46]"
                 }`}
               >
@@ -297,14 +271,26 @@ const ProductDetailsContainer = () => {
                 />
                 {isFavorite ? "Saved" : "Favorite"}
               </button>
-              <button type="button" onClick={() => void shareProduct()} aria-label={`Share ${product.name}`} className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/[0.09] bg-[#2C2927] text-[#A9A095] transition hover:border-[#CBA24A]/35 hover:text-[#D7AA46]">
-                <Share2 className="h-4 w-4" />
-              </button>
+              <SocialShareContent
+                storeName={storeName}
+                productId={id}
+                title={product.name}
+              />
             </div>
           </div>
         </section>
 
-        {recommendationNote && (
+         <section className="mt-9 rounded-2xl border border-white/[0.09] bg-[#191715] p-6 sm:p-7">
+            <div className="flex items-start gap-3">
+              <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#CBA24A]" />
+              <div>
+                <h2 className="font-playfair text-lg text-[#F5E7D0]">Why You’ll Like This Cigar</h2>
+                <p className="mt-2 text-sm leading-6 text-[#9D958B]">{recommendationNote || "N/A"}</p>
+              </div>
+            </div>
+          </section>
+
+        {/* {recommendationNote && (
           <section className="mt-9 rounded-2xl border border-white/[0.09] bg-[#191715] p-6 sm:p-7">
             <div className="flex items-start gap-3">
               <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#CBA24A]" />
@@ -314,7 +300,7 @@ const ProductDetailsContainer = () => {
               </div>
             </div>
           </section>
-        )}
+        )} */}
 
         <section className="mt-9">
           <h2 className="flex items-center gap-2 font-playfair text-xl text-[#F5E7D0]">
@@ -335,11 +321,54 @@ const ProductDetailsContainer = () => {
           </div>
         </section>
 
-        <PerfectPairings
-          pairings={product.pairingSuggestions || []}
-          note={product.description}
-        />
+        {!!product.pairingSuggestions?.length && (
+          <section
+            className="mt-10"
+            aria-labelledby="perfect-pairings-title"
+          >
+            <h2
+              id="perfect-pairings-title"
+              className="flex items-center gap-2 font-playfair text-lg text-[#F5E7D0] sm:text-xl"
+            >
+              <Wine
+                className="h-5 w-5 text-[#D7AA46]"
+                strokeWidth={1.8}
+              />
+              Perfect Pairings
+            </h2>
+
+            <div className="mt-4 rounded-xl border border-white/[0.1] bg-[#191715] p-4 sm:p-5">
+              <p className="text-sm italic leading-6 text-[#9D958B]">
+                {product?.description ||
+                  "Rich, thoughtfully selected companions can complement the character of a premium cigar."}
+              </p>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {product?.pairingSuggestions?.map((pairing) => {
+                  const PairingIcon = getPairingIcon(pairing);
+
+                  return (
+                    <div
+                      key={pairing}
+                      className="flex min-h-[68px] flex-col items-center justify-center rounded-lg bg-[#2A2725] px-3 py-3 text-center transition hover:bg-[#302D2A]"
+                    >
+                      <PairingIcon
+                        className="h-5 w-5 text-[#F0EBE5]"
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
+                      <p className="mt-1.5 text-xs text-[#F0EBE5]">
+                        {pairing}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
         <MoreExclusive />
+        <SimilarCigars/>
       </div>
     </main>
   );

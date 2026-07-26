@@ -3,6 +3,8 @@
 import { Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useFavorites } from "@/hooks/use-favorites";
 
 export type ProductBadge = {
   label: string;
@@ -51,14 +53,23 @@ function titleCase(value: string) {
 
 export default function ProductCard({
   product,
-  isFavorite = false,
+  isFavorite: controlledIsFavorite,
   onFavoriteChange,
   favoriteDisabled = false,
   className = "",
   href,
 }: ProductCardProps) {
+  const params = useParams<{ "store-name"?: string }>();
+  const storeName = params["store-name"] || "";
+  const favorites = useFavorites(storeName);
+  const isFavorite =
+    controlledIsFavorite ?? favorites.isFavorite(product.id);
+  const favoriteHandler =
+    onFavoriteChange ||
+    ((favoriteProduct: ProductCardData, favorite: boolean) =>
+      favorites.setFavorite(favoriteProduct, favorite));
   const strength = product.strength?.toLowerCase() || "medium";
-  const disabled = favoriteDisabled || !onFavoriteChange;
+  const disabled = favoriteDisabled || !storeName;
 
   return (
     <article
@@ -154,15 +165,17 @@ export default function ProductCard({
               ? `Remove ${product.name} from favorites`
               : `Add ${product.name} to favorites`
           }
-          onClick={() => onFavoriteChange?.(product, !isFavorite)}
-          className={`mt-3 inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border text-xs transition ${
+          onClick={() => favoriteHandler(product, !isFavorite)}
+          className={`mt-3 inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border text-xs font-medium transition ${
             isFavorite
-              ? "border-[#CBA24A]/25 bg-transparent text-[#D4A94A]"
+              ? "border-[#D5AB48] bg-[#D5AB48] text-[#241A0C] shadow-[0_6px_18px_rgba(213,171,72,0.16)]"
               : "border-white/[0.04] bg-[#2C2927] text-[#96908A]"
           } ${
             disabled
               ? "cursor-not-allowed opacity-70"
-              : "hover:border-[#CBA24A]/35 hover:text-[#D4A94A]"
+              : isFavorite
+                ? "hover:border-[#E2BA5A] hover:bg-[#E2BA5A]"
+                : "hover:border-[#CBA24A]/35 hover:text-[#D4A94A]"
           }`}
         >
           <Heart className={`h-3.5 w-3.5 ${isFavorite ? "fill-current" : ""}`} />

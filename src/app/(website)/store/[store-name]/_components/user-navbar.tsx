@@ -12,6 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useFavorites } from "@/hooks/use-favorites";
 
 type NavItem = {
   label: string;
@@ -24,6 +25,10 @@ const UserNavbar = () => {
   const pathname = usePathname();
   const storeName = params["store-name"];
   const storePath = `/store/${encodeURIComponent(storeName)}`;
+  const favoritesPath = `${storePath}/favorites`;
+  const favorites = useFavorites(storeName);
+  const favoriteCount = favorites.favorites.length;
+  const favoritesActive = pathname === favoritesPath;
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navItems: NavItem[] = [
@@ -113,11 +118,37 @@ const UserNavbar = () => {
             <Search className="h-5 w-5" />
           </Link> 
           <Link
-            href={`${storePath}/favorites`}
-            aria-label="View favorites"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#A49D95] transition hover:bg-white/[0.05] hover:text-[#D7AA46]"
+            href={favoritesPath}
+            aria-label={
+              favorites.isReady
+                ? `View favorites, ${favoriteCount} saved`
+                : "View favorites"
+            }
+            aria-current={favoritesActive ? "page" : undefined}
+            title={
+              favorites.isReady
+                ? `${favoriteCount} saved ${favoriteCount === 1 ? "cigar" : "cigars"}`
+                : "View favorites"
+            }
+            className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full transition ${
+              favoritesActive
+                ? "bg-[#CBA24A]/15 text-[#D7AA46]"
+                : "text-[#A49D95] hover:bg-white/[0.05] hover:text-[#D7AA46]"
+            }`}
           >
-            <Heart className="h-5 w-5" />
+            <Heart
+              className={`h-5 w-5 ${
+                favoriteCount > 0 ? "fill-current text-[#D7AA46]" : ""
+              }`}
+            />
+            {favorites.isReady && favoriteCount > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute -right-0.5 -top-0.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-[#151311] bg-[#D5AB48] px-1 text-[9px] font-bold leading-none text-[#241A0C]"
+              >
+                {favoriteCount > 99 ? "99+" : favoriteCount}
+              </span>
+            )}
           </Link>
           <button
             type="button"
