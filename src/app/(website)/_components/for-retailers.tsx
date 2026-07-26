@@ -1,7 +1,6 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import LandingContentState from "@/components/website/landing-content-state";
 import LandingImage from "@/components/website/landing-image";
 import { getRetailerAbout } from "@/lib/retailerLanding";
 import { useQuery } from "@tanstack/react-query";
@@ -101,18 +100,6 @@ const ForRetailers = () => {
             </Link>
           </div>
         </div>
-
-        {(query.isError || !live) && (
-          <LandingContentState
-            type={query.isError ? "error" : "empty"}
-            message={
-              query.isError
-                ? "Live retailer content could not be loaded. Showing the default content."
-                : "No retailer content was found. Showing the default content."
-            }
-            onRetry={query.isError ? () => void query.refetch() : undefined}
-          />
-        )}
       </div>
     </section>
   );

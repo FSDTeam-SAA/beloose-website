@@ -32,19 +32,39 @@ export type RetailerPlatform = {
   features?: RetailerPlatformFeature[];
 };
 
+export type RetailerHowItWork = {
+  _id: string;
+  image?: string;
+  title?: string;
+  description?: string;
+};
+
+export type RetailerBenefits = {
+  _id: string;
+  images?: string[];
+  title?: string;
+  subTitle?: string;
+  features?: string[];
+};
+
 type CollectionResponse<T> = {
   data?: T[];
   message?: string;
 };
 
-async function getLatest<T>(path: string, signal?: AbortSignal) {
+async function getCollection<T>(
+  path: string,
+  limit: number,
+  signal?: AbortSignal,
+  sortOrder: "asc" | "desc" = "desc",
+) {
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
   const query = new URLSearchParams({
     page: "1",
-    limit: "1",
+    limit: String(limit),
     sortBy: "createdAt",
-    sortOrder: "desc",
+    sortOrder,
   });
   const response = await fetch(`${apiUrl}${path}?${query}`, {
     headers: { Accept: "application/json" },
@@ -61,8 +81,11 @@ async function getLatest<T>(path: string, signal?: AbortSignal) {
     throw new Error("The landing content response is invalid.");
   }
 
-  return payload.data[0] ?? null;
+  return payload.data;
 }
+
+const getLatest = async <T>(path: string, signal?: AbortSignal) =>
+  (await getCollection<T>(path, 1, signal))[0] ?? null;
 
 export const getRetailerBanner = (signal?: AbortSignal) =>
   getLatest<RetailerBanner>("/retailer-banner", signal);
@@ -72,3 +95,9 @@ export const getRetailerAbout = (signal?: AbortSignal) =>
 
 export const getRetailerPlatform = (signal?: AbortSignal) =>
   getLatest<RetailerPlatform>("/retailer-platform", signal);
+
+export const getRetailerHowItWorks = (signal?: AbortSignal) =>
+  getCollection<RetailerHowItWork>("/retailer-howitwork", 3, signal, "asc");
+
+export const getRetailerBenefits = (signal?: AbortSignal) =>
+  getLatest<RetailerBenefits>("/retailer-benefits", signal);
