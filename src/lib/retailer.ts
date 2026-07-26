@@ -11,6 +11,14 @@ export class RetailerApiError extends Error {
 
 export type RetailerProfile = {
   _id: string;
+  userId?: {
+    _id: string;
+    fullName?: string;
+    email?: string;
+    verified?: string;
+    verfied?: string;
+    subscriptionExpiry?: string;
+  };
   storeName: string;
   address: string;
   phoneNumber: string;
