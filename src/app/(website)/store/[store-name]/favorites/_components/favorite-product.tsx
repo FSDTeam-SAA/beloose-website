@@ -15,7 +15,7 @@ const FavoriteProduct = () => {
   const favorites = useFavorites(storeName);
 
   return (
-    <section className="bg-[#0F0E0D] py-14 text-white sm:py-20">
+    <section className="store-section bg-[#0F0E0D] text-white">
       <div className="container">
         <div className="mb-7 sm:mb-9">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#CBA24A]">

@@ -43,7 +43,7 @@ const SimilarCigars = () => {
     ) || [];
 
   return (
-    <section className="mt-10" aria-labelledby="similar-cigars-title">
+    <section className="store-section-gap" aria-labelledby="similar-cigars-title">
       <div className="mb-5">
         <h2
           id="similar-cigars-title"

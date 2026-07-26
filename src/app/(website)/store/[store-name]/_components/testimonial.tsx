@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -27,7 +28,13 @@ const testimonials = [
 
 const Testimonial = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const reduceMotion = useReducedMotion();
   const testimonial = testimonials[activeIndex];
+  const initials = testimonial.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2);
 
   const showPrevious = () => {
     setActiveIndex((index) =>
@@ -41,43 +48,81 @@ const Testimonial = () => {
 
   return (
     <section
-      aria-label="Customer testimonials"
-      className="relative isolate flex min-h-[420px] items-center overflow-hidden bg-[#170C05] px-4 py-14 text-center text-white sm:min-h-[460px] sm:py-16 lg:min-h-[500px]"
+      aria-labelledby="testimonial-title"
+      className="store-section relative isolate overflow-hidden bg-[#170C05] px-4 text-white"
     >
       <Image
         src="/assets/images/testimonial.jpg"
-        alt="Interior of a premium cigar lounge"
+        alt=""
         fill
         sizes="100vw"
         className="z-[-3] object-cover object-center"
       />
-      <div className="absolute inset-0 z-[-2] bg-[#1A0D05]/65" />
-      <div className="absolute inset-0 z-[-1] bg-[radial-gradient(circle_at_center,rgba(81,47,21,0.12),rgba(16,8,3,0.42))]" />
+      <div className="absolute inset-0 z-[-2] bg-[#100905]/80" />
+      <div className="absolute inset-0 z-[-1] bg-[radial-gradient(circle_at_center,rgba(203,162,74,0.12),transparent_58%),linear-gradient(to_right,rgba(10,5,2,0.42),transparent_35%,rgba(10,5,2,0.42))]" />
 
       <div className="container">
-        <Quote
-          aria-hidden="true"
-          className="mx-auto h-8 w-8 fill-[#CBA24A] text-[#CBA24A] sm:h-9 sm:w-9"
-        />
-
-        <blockquote className="mx-auto mt-5 min-h-[120px] max-w-4xl sm:min-h-[105px]">
-          <p className="font-[family-name:var(--font-playfair)] text-xl italic leading-relaxed text-[#F4DFC0] drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] sm:text-2xl lg:text-[28px]">
-            “{testimonial.quote}”
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#D7AA46]">
+            Trusted experiences
           </p>
-        </blockquote>
+          <h2
+            id="testimonial-title"
+            className="mt-2 font-playfair text-2xl text-[#F5E7D0] sm:text-3xl"
+          >
+            What Retailers Are Saying
+          </h2>
+        </div>
 
-        <div className="mx-auto mt-5 h-px w-10 bg-[#CBA24A]" />
-        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.08em] text-[#D8AF4F]">
-          {testimonial.name}
-        </p>
-        <p className="mt-1 text-xs text-[#D8C3A5]/70">{testimonial.role}</p>
+        <div
+          className="relative mx-auto mt-6 max-w-4xl overflow-hidden rounded-2xl border border-white/[0.09] bg-[#19130F]/85 px-5 py-7 text-center shadow-[0_18px_55px_rgba(0,0,0,0.3)] backdrop-blur-md sm:px-10 sm:py-9"
+          aria-live="polite"
+        >
+          <Quote
+            aria-hidden="true"
+            className="absolute left-4 top-4 h-10 w-10 fill-[#CBA24A]/10 text-[#CBA24A]/25 sm:left-7 sm:top-6 sm:h-14 sm:w-14"
+          />
 
-        <div className="mt-6 flex items-center justify-center gap-3">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={testimonial.name}
+              initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+              transition={{ duration: reduceMotion ? 0 : 0.25 }}
+            >
+              <blockquote className="relative mx-auto max-w-3xl">
+                <p className="text-balance font-playfair text-lg italic leading-8 text-[#F4DFC0] sm:text-xl lg:text-2xl">
+                  “{testimonial.quote}”
+                </p>
+              </blockquote>
+
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-[#CBA24A]/35 bg-[#CBA24A]/10 text-xs font-semibold text-[#E1B654]"
+                >
+                  {initials}
+                </span>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-[#F2DEBB]">
+                    {testimonial.name}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[#AFA59A]">
+                    {testimonial.role}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="mt-5 flex items-center justify-center gap-3">
           <button
             type="button"
             onClick={showPrevious}
             aria-label="Show previous testimonial"
-            className="flex h-9 w-9 items-center justify-center rounded-sm border border-[#CBA24A]/45 text-[#CBA24A] transition-colors hover:border-[#CBA24A] hover:bg-[#CBA24A]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#CBA24A]/40 bg-black/20 text-[#D7AA46] transition hover:border-[#CBA24A] hover:bg-[#CBA24A]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -90,10 +135,10 @@ const Testimonial = () => {
                 onClick={() => setActiveIndex(index)}
                 aria-label={`Show testimonial ${index + 1}`}
                 aria-current={index === activeIndex ? "true" : undefined}
-                className={`h-1 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A] ${
+                className={`h-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#170C05] ${
                   index === activeIndex
-                    ? "w-7 bg-[#CBA24A]"
-                    : "w-3 bg-[#CBA24A]/35 hover:bg-[#CBA24A]/65"
+                    ? "w-8 bg-[#CBA24A]"
+                    : "w-2 bg-white/25 hover:bg-[#CBA24A]/65"
                 }`}
               />
             ))}
@@ -103,7 +148,7 @@ const Testimonial = () => {
             type="button"
             onClick={showNext}
             aria-label="Show next testimonial"
-            className="flex h-9 w-9 items-center justify-center rounded-sm border border-[#CBA24A]/45 text-[#CBA24A] transition-colors hover:border-[#CBA24A] hover:bg-[#CBA24A]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#CBA24A]/40 bg-black/20 text-[#D7AA46] transition hover:border-[#CBA24A] hover:bg-[#CBA24A]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

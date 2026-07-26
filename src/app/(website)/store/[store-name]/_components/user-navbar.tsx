@@ -34,12 +34,12 @@ const UserNavbar = () => {
   const navItems: NavItem[] = [
     { label: "Home", href: storePath },
     { label: "All Cigars", href: `${storePath}/all-products` },
-    { label: "Daily Featured", href: `${storePath}/daily-featured` },
-    { label: "Staff Picks", href: `${storePath}/staff-picks` },
-    { label: "New Arrivals", href: `${storePath}/new-arrivals` },
+    { label: "Daily Featured", href: `${storePath}#daily-featured` },
+    { label: "Staff Picks", href: `${storePath}#staff-picks` },
+    { label: "New Arrivals", href: `${storePath}#new-arrivals` },
     {
       label: "Surprise Me",
-      href: `${storePath}/surprise-me`,
+      href: `${storePath}#surprise-me`,
       icon: Sparkles,
     },
   ];
@@ -94,11 +94,12 @@ const UserNavbar = () => {
               <Link
                 key={item.label}
                 href={item.href}
+                onClick={() => setMenuOpen(false)}
                 aria-current={active ? "page" : undefined}
-                className={`inline-flex h-10 items-center gap-1 rounded-lg px-2.5 text-[13px] transition xl:px-3 ${
+                className={`relative inline-flex h-10 items-center gap-1 rounded-lg px-2.5 text-[13px] text-white transition after:absolute after:inset-x-2.5 after:bottom-0 after:h-0.5 after:origin-center after:rounded-full after:bg-[#D7AA46] after:transition-transform xl:px-3 xl:after:inset-x-3 ${
                   active
-                    ? "bg-[#CBA24A]/10 text-[#D7AA46]"
-                    : "text-[#A49D95] hover:bg-white/[0.04] hover:text-[#E4DDD5]"
+                    ? "after:scale-x-100"
+                    : "after:scale-x-0 hover:bg-white/[0.04] hover:after:scale-x-100"
                 }`}
               >
                 {item.label === "Home" && <Home className="h-3.5 w-3.5" />}
@@ -183,10 +184,10 @@ const UserNavbar = () => {
                 key={item.label}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex h-12 items-center gap-3 rounded-xl px-4 text-sm transition ${
+                className={`flex h-12 items-center gap-3 rounded-xl px-4 text-sm text-white transition ${
                   active
-                    ? "bg-[#CBA24A]/10 text-[#D7AA46]"
-                    : "text-[#AAA29A] hover:bg-white/[0.04] hover:text-[#E4DDD5]"
+                    ? "border-l-2 border-[#D7AA46]"
+                    : "border-l-2 border-transparent hover:bg-white/[0.04] hover:border-[#D7AA46]/60"
                 }`}
               >
                 {item.label === "Home" ? (

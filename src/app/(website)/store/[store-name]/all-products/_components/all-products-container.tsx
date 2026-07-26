@@ -184,7 +184,7 @@ const AllProductsContainer = () => {
   return (
     <main className="min-h-screen bg-[#0F0E0D] text-white">
       <div className="border-b border-white/[0.07] bg-[radial-gradient(circle_at_top_left,rgba(203,162,74,0.14),transparent_38%)]">
-        <div className="container py-10 sm:py-14">
+        <div className="store-page-section container">
           <Link
             href={`/store/${encodeURIComponent(storeName)}`}
             className="inline-flex items-center gap-2 text-xs text-[#A9A095] transition hover:text-[#D7AA46]"
@@ -222,7 +222,7 @@ const AllProductsContainer = () => {
         </div>
       </div>
 
-      <div className="container py-10 sm:py-14">
+      <div className="store-page-section container">
         <section aria-label="Search and filter products" className="mb-8">
           <div className="flex flex-col gap-3 sm:flex-row">
             <label className="relative flex-1">

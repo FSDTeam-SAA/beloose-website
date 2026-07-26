@@ -63,7 +63,7 @@ const NewArrivalsContainer = () => {
   return (
     <main className="min-h-screen bg-[#0F0E0D] text-white">
       <div className="border-b border-white/[0.07] bg-[radial-gradient(circle_at_top_left,rgba(203,162,74,0.14),transparent_38%)]">
-        <div className="container py-10 sm:py-14">
+        <div className="store-page-section container">
           <Link
             href={`/store/${encodeURIComponent(storeName)}`}
             className="inline-flex items-center gap-2 text-xs text-[#A9A095] transition hover:text-[#D7AA46]"
@@ -101,7 +101,7 @@ const NewArrivalsContainer = () => {
         </div>
       </div>
 
-      <div className="container py-10 sm:py-14">
+      <div className="store-page-section container">
         {query.isLoading && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
@@ -148,7 +148,7 @@ const NewArrivalsContainer = () => {
             const items = query.data?.groupedByRecency[key] || [];
             if (!items.length) return null;
             return (
-              <section key={key} className="mb-12 last:mb-0">
+              <section key={key} className="mb-10 last:mb-0 sm:mb-12">
                 <div className="mb-5 flex items-center gap-3">
                   <h2 className="font-playfair text-xl text-[#F5E7D0] sm:text-2xl">
                     {label}

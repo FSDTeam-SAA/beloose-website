@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Dices, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowRight, Dices, RefreshCw, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import ProductCard, {
   ProductCardSkeleton,
@@ -37,9 +38,13 @@ const SurpriseMe = () => {
         badges: [{ label: "Surprise Pick", variant: "gold" }],
       }
     : null;
+  const products = product ? [product] : [];
 
   return (
-    <section className="bg-[#0F0E0D] py-14 text-white sm:py-20">
+    <section
+      id="surprise-me"
+      className="store-section scroll-mt-20 bg-[#0F0E0D] text-white"
+    >
       <div className="container">
         <div className="mb-7 flex items-end justify-between gap-5 sm:mb-9">
           <div className="flex items-start gap-3">
@@ -59,6 +64,15 @@ const SurpriseMe = () => {
             </div>
           </div>
 
+          {products.length > 4 && (
+            <Link
+              href={`/store/${encodeURIComponent(storeName)}/surprise-me`}
+              className="group inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-[#CBA24A] transition hover:text-[#E0B44F] sm:text-sm"
+            >
+              View all
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          )}
         </div>
 
         {query.isError ? (
@@ -82,12 +96,13 @@ const SurpriseMe = () => {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
             {query.isLoading && <ProductCardSkeleton />}
-            {product && (
+            {products.slice(0, 4).map((card) => (
               <ProductCard
-                product={product}
-                href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(product.id)}`}
+                key={card.id}
+                product={card}
+                href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(card.id)}`}
               />
-            )}
+            ))}
             {!query.isLoading && !item && (
               <div className="col-span-full flex min-h-56 flex-col items-center justify-center rounded-2xl border border-dashed border-[#CBA24A]/25 bg-[#CBA24A]/[0.04] p-6 text-center">
                 <Dices className="h-8 w-8 text-[#CBA24A]" />

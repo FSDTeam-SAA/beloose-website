@@ -16,6 +16,29 @@ html {
   }
 }
 
+@layer components {
+  /*
+   * Shared spacing rhythm for the customer-facing store.
+   * Landing sections are intentionally more spacious than utility/list pages,
+   * while both scale down consistently on mobile.
+   */
+  .store-section {
+    @apply py-7 sm:py-10;
+  }
+
+  .store-page-section {
+    @apply py-5 sm:py-7;
+  }
+
+  .store-section-gap {
+    @apply mt-5 sm:mt-6;
+  }
+
+  .store-section-stack {
+    @apply space-y-5 sm:space-y-6;
+  }
+}
+
 .hide-scrollbar {
   overflow: auto; /* allow scrolling */
   scrollbar-width: none; /* Firefox */

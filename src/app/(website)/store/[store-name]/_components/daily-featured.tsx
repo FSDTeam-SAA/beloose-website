@@ -40,7 +40,10 @@ export default function DailyFeatured() {
   });
 
   return (
-    <section className="bg-[#0F0E0D] py-14 text-white sm:py-20">
+    <section
+      id="daily-featured"
+      className="store-section scroll-mt-20 bg-[#151311] text-white"
+    >
       <div className="container">
         <div className="mb-7 flex items-end justify-between gap-5 sm:mb-9">
           <div className="flex items-start gap-3">
