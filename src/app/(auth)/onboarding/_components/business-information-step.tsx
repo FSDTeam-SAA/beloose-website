@@ -52,14 +52,14 @@ const BusinessInformationStep = ({
             name="phoneNumber"
             value={data.phoneNumber}
             onChange={(event) => onFieldChange("phoneNumber", event.target.value)}
-            placeholder="Enter any contact number"
+            placeholder="+1 (555) 123-4567"
             type="tel"
             inputMode="tel"
             autoComplete="tel"
             required
           />
           <span className="mt-1 block text-[10px] text-[#B7A887]">
-            Any local or international number is accepted.
+            Use a country code for international numbers.
           </span>
         </label>
       </div>

@@ -5,17 +5,16 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Heart,
+  MapPin,
   RefreshCw,
   RotateCcw,
   Sparkles,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import ProductCard, {
-  ProductCardSkeleton,
-  type ProductCardData,
-} from "@/components/common/product-card";
 import {
   getGuidedDiscoveryResults,
   type GuidedDiscoveryAnswers,
@@ -80,14 +79,20 @@ const questions: Question[] = [
         title: "Smooth & Familiar",
         description: "Connecticut wrapper · Coffee pairing",
         icon: "🤝",
-        extra: { wrapper: "Connecticut", pairingSuggestions: "Coffee" },
+        extra: {
+          wrapper: "Connecticut",
+          pairingSuggestions: "Cigar + Coffee / Espresso",
+        },
       },
       {
         value: "rich",
         title: "Rich & Relaxed",
         description: "Maduro wrapper · Aged rum pairing",
         icon: "🥃",
-        extra: { wrapper: "Maduro", pairingSuggestions: "Aged Rum" },
+        extra: {
+          wrapper: "Maduro",
+          pairingSuggestions: "Cigar + Aged Rum",
+        },
       },
       {
         value: "adventurous",
@@ -100,34 +105,35 @@ const questions: Question[] = [
   },
 ];
 
-function toProduct(item: Awaited<ReturnType<typeof getGuidedDiscoveryResults>>["items"][number]): ProductCardData {
-  return {
-    id: item._id,
-    name: item.name,
-    brand: item.brand,
-    price: item.price,
-    strength: item.strength,
-    image: item.image,
-    origin: item.wrapper,
-    description: [item.size, item.shelfName].filter(Boolean).join(" · "),
-    badges: [{ label: "Guided Match", variant: "gold" }],
-  };
-}
-
 export default function QuizContainer() {
   const params = useParams<{ "store-name": string }>();
   const storeName = params["store-name"];
   const storePath = `/store/${encodeURIComponent(storeName)}`;
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<GuidedDiscoveryAnswers>({});
+  const [submittedAnswers, setSubmittedAnswers] =
+    useState<GuidedDiscoveryAnswers | null>(null);
+  const [resultLimit, setResultLimit] = useState(5);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
   const showingResults = step === questions.length;
   const question = questions[step];
 
   const resultsQuery = useQuery({
-    queryKey: ["store", storeName, "guided-discovery", answers],
+    queryKey: [
+      "store",
+      storeName,
+      "guided-discovery",
+      submittedAnswers,
+      resultLimit,
+    ],
     queryFn: ({ signal }) =>
-      getGuidedDiscoveryResults(storeName, answers, signal),
-    enabled: Boolean(storeName) && showingResults,
+      getGuidedDiscoveryResults(
+        storeName,
+        submittedAnswers!,
+        signal,
+        resultLimit,
+      ),
+    enabled: Boolean(storeName && submittedAnswers) && showingResults,
     staleTime: 60_000,
   });
 
@@ -143,7 +149,20 @@ export default function QuizContainer() {
 
   const restart = () => {
     setAnswers({});
+    setSubmittedAnswers(null);
+    setResultLimit(5);
+    setSavedIds([]);
     setStep(0);
+  };
+
+  const continueQuiz = () => {
+    if (!selectedValue) return;
+
+    if (step === questions.length - 1) {
+      setSubmittedAnswers({ ...answers });
+    }
+
+    setStep((current) => current + 1);
   };
 
   if (showingResults) {
@@ -153,9 +172,20 @@ export default function QuizContainer() {
           <QuizHeading results />
 
           {resultsQuery.isLoading && (
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {[0, 1, 2].map((item) => (
-                <ProductCardSkeleton key={item} />
+            <div className="mx-auto mt-10 max-w-3xl space-y-3">
+              {Array.from({ length: 5 }).map((_, item) => (
+                <div
+                  key={item}
+                  className="flex min-h-24 animate-pulse items-center gap-4 rounded-lg border border-[#795629]/60 bg-[#241509] p-4"
+                >
+                  <div className="h-16 w-16 shrink-0 rounded bg-white/[0.07]" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-2/5 rounded bg-white/[0.08]" />
+                    <div className="h-3 w-3/5 rounded bg-white/[0.06]" />
+                    <div className="h-3 w-1/4 rounded bg-white/[0.06]" />
+                  </div>
+                  <div className="hidden h-9 w-16 rounded bg-white/[0.07] sm:block" />
+                </div>
               ))}
             </div>
           )}
@@ -198,19 +228,108 @@ export default function QuizContainer() {
 
           {!!resultsQuery.data?.items.length && (
             <>
-              <p className="mt-8 text-center text-xs text-[#A99070]">
-                {resultsQuery.data.meta.total} matching{" "}
-                {resultsQuery.data.meta.total === 1 ? "cigar" : "cigars"} found
-              </p>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {resultsQuery.data.items.map((item) => (
-                  <ProductCard
-                    key={item._id}
-                    product={toProduct(item)}
-                    href={`${storePath}/${encodeURIComponent(item._id)}`}
-                  />
-                ))}
+              <div className="mx-auto mt-9 max-w-3xl space-y-3">
+                {resultsQuery.data.items.map((item) => {
+                  const isSaved = savedIds.includes(item._id);
+
+                  return (
+                    <article
+                      key={item._id}
+                      className="flex min-w-0 flex-col gap-4 rounded-lg border border-[#8B6532] bg-[#2A1A0E]/90 p-4 transition hover:border-[#C99D43] sm:flex-row sm:items-center"
+                    >
+                      <div className="flex min-w-0 flex-1 items-center gap-4">
+                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-[#1B1008]">
+                          {item.image ? (
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              fill
+                              sizes="64px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-full items-center justify-center font-playfair text-2xl text-[#D9AD4A]">
+                              {item.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <h2 className="truncate font-playfair text-lg text-[#F3DEB5]">
+                            {item.name}
+                          </h2>
+                          <p className="mt-0.5 truncate text-[11px] text-[#A88E6D]">
+                            {[item.brand, item.wrapper, item.strength]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                            <span className="font-semibold text-[#D9AD4A]">
+                              ${Number(item.price).toLocaleString(undefined, {
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[#A88E6D]">
+                              <MapPin className="h-3 w-3" />
+                              {item.shelfName || "Ask store staff"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          aria-label={
+                            isSaved
+                              ? `Remove ${item.name} from saved cigars`
+                              : `Save ${item.name}`
+                          }
+                          aria-pressed={isSaved}
+                          onClick={() =>
+                            setSavedIds((current) =>
+                              isSaved
+                                ? current.filter((id) => id !== item._id)
+                                : [...current, item._id],
+                            )
+                          }
+                          className={`flex h-9 w-9 items-center justify-center rounded border transition ${
+                            isSaved
+                              ? "border-[#D9AD4A] bg-[#D9AD4A]/10 text-[#D9AD4A]"
+                              : "border-[#795629] text-[#B4915D] hover:border-[#D9AD4A] hover:text-[#D9AD4A]"
+                          }`}
+                        >
+                          <Heart
+                            className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`}
+                          />
+                        </button>
+                        <Link
+                          href={`${storePath}/${encodeURIComponent(item._id)}`}
+                          className="inline-flex h-9 min-w-16 items-center justify-center rounded bg-[#D2A440] px-5 text-xs font-semibold text-[#211305] transition hover:bg-[#E0B44F]"
+                        >
+                          View
+                        </Link>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
+
+              {resultsQuery.data.meta.total >
+                resultsQuery.data.items.length && (
+                <div className="mt-6 text-center">
+                  <button
+                    type="button"
+                    disabled={resultsQuery.isFetching}
+                    onClick={() =>
+                      setResultLimit(resultsQuery.data!.meta.total)
+                    }
+                    className="inline-flex h-10 items-center justify-center rounded-lg border border-[#CBA24A]/55 px-6 text-xs font-medium text-[#E4C98E] transition hover:bg-[#CBA24A]/10 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {resultsQuery.isFetching ? "Loading..." : "See all"}
+                  </button>
+                </div>
+              )}
             </>
           )}
 
@@ -336,7 +455,7 @@ export default function QuizContainer() {
             <button
               type="button"
               disabled={!selectedValue}
-              onClick={() => setStep((current) => current + 1)}
+              onClick={continueQuiz}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#D2A440] px-8 text-xs font-semibold text-[#211305] transition hover:bg-[#E0B44F] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {step === questions.length - 1 ? "Find my matches" : "Continue"}

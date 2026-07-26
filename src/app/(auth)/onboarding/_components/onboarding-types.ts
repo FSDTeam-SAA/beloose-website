@@ -18,6 +18,7 @@ export type OnboardingData = {
   inventoryWrapper: string;
   inventorySize: string;
   inventoryDescription: string;
+  inventoryPairingSuggestions: string[];
   inventoryShelfName: string;
   inventoryQuantity: string;
   inventoryPrice: string;
@@ -56,6 +57,7 @@ export type InventoryData = Pick<
   | "inventoryWrapper"
   | "inventorySize"
   | "inventoryDescription"
+  | "inventoryPairingSuggestions"
   | "inventoryShelfName"
   | "inventoryQuantity"
   | "inventoryPrice"
