@@ -7,7 +7,7 @@ import {
   type RetailerProfileInput,
 } from "@/lib/retailer";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil } from "lucide-react";
+import { CalendarDays, CheckCircle2, CreditCard, Pencil } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import ProfileHero from "./ProfileHero";
 import ProfileSkeleton from "./ProfileSkeleton";
 
 const inputClass =
-  "h-9 w-full rounded border border-[#d5c39b] bg-transparent px-3 text-[11px] text-[#f0ddb0] outline-none placeholder:text-[#aa8e5b] read-only:cursor-default focus:border-[#d2a13d] disabled:opacity-60";
+  "h-9 w-full rounded border border-[#d5c39b] bg-transparent px-3 text-[11px] text-[#f0ddb0] outline-none placeholder:text-[#aa8e5b] read-only:cursor-default focus:border-[#d2a13d] disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function ProfileForm() {
   const { data: session, status } = useSession();
@@ -87,6 +87,8 @@ function ProfileEditor({
   const [bannerPreview, setBannerPreview] = useState<string>();
   const [validationError, setValidationError] = useState("");
   const queryClient = useQueryClient();
+  const verificationStatus =
+    retailer.userId?.verified || retailer.userId?.verfied;
 
   const mutation = useMutation({
     mutationFn: (input: RetailerProfileInput) =>
@@ -176,9 +178,18 @@ function ProfileEditor({
         name={retailer.storeName || "Retailer"}
         profilePicture={logoPreview || retailer.logo}
         banner={bannerPreview || retailer.banner}
+        verified={verificationStatus?.toLowerCase() === "verified"}
         editable
         onImageChange={chooseLogo}
       />
+
+      <div className="mt-4">
+        <SubscriptionSummary
+          plan={retailer.subscriptionPlan}
+          status={retailer.subscriptionStatus}
+          expiresAt={retailer.userId?.subscriptionExpiry}
+        />
+      </div>
 
       <form onSubmit={submit} className="mt-4 space-y-4">
         <FormSection
@@ -193,7 +204,7 @@ function ProfileEditor({
               label="Shop Name"
               value={retailer.storeName}
               onChange={(value) => field("storeName", value)}
-              readOnly={editing !== "shop"}
+              disabled
               required
             />
             <Field
@@ -227,15 +238,6 @@ function ProfileEditor({
             <ReadOnlyValue
               label="Review Status"
               value={retailer.status}
-            />
-            <ReadOnlyValue
-              label="Subscription"
-              value={[
-                retailer.subscriptionPlan,
-                retailer.subscriptionStatus,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
             />
           </div>
         </FormSection>
@@ -353,6 +355,7 @@ function Field({
   type = "text",
   placeholder,
   readOnly,
+  disabled,
   required,
 }: {
   label: string;
@@ -361,6 +364,7 @@ function Field({
   type?: string;
   placeholder?: string;
   readOnly?: boolean;
+  disabled?: boolean;
   required?: boolean;
 }) {
   return (
@@ -373,6 +377,7 @@ function Field({
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         readOnly={readOnly}
+        disabled={disabled}
         required={required}
       />
     </label>
@@ -419,6 +424,68 @@ function ReadOnlyValue({
       </span>
     </div>
   );
+}
+
+function SubscriptionSummary({
+  plan,
+  status,
+  expiresAt,
+}: {
+  plan?: RetailerProfile["subscriptionPlan"];
+  status?: RetailerProfile["subscriptionStatus"];
+  expiresAt?: string;
+}) {
+  const isActive = status === "active";
+
+  return (
+    <div className="overflow-hidden rounded-md border border-[#d5c39b]/30 bg-[#392711]/60 sm:col-span-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#d5c39b]/15 px-3 py-2.5">
+        <div className="flex items-center gap-2 text-[#f0ddb0]">
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-[#d2a13d]/15 text-[#d2a13d]">
+            <CreditCard size={14} aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-[9px] uppercase tracking-[0.16em] text-[#aa8e5b]">
+              Subscription
+            </p>
+            <p className="text-xs font-semibold capitalize">
+              {plan && plan !== "none" ? `${plan} plan` : "No active plan"}
+            </p>
+          </div>
+        </div>
+        <span
+          className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[8px] font-semibold uppercase tracking-wide ${
+            isActive
+              ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-300"
+              : "border-amber-400/25 bg-amber-500/10 text-amber-200"
+          }`}
+        >
+          <CheckCircle2 size={10} aria-hidden="true" />
+          {status?.replaceAll("_", " ") || "Inactive"}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 px-3 py-2.5 text-[10px] text-[#bca37b]">
+        <CalendarDays size={13} className="text-[#d2a13d]" aria-hidden="true" />
+        <span>Valid until</span>
+        <span className="font-medium text-[#f0ddb0]">
+          {formatSubscriptionDate(expiresAt)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function formatSubscriptionDate(value?: string) {
+  if (!value) return "Not available";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not available";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 function releasePreview(value?: string) {

@@ -1,6 +1,13 @@
-import Image from "next/image";
+"use client";
 
-const steps = [
+import LandingImage from "@/components/website/landing-image";
+import {
+  getRetailerHowItWorks,
+  type RetailerHowItWork,
+} from "@/lib/retailerLanding";
+import { useQuery } from "@tanstack/react-query";
+
+const fallbackSteps = [
   {
     title: "Receive Inventory",
     description:
@@ -25,6 +32,30 @@ const steps = [
 ];
 
 const HowItWorks = () => {
+  const query = useQuery({
+    queryKey: ["retailer-landing", "how-it-works"],
+    queryFn: ({ signal }) => getRetailerHowItWorks(signal),
+    staleTime: 5 * 60_000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const liveSteps = query.data?.filter(hasStepContent) || [];
+  const steps = liveSteps.length
+    ? liveSteps.map((step, index) => {
+        const fallback = fallbackSteps[index % fallbackSteps.length];
+        return {
+          title: step.title?.trim() || fallback.title,
+          description: step.description?.trim() || fallback.description,
+          image: step.image?.trim() || fallback.image,
+          fallbackImage: fallback.image,
+          alt: step.title?.trim() || fallback.alt,
+        };
+      })
+    : fallbackSteps.map((step) => ({
+        ...step,
+        fallbackImage: step.image,
+      }));
+
   return (
     <section className="border-t border-[#3d230d]/45 bg-[#0d0904] py-16 text-[#d7c08c] sm:py-20 lg:py-[86px]">
       <div className="container px-4 sm:px-6 lg:px-8 xl:px-10">
@@ -44,8 +75,9 @@ const HowItWorks = () => {
                 key={step.title}
                 className="overflow-hidden rounded-[3px] border border-[#3d260e] bg-[#1c1006] shadow-[0_18px_38px_rgba(0,0,0,0.14)]"
               >
-                <Image
+                <LandingImage
                   src={step.image}
+                  fallbackSrc={step.fallbackImage}
                   alt={step.alt}
                   width={495}
                   height={180}
@@ -69,5 +101,13 @@ const HowItWorks = () => {
     </section>
   );
 };
+
+function hasStepContent(step: RetailerHowItWork) {
+  return Boolean(
+    step.image?.trim() ||
+      step.title?.trim() ||
+      step.description?.trim(),
+  );
+}
 
 export default HowItWorks;
