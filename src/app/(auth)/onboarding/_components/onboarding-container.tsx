@@ -47,6 +47,7 @@ const initialData: OnboardingData = {
   inventoryWrapper: "",
   inventorySize: "",
   inventoryDescription: "",
+  inventoryPairingSuggestions: [],
   inventoryShelfName: "",
   inventoryQuantity: "",
   inventoryPrice: "",
@@ -80,12 +81,16 @@ const requiredFields: (keyof OnboardingData)[][] = [
 ];
 
 const normalizePhoneNumber = (value: string) => {
-  const phoneNumber = value.trim().replace(/[\s()-]/g, "");
+  const input = value.trim();
+  const phoneNumber = input.replace(/\D/g, "");
 
   if (/^01[3-9]\d{8}$/.test(phoneNumber)) {
     return `+88${phoneNumber}`;
   }
   if (/^8801[3-9]\d{8}$/.test(phoneNumber)) {
+    return `+${phoneNumber}`;
+  }
+  if (input.startsWith("+")) {
     return `+${phoneNumber}`;
   }
 
@@ -201,7 +206,7 @@ const OnboardingContainer = () => {
 
   const updateInventoryField = (
     field: InventoryField,
-    value: string | boolean,
+    value: string | boolean | string[],
   ) => {
     setData((current) => ({ ...current, [field]: value }));
   };
@@ -335,6 +340,9 @@ const OnboardingContainer = () => {
         formData.append("wrapper", data.inventoryWrapper.trim());
         formData.append("size", data.inventorySize.trim());
         formData.append("description", data.inventoryDescription.trim());
+        data.inventoryPairingSuggestions.forEach((suggestion) => {
+          formData.append("pairingSuggestions", suggestion);
+        });
         formData.append("humidorId", data.humidorId);
         formData.append("shelfName", data.inventoryShelfName);
         formData.append("quantity", data.inventoryQuantity);
@@ -472,6 +480,18 @@ const OnboardingContainer = () => {
     setStep((current) => Math.max(current - 1, 0));
   };
 
+  const skipOptionalStep = () => {
+    if (step !== 1 && step !== 2) return;
+
+    hasUserNavigated.current = true;
+    toast.info(
+      step === 1
+        ? "Humidor setup skipped. You can add one from the dashboard later."
+        : "Inventory setup skipped. You can add products from the dashboard later.",
+    );
+    setStep((current) => Math.min(current + 1, steps.length - 1));
+  };
+
   const goToCompletedStep = (targetStep: number) => {
     if (targetStep > step) return;
     hasUserNavigated.current = true;
@@ -502,70 +522,74 @@ const OnboardingContainer = () => {
       />
       <div className="absolute inset-0 -z-10 bg-black/55" />
 
-      <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-[#CBA24A]/30 bg-[#130f09]/90 px-4 backdrop-blur-md sm:px-10">
-        <Link href="/" aria-label="Go to home" className="flex items-center gap-2">
-          <Image
-            src="/assets/images/logo.png"
-            alt="Humidor411"
-            width={54}
-            height={54}
-            priority
-            className="h-[54px] w-[54px] object-contain"
-          />
-          <span className="hidden font-playfair text-xl font-semibold text-[#D5AB48] sm:block">
-            Humidor411
-          </span>
-        </Link>
-        <div className="text-xs text-[#B7A887] sm:text-sm">
-          Onboarding · Step {step + 1} of {steps.length}
+      <header className="h-[72px] shrink-0 border-b border-[#CBA24A]/30 bg-[#130f09]/90 backdrop-blur-md">
+        <div className="container flex h-full items-center justify-between">
+          <Link href="/" aria-label="Go to home" className="flex items-center gap-2">
+            <Image
+              src="/assets/images/logo.png"
+              alt="Humidor411"
+              width={54}
+              height={54}
+              priority
+              className="h-[54px] w-[54px] object-contain"
+            />
+            <span className="hidden font-playfair text-xl font-semibold text-[#D5AB48] sm:block">
+              Humidor411
+            </span>
+          </Link>
+          <div className="text-xs text-[#B7A887] sm:text-sm">
+            Onboarding · Step {step + 1} of {steps.length}
+          </div>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="shrink-0 border-b border-[#CBA24A]/20 bg-[#130f09]/45 px-4 pb-3 pt-4 backdrop-blur-sm sm:px-10 sm:pb-4 sm:pt-5">
-          <div className="mx-auto h-1.5 max-w-[1100px] overflow-hidden rounded-full bg-[#3B2D16]/80">
-          <div
-            className="h-full rounded-full bg-[#D5AB48] transition-all duration-300"
-            style={{ width: `${((step + 1) / steps.length) * 100}%` }}
-          />
-          </div>
+        <div className="shrink-0 border-b border-[#CBA24A]/20 bg-[#130f09]/45 pb-3 pt-4 backdrop-blur-sm sm:pb-4 sm:pt-5">
+          <div className="container">
+            <div className="mx-auto h-1.5 max-w-[1100px] overflow-hidden rounded-full bg-[#3B2D16]/80">
+              <div
+                className="h-full rounded-full bg-[#D5AB48] transition-all duration-300"
+                style={{ width: `${((step + 1) / steps.length) * 100}%` }}
+              />
+            </div>
 
-          <nav aria-label="Onboarding progress" className="mx-auto mt-4 flex max-w-[1000px] items-start overflow-x-auto pb-1 sm:mt-6">
-          {steps.map((item, index) => {
-            const Icon = item.icon;
-            const active = index === step;
-            const complete = index < step;
-            return (
-              <div key={item.title} className="flex min-w-0 flex-1 items-start">
-                <button
-                  type="button"
-                  onClick={() => goToCompletedStep(index)}
-                  aria-current={active ? "step" : undefined}
-                  aria-label={`${item.title}${complete ? ", completed" : active ? ", current step" : ""}`}
-                  className="flex min-w-[58px] flex-col items-center sm:min-w-[92px]"
-                >
-                  <span
-                    className={`flex h-10 w-10 items-center justify-center rounded-full border ${
-                      active
-                        ? "border-[#D5AB48] bg-[#241A0C]/80 text-[#D5AB48]"
-                        : complete
-                          ? "border-[#D5AB48] bg-[#D5AB48] text-[#241A0C]"
-                          : "border-[#6f5528] bg-[#3B2D16]/80 text-[#B7A887]"
-                    }`}
-                  >
-                    {complete ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
-                  </span>
-                  <span className={`mt-2 hidden text-center text-xs sm:block ${active ? "text-[#F5E7C2]" : "text-[#B7A887]"}`}>
-                    {item.title}
-                  </span>
-                </button>
-                {index < steps.length - 1 ? (
-                  <span className="mt-5 h-px min-w-4 flex-1 bg-[#CBA24A]/30" />
-                ) : null}
-              </div>
-            );
-          })}
-          </nav>
+            <nav aria-label="Onboarding progress" className="mx-auto mt-4 flex max-w-[1000px] items-start overflow-x-auto pb-1 sm:mt-6">
+              {steps.map((item, index) => {
+                const Icon = item.icon;
+                const active = index === step;
+                const complete = index < step;
+                return (
+                  <div key={item.title} className="flex min-w-0 flex-1 items-start">
+                    <button
+                      type="button"
+                      onClick={() => goToCompletedStep(index)}
+                      aria-current={active ? "step" : undefined}
+                      aria-label={`${item.title}${complete ? ", completed" : active ? ", current step" : ""}`}
+                      className="flex min-w-[58px] flex-col items-center sm:min-w-[92px]"
+                    >
+                      <span
+                        className={`flex h-10 w-10 items-center justify-center rounded-full border ${
+                          active
+                            ? "border-[#D5AB48] bg-[#241A0C]/80 text-[#D5AB48]"
+                            : complete
+                              ? "border-[#D5AB48] bg-[#D5AB48] text-[#241A0C]"
+                              : "border-[#6f5528] bg-[#3B2D16]/80 text-[#B7A887]"
+                        }`}
+                      >
+                        {complete ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                      </span>
+                      <span className={`mt-2 hidden text-center text-xs sm:block ${active ? "text-[#F5E7C2]" : "text-[#B7A887]"}`}>
+                        {item.title}
+                      </span>
+                    </button>
+                    {index < steps.length - 1 ? (
+                      <span className="mt-5 h-px min-w-4 flex-1 bg-[#CBA24A]/30" />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </nav>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 [scrollbar-color:#8B6A32_transparent] sm:px-10 sm:py-8">
@@ -623,18 +647,30 @@ const OnboardingContainer = () => {
             >
               <ArrowLeft className="h-4 w-4" /> Back
             </button>
-            <button
-              type="submit"
-              disabled={isCreatingRetailer || isCreatingHumidor || isCreatingInventory}
-              className="flex h-11 items-center justify-center gap-2 rounded-[7px] bg-[#D5AB48] px-5 text-sm font-semibold text-[#241A0C] transition hover:bg-[#E2BA5A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5E7C2] disabled:cursor-not-allowed disabled:opacity-60 sm:px-7"
-            >
-              {isCreatingRetailer || isCreatingHumidor || isCreatingInventory
-                ? "Saving..."
-                : step === steps.length - 1
-                  ? "Go to Dashboard"
-                  : "Continue"}
-              <ArrowRight className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2 sm:gap-3">
+              {(step === 1 || step === 2) && (
+                <button
+                  type="button"
+                  onClick={skipOptionalStep}
+                  disabled={isCreatingHumidor || isCreatingInventory}
+                  className="h-11 rounded-md px-3 text-xs font-medium text-[#B7A887] transition hover:bg-white/[0.05] hover:text-[#F5E7C2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A] disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
+                >
+                  Skip for now
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={isCreatingRetailer || isCreatingHumidor || isCreatingInventory}
+                className="flex h-11 items-center justify-center gap-2 rounded-[7px] bg-[#D5AB48] px-5 text-sm font-semibold text-[#241A0C] transition hover:bg-[#E2BA5A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5E7C2] disabled:cursor-not-allowed disabled:opacity-60 sm:px-7"
+              >
+                {isCreatingRetailer || isCreatingHumidor || isCreatingInventory
+                  ? "Saving..."
+                  : step === steps.length - 1
+                    ? "Go to Dashboard"
+                    : "Continue"}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           </form>
         </div>

@@ -1,6 +1,13 @@
 "use client";
 
-import { ImagePlus, Package, Sparkles, Trash2, Warehouse } from "lucide-react";
+import {
+  Check,
+  ImagePlus,
+  Package,
+  Sparkles,
+  Trash2,
+  Warehouse,
+} from "lucide-react";
 import Image from "next/image";
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,9 +22,37 @@ import {
 type InventoryStepProps = {
   data: InventoryData;
   image: File | null;
-  onFieldChange: (field: InventoryField, value: string | boolean) => void;
+  onFieldChange: (
+    field: InventoryField,
+    value: string | boolean | string[],
+  ) => void;
   onImageChange: (file: File | null) => void;
 };
+
+const pairingOptions = [
+  "Cigar + Whisky",
+  "Cigar + Aged Rum",
+  "Cigar + Cognac / Brandy",
+  "Cigar + Port",
+  "Cigar + Coffee / Espresso",
+  "Cigar + Dark Beer / Stout",
+];
+
+const wrapperOptions = [
+  "Connecticut",
+  "Connecticut Broadleaf",
+  "Natural",
+  "Maduro",
+  "Habano",
+  "Corojo",
+  "Cameroon",
+  "Sumatra",
+  "Oscuro",
+  "Candela",
+  "Colorado",
+  "Criollo",
+  "San Andrés",
+];
 
 const Toggle = ({
   label,
@@ -76,17 +111,89 @@ const InventoryStep = ({
         <div><h2 className="text-sm font-semibold text-[#F5E7C2]">Cigar details</h2><p className="mt-0.5 text-xs text-[#B7A887]">Add the key product information customers will see.</p></div>
       </div>
       <div className="space-y-4">
-        <label>
+        <label className="block">
           <span className={labelClassName}>Cigar name</span>
           <input className={inputClassName} value={data.inventoryName} onChange={(e) => onFieldChange("inventoryName", e.target.value)} placeholder="Padron 1964 Natural Toro" />
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
-          <label><span className={labelClassName}>Brand</span><input className={inputClassName} value={data.inventoryBrand} onChange={(e) => onFieldChange("inventoryBrand", e.target.value)} placeholder="Padron" /></label>
-          <label><span className={labelClassName}>Size</span><input className={inputClassName} value={data.inventorySize} onChange={(e) => onFieldChange("inventorySize", e.target.value)} placeholder="Toro" /></label>
-          <label><span className={labelClassName}>Wrapper</span><input className={inputClassName} value={data.inventoryWrapper} onChange={(e) => onFieldChange("inventoryWrapper", e.target.value)} placeholder="Natural Colorado" /></label>
-          <div><span className={labelClassName}>Strength</span><Select value={data.inventoryStrength} onValueChange={(value) => onFieldChange("inventoryStrength", value)}><SelectTrigger aria-label="Strength" className={`${inputClassName} shadow-none`}><SelectValue placeholder="Select strength" /></SelectTrigger><SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]"><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="mild">Mild</SelectItem><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="medium">Medium</SelectItem><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="full">Full</SelectItem></SelectContent></Select></div>
+          <label className="block"><span className={labelClassName}>Brand</span><input className={inputClassName} value={data.inventoryBrand} onChange={(e) => onFieldChange("inventoryBrand", e.target.value)} placeholder="Padron" /></label>
+          <label className="block"><span className={labelClassName}>Size</span><input className={inputClassName} value={data.inventorySize} onChange={(e) => onFieldChange("inventorySize", e.target.value)} placeholder="Toro" /></label>
+          <div>
+            <span className={labelClassName}>Wrapper</span>
+            <Select
+              value={data.inventoryWrapper || undefined}
+              onValueChange={(value) =>
+                onFieldChange("inventoryWrapper", value)
+              }
+            >
+              <SelectTrigger
+                aria-label="Wrapper"
+                className={`${inputClassName} shadow-none`}
+              >
+                <SelectValue placeholder="Choose one" />
+              </SelectTrigger>
+              <SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]">
+                {wrapperOptions.map((option) => (
+                  <SelectItem
+                    key={option}
+                    value={option}
+                    className="focus:bg-[#4b391b] focus:text-[#f1d993]"
+                  >
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div><span className={labelClassName}>Strength</span><Select value={data.inventoryStrength} onValueChange={(value) => onFieldChange("inventoryStrength", value)}><SelectTrigger aria-label="Strength" className={`${inputClassName} shadow-none`}><SelectValue placeholder="Select strength" /></SelectTrigger><SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]"><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="mild">Mild</SelectItem><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="medium">Medium</SelectItem><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="medium-full">Medium-Full</SelectItem><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="full">Full</SelectItem></SelectContent></Select></div>
         </div>
-        <label><span className={labelClassName}>Description</span><textarea className={textareaClassName} value={data.inventoryDescription} onChange={(e) => onFieldChange("inventoryDescription", e.target.value)} placeholder="A premium handmade Nicaraguan cigar." /></label>
+        <label className="block"><span className={labelClassName}>Description</span><textarea className={textareaClassName} value={data.inventoryDescription} onChange={(e) => onFieldChange("inventoryDescription", e.target.value)} placeholder="A premium handmade Nicaraguan cigar." /></label>
+        <div>
+          <span className={labelClassName}>Pairing suggestions</span>
+          <p className="mb-3 text-xs text-[#8f8a85]">
+            Choose any pairings that complement this cigar.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {pairingOptions.map((option) => {
+              const selected =
+                data.inventoryPairingSuggestions.includes(option);
+
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() =>
+                    onFieldChange(
+                      "inventoryPairingSuggestions",
+                      selected
+                        ? data.inventoryPairingSuggestions.filter(
+                            (value) => value !== option,
+                          )
+                        : [...data.inventoryPairingSuggestions, option],
+                    )
+                  }
+                  className={`flex min-h-11 items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5 text-left text-xs transition ${
+                    selected
+                      ? "border-[#D5AB48] bg-[#D5AB48]/10 text-[#F5E7C2]"
+                      : "border-[#6f5528] bg-[#3B2D16]/35 text-[#B7A887] hover:border-[#8B6A32]"
+                  }`}
+                >
+                  <span>{option}</span>
+                  <span
+                    className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
+                      selected
+                        ? "border-[#D5AB48] bg-[#D5AB48] text-[#2b2112]"
+                        : "border-[#6f5528]"
+                    }`}
+                  >
+                    {selected && <Check className="h-3 w-3" />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
 
@@ -96,10 +203,10 @@ const InventoryStep = ({
         <div><h2 className="text-sm font-semibold text-[#F5E7C2]">Placement & stock</h2><p className="mt-0.5 text-xs text-[#B7A887]">Choose where it is stored and set stock tracking values.</p></div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div><span className={labelClassName}>Shelf</span><Select value={data.inventoryShelfName || undefined} onValueChange={(value) => onFieldChange("inventoryShelfName", value)}><SelectTrigger aria-label="Shelf" className={`${inputClassName} shadow-none`}><SelectValue placeholder="Select a shelf" /></SelectTrigger><SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]">{data.shelfes.map((shelf) => <SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" key={shelf.name} value={shelf.name}>{shelf.name}</SelectItem>)}</SelectContent></Select></div>
-        <label><span className={labelClassName}>Quantity</span><input className={inputClassName} type="number" min="0" value={data.inventoryQuantity} onChange={(e) => onFieldChange("inventoryQuantity", e.target.value)} placeholder="10" /></label>
-        <label><span className={labelClassName}>Price ($)</span><input className={inputClassName} type="number" min="0" step="0.01" value={data.inventoryPrice} onChange={(e) => onFieldChange("inventoryPrice", e.target.value)} placeholder="25.99" /></label>
-        <label><span className={labelClassName}>Low stock alert</span><input className={inputClassName} type="number" min="0" value={data.lowStockThreshold} onChange={(e) => onFieldChange("lowStockThreshold", e.target.value)} placeholder="5" /></label>
+        <div><span className={labelClassName}>Shelf</span><Select value={data.inventoryShelfName || undefined} onValueChange={(value) => onFieldChange("inventoryShelfName", value)}><SelectTrigger aria-label="Shelf" className={`${inputClassName} shadow-none`}><SelectValue placeholder="Select a shelf" /></SelectTrigger><SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]">{data.shelfes.filter((shelf) => shelf.name.trim()).map((shelf) => <SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" key={shelf.name} value={shelf.name.trim()}>{shelf.name}</SelectItem>)}</SelectContent></Select></div>
+        <label className="block"><span className={labelClassName}>Quantity</span><input className={inputClassName} type="number" min="0" value={data.inventoryQuantity} onChange={(e) => onFieldChange("inventoryQuantity", e.target.value)} placeholder="10" /></label>
+        <label className="block"><span className={labelClassName}>Price ($)</span><input className={inputClassName} type="number" min="0" step="0.01" value={data.inventoryPrice} onChange={(e) => onFieldChange("inventoryPrice", e.target.value)} placeholder="25.99" /></label>
+        <label className="block"><span className={labelClassName}>Low stock alert</span><input className={inputClassName} type="number" min="0" value={data.lowStockThreshold} onChange={(e) => onFieldChange("lowStockThreshold", e.target.value)} placeholder="5" /></label>
       </div>
     </section>
 
@@ -172,11 +279,11 @@ const InventoryStep = ({
         <div><h2 className="text-sm font-semibold text-[#F5E7C2]">Optional highlights</h2><p className="mt-0.5 text-xs text-[#B7A887]">Promote this product in special customer-facing sections.</p></div>
       </div>
       <Toggle label="Staff Pick" description="Feature this cigar as a staff recommendation" checked={data.isStaffPick} onChange={(value) => onFieldChange("isStaffPick", value)} />
-      {data.isStaffPick ? <div className="grid gap-4 sm:grid-cols-2"><label><span className={labelClassName}>Picked by</span><input className={inputClassName} value={data.staffPickBy} onChange={(e) => onFieldChange("staffPickBy", e.target.value)} placeholder="Mike" /></label><label><span className={labelClassName}>Staff note</span><input className={inputClassName} value={data.staffPickNote} onChange={(e) => onFieldChange("staffPickNote", e.target.value)} placeholder="A customer favorite" /></label></div> : null}
+      {data.isStaffPick ? <div className="grid gap-4 sm:grid-cols-2"><label className="block"><span className={labelClassName}>Picked by</span><input className={inputClassName} value={data.staffPickBy} onChange={(e) => onFieldChange("staffPickBy", e.target.value)} placeholder="Mike" /></label><label className="block"><span className={labelClassName}>Staff note</span><input className={inputClassName} value={data.staffPickNote} onChange={(e) => onFieldChange("staffPickNote", e.target.value)} placeholder="A customer favorite" /></label></div> : null}
       <Toggle label="New Arrival" description="Mark this cigar as recently added" checked={data.isNewArrival} onChange={(value) => onFieldChange("isNewArrival", value)} />
-      {data.isNewArrival ? <label><span className={labelClassName}>Arrival date</span><input className={inputClassName} type="date" value={data.arrivalDate} onChange={(e) => onFieldChange("arrivalDate", e.target.value)} /></label> : null}
+      {data.isNewArrival ? <label className="block"><span className={labelClassName}>Arrival date</span><input className={inputClassName} type="date" value={data.arrivalDate} onChange={(e) => onFieldChange("arrivalDate", e.target.value)} /></label> : null}
       <Toggle label="Daily Featured" description="Show this cigar in today's featured selection" checked={data.isDailyFeatured} onChange={(value) => onFieldChange("isDailyFeatured", value)} />
-      {data.isDailyFeatured ? <label><span className={labelClassName}>Featured note</span><input className={inputClassName} value={data.featuredNote} onChange={(e) => onFieldChange("featuredNote", e.target.value)} placeholder="Try this with our new bourbon pairing" /></label> : null}
+      {data.isDailyFeatured ? <label className="block"><span className={labelClassName}>Featured note</span><input className={inputClassName} value={data.featuredNote} onChange={(e) => onFieldChange("featuredNote", e.target.value)} placeholder="Try this with our new bourbon pairing" /></label> : null}
     </section>
   </div>
   );

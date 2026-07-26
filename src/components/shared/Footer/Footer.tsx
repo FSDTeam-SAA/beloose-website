@@ -1,6 +1,9 @@
+"use client";
+
 import { Mail, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTwitter } from "react-icons/fa";
 
 export interface ContactInfoResponse {
@@ -57,6 +60,10 @@ const socialLinks = [
 ];
 
 const Footer = () => {
+  const pathname = usePathname();
+
+  if (pathname.startsWith("/store/")) return null;
+
   return (
     <footer className="relative overflow-hidden border-t border-[#271c0f] bg-[#0e0904] text-[#d7c4a7]">
       <Image

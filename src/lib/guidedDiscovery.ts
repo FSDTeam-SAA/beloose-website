@@ -36,12 +36,13 @@ export async function getGuidedDiscoveryResults(
   storeName: string,
   answers: GuidedDiscoveryAnswers,
   signal?: AbortSignal,
+  limit = 5,
 ): Promise<GuidedDiscoveryResults> {
   const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8087/api/v1";
   const query = new URLSearchParams({
     page: "1",
-    limit: "12",
+    limit: String(limit),
     sortOrder: "asc",
   });
   Object.entries(budgetRange(answers.budget)).forEach(([key, value]) => {
@@ -67,6 +68,8 @@ export async function getGuidedDiscoveryResults(
   if (
     !response.ok ||
     !payload ||
+    !("success" in payload) ||
+    !payload.success ||
     !("data" in payload) ||
     !Array.isArray(payload.data) ||
     !("meta" in payload)

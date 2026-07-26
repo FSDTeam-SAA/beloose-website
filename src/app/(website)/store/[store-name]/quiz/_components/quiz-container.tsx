@@ -5,17 +5,18 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ChevronDown,
+  Heart,
+  MapPin,
   RefreshCw,
   RotateCcw,
   Sparkles,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import ProductCard, {
-  ProductCardSkeleton,
-  type ProductCardData,
-} from "@/components/common/product-card";
+import { useFavorites } from "@/hooks/use-favorites";
 import {
   getGuidedDiscoveryResults,
   type GuidedDiscoveryAnswers,
@@ -28,7 +29,6 @@ type Option = {
   title: string;
   description: string;
   icon: string;
-  extra?: Partial<GuidedDiscoveryAnswers>;
 };
 
 type Question = {
@@ -71,48 +71,88 @@ const questions: Question[] = [
     ],
   },
   {
+    key: "wrapper",
+    title: "Which wrapper do you prefer?",
+    subtitle: "Choose the wrapper style that best suits your taste.",
+    options: [
+      { value: "Connecticut", title: "Connecticut", description: "Creamy, mild & smooth", icon: "🍃" },
+      { value: "Connecticut Broadleaf", title: "Connecticut Broadleaf", description: "Earthy, sweet & robust", icon: "🍂" },
+      { value: "Natural", title: "Natural", description: "Balanced & approachable", icon: "🌿" },
+      { value: "Maduro", title: "Maduro", description: "Dark, rich & naturally sweet", icon: "🍫" },
+      { value: "Habano", title: "Habano", description: "Spicy, aromatic & full-flavored", icon: "🔥" },
+      { value: "Corojo", title: "Corojo", description: "Peppery, bold & complex", icon: "🌶️" },
+      { value: "Cameroon", title: "Cameroon", description: "Toasty, sweet & distinctive", icon: "🌰" },
+      { value: "Sumatra", title: "Sumatra", description: "Earthy, mellow & subtly sweet", icon: "☕" },
+      { value: "Oscuro", title: "Oscuro", description: "Very dark, intense & bold", icon: "🌑" },
+      { value: "Candela", title: "Candela", description: "Fresh, grassy & mild", icon: "🌱" },
+      { value: "Colorado", title: "Colorado", description: "Rich, balanced & aromatic", icon: "🪵" },
+      { value: "Criollo", title: "Criollo", description: "Nutty, spicy & refined", icon: "✨" },
+      { value: "San Andrés", title: "San Andrés", description: "Earthy, bold & chocolatey", icon: "🏔️" },
+    ],
+  },
+  {
+    key: "pairingSuggestions",
+    title: "What would you pair it with?",
+    subtitle: "Choose one companion for your cigar.",
+    options: [
+      {
+        value: "Cigar + Whisky",
+        title: "Cigar + Whisky",
+        description: "Classic pairing for medium or full-bodied cigars",
+        icon: "🥃",
+      },
+      {
+        value: "Cigar + Aged Rum",
+        title: "Cigar + Aged Rum",
+        description: "Sweet caramel and vanilla notes",
+        icon: "🍹",
+      },
+      {
+        value: "Cigar + Cognac / Brandy",
+        title: "Cigar + Cognac / Brandy",
+        description: "Smooth, premium pairing",
+        icon: "🍷",
+      },
+      {
+        value: "Cigar + Port",
+        title: "Cigar + Port",
+        description: "Sweetness balances tobacco spice and earthiness",
+        icon: "🍇",
+      },
+      {
+        value: "Cigar + Coffee / Espresso",
+        title: "Cigar + Coffee / Espresso",
+        description: "Non-alcoholic pairing for creamy or nutty cigars",
+        icon: "☕",
+      },
+      {
+        value: "Cigar + Dark Beer / Stout",
+        title: "Cigar + Dark Beer / Stout",
+        description: "Rich pairing for bold cigars",
+        icon: "🍺",
+      },
+    ],
+  },
+  {
     key: "profile",
     title: "What are you in the mood for?",
-    subtitle: "Choose a flavor direction, or keep your options open.",
+    subtitle: "Something familiar or a new adventure?",
     options: [
       {
         value: "familiar",
-        title: "Smooth & Familiar",
-        description: "Connecticut wrapper · Coffee pairing",
+        title: "Something Familiar",
+        description: "Trusted, well-known blends",
         icon: "🤝",
-        extra: { wrapper: "Connecticut", pairingSuggestions: "Coffee" },
-      },
-      {
-        value: "rich",
-        title: "Rich & Relaxed",
-        description: "Maduro wrapper · Aged rum pairing",
-        icon: "🥃",
-        extra: { wrapper: "Maduro", pairingSuggestions: "Aged Rum" },
       },
       {
         value: "adventurous",
         title: "Try Something New",
-        description: "Explore any wrapper or pairing",
+        description: "Discover a new favorite",
         icon: "⭐",
-        extra: { wrapper: "", pairingSuggestions: "" },
       },
     ],
   },
 ];
-
-function toProduct(item: Awaited<ReturnType<typeof getGuidedDiscoveryResults>>["items"][number]): ProductCardData {
-  return {
-    id: item._id,
-    name: item.name,
-    brand: item.brand,
-    price: item.price,
-    strength: item.strength,
-    image: item.image,
-    origin: item.wrapper,
-    description: [item.size, item.shelfName].filter(Boolean).join(" · "),
-    badges: [{ label: "Guided Match", variant: "gold" }],
-  };
-}
 
 export default function QuizContainer() {
   const params = useParams<{ "store-name": string }>();
@@ -120,14 +160,30 @@ export default function QuizContainer() {
   const storePath = `/store/${encodeURIComponent(storeName)}`;
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<GuidedDiscoveryAnswers>({});
+  const [submittedAnswers, setSubmittedAnswers] =
+    useState<GuidedDiscoveryAnswers | null>(null);
+  const [resultLimit, setResultLimit] = useState(5);
+  const [showAllWrappers, setShowAllWrappers] = useState(false);
+  const favorites = useFavorites(storeName);
   const showingResults = step === questions.length;
   const question = questions[step];
 
   const resultsQuery = useQuery({
-    queryKey: ["store", storeName, "guided-discovery", answers],
+    queryKey: [
+      "store",
+      storeName,
+      "guided-discovery",
+      submittedAnswers,
+      resultLimit,
+    ],
     queryFn: ({ signal }) =>
-      getGuidedDiscoveryResults(storeName, answers, signal),
-    enabled: Boolean(storeName) && showingResults,
+      getGuidedDiscoveryResults(
+        storeName,
+        submittedAnswers!,
+        signal,
+        resultLimit,
+      ),
+    enabled: Boolean(storeName && submittedAnswers) && showingResults,
     staleTime: 60_000,
   });
 
@@ -135,15 +191,25 @@ export default function QuizContainer() {
     setAnswers((current) => ({
       ...current,
       [question.key]: option.value,
-      ...(question.key === "profile"
-        ? { wrapper: "", pairingSuggestions: "", ...option.extra }
-        : {}),
     }));
   };
 
   const restart = () => {
     setAnswers({});
+    setSubmittedAnswers(null);
+    setResultLimit(5);
+    setShowAllWrappers(false);
     setStep(0);
+  };
+
+  const continueQuiz = () => {
+    if (!selectedValue) return;
+
+    if (step === questions.length - 1) {
+      setSubmittedAnswers({ ...answers });
+    }
+
+    setStep((current) => current + 1);
   };
 
   if (showingResults) {
@@ -153,9 +219,20 @@ export default function QuizContainer() {
           <QuizHeading results />
 
           {resultsQuery.isLoading && (
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {[0, 1, 2].map((item) => (
-                <ProductCardSkeleton key={item} />
+            <div className="mx-auto mt-10 max-w-3xl space-y-3">
+              {Array.from({ length: 5 }).map((_, item) => (
+                <div
+                  key={item}
+                  className="flex min-h-24 animate-pulse items-center gap-4 rounded-lg border border-[#795629]/60 bg-[#241509] p-4"
+                >
+                  <div className="h-16 w-16 shrink-0 rounded bg-white/[0.07]" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-2/5 rounded bg-white/[0.08]" />
+                    <div className="h-3 w-3/5 rounded bg-white/[0.06]" />
+                    <div className="h-3 w-1/4 rounded bg-white/[0.06]" />
+                  </div>
+                  <div className="hidden h-9 w-16 rounded bg-white/[0.07] sm:block" />
+                </div>
               ))}
             </div>
           )}
@@ -198,19 +275,124 @@ export default function QuizContainer() {
 
           {!!resultsQuery.data?.items.length && (
             <>
-              <p className="mt-8 text-center text-xs text-[#A99070]">
-                {resultsQuery.data.meta.total} matching{" "}
-                {resultsQuery.data.meta.total === 1 ? "cigar" : "cigars"} found
-              </p>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {resultsQuery.data.items.map((item) => (
-                  <ProductCard
-                    key={item._id}
-                    product={toProduct(item)}
-                    href={`${storePath}/${encodeURIComponent(item._id)}`}
-                  />
-                ))}
+              <div className="mx-auto mt-9 max-w-3xl space-y-3">
+                {resultsQuery.data.items.map((item) => {
+                  const isSaved = favorites.isFavorite(item._id);
+
+                  return (
+                    <article
+                      key={item._id}
+                      className="flex min-w-0 flex-col gap-4 rounded-lg border border-[#8B6532] bg-[#2A1A0E]/90 p-4 transition hover:border-[#C99D43] sm:flex-row sm:items-center"
+                    >
+                      <div className="flex min-w-0 flex-1 items-center gap-4">
+                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-[#1B1008]">
+                          {item.image ? (
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              fill
+                              sizes="64px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-full items-center justify-center font-playfair text-2xl text-[#D9AD4A]">
+                              {item.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <h2 className="truncate font-playfair text-lg text-[#F3DEB5]">
+                            {item.name}
+                          </h2>
+                          <p className="mt-0.5 truncate text-[11px] text-[#A88E6D]">
+                            {[item.brand, item.wrapper, item.strength]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                            <span className="font-semibold text-[#D9AD4A]">
+                              ${Number(item.price).toLocaleString(undefined, {
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[#A88E6D]">
+                              <MapPin className="h-3 w-3" />
+                              {item.shelfName || "Ask store staff"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          aria-label={
+                            isSaved
+                              ? `Remove ${item.name} from saved cigars`
+                              : `Save ${item.name}`
+                          }
+                          aria-pressed={isSaved}
+                          onClick={() =>
+                            favorites.setFavorite(
+                              {
+                                id: item._id,
+                                name: item.name,
+                                brand: item.brand,
+                                price: item.price,
+                                strength: item.strength,
+                                image: item.image,
+                                origin: item.wrapper,
+                                description: [item.size, item.shelfName]
+                                  .filter(Boolean)
+                                  .join(" · "),
+                                badges: [
+                                  {
+                                    label: "Guided Match",
+                                    variant: "gold",
+                                  },
+                                ],
+                              },
+                              !isSaved,
+                            )
+                          }
+                          className={`flex h-9 w-9 items-center justify-center rounded border transition ${
+                            isSaved
+                              ? "border-[#D9AD4A] bg-[#D9AD4A]/10 text-[#D9AD4A]"
+                              : "border-[#795629] text-[#B4915D] hover:border-[#D9AD4A] hover:text-[#D9AD4A]"
+                          }`}
+                        >
+                          <Heart
+                            className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`}
+                          />
+                        </button>
+                        <Link
+                          href={`${storePath}/${encodeURIComponent(item._id)}`}
+                          className="inline-flex h-9 min-w-16 items-center justify-center rounded bg-[#D2A440] px-5 text-xs font-semibold text-[#211305] transition hover:bg-[#E0B44F]"
+                        >
+                          View
+                        </Link>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
+
+              {resultsQuery.data.meta.total >
+                resultsQuery.data.items.length && (
+                <div className="mt-6 text-center">
+                  <button
+                    type="button"
+                    disabled={resultsQuery.isFetching}
+                    onClick={() =>
+                      setResultLimit(resultsQuery.data!.meta.total)
+                    }
+                    className="inline-flex h-10 items-center justify-center rounded-lg border border-[#CBA24A]/55 px-6 text-xs font-medium text-[#E4C98E] transition hover:bg-[#CBA24A]/10 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {resultsQuery.isFetching ? "Loading..." : "See all"}
+                  </button>
+                </div>
+              )}
             </>
           )}
 
@@ -238,6 +420,11 @@ export default function QuizContainer() {
 
   const selectedValue = answers[question.key];
   const progress = ((step + 1) / questions.length) * 100;
+  const wrapperOptionsCollapsed =
+    question.key === "wrapper" && !showAllWrappers;
+  const visibleOptions = wrapperOptionsCollapsed
+    ? question.options.slice(0, 4)
+    : question.options;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#160D06] px-4 py-10 text-white sm:py-16">
@@ -284,7 +471,7 @@ export default function QuizContainer() {
           <p className="mt-1 text-xs text-[#92795D]">{question.subtitle}</p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {question.options.map((option) => {
+            {visibleOptions.map((option) => {
               const selected = selectedValue === option.value;
               return (
                 <button
@@ -318,6 +505,21 @@ export default function QuizContainer() {
               );
             })}
           </div>
+
+          {wrapperOptionsCollapsed && question.options.length > 4 && (
+            <button
+              type="button"
+              onClick={() => setShowAllWrappers(true)}
+              aria-expanded={false}
+              className="mx-auto mt-5 flex h-10 items-center justify-center gap-2 rounded-lg border border-[#CBA24A]/45 px-5 text-xs font-medium text-[#D9AD4A] transition hover:border-[#D5A744] hover:bg-[#D5A744]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D5A744]"
+            >
+              Show more wrappers
+              <span className="rounded-full bg-[#D5A744]/15 px-2 py-0.5 text-[10px]">
+                +{question.options.length - 4}
+              </span>
+              <ChevronDown className="h-4 w-4" />
+            </button>
+          )}
         </section>
 
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
@@ -336,7 +538,7 @@ export default function QuizContainer() {
             <button
               type="button"
               disabled={!selectedValue}
-              onClick={() => setStep((current) => current + 1)}
+              onClick={continueQuiz}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#D2A440] px-8 text-xs font-semibold text-[#211305] transition hover:bg-[#E0B44F] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {step === questions.length - 1 ? "Find my matches" : "Continue"}

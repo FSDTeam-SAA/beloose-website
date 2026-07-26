@@ -25,13 +25,13 @@ const UserStorePage = ({
         <StoreUserHero/>
         <TrustedBy/>
 
+        <DailyFeatured/>
         <NewArrivals/>
 
         <GuidedDiscovery/>
 
         <StaffPicks/>
         <SurpriseMe/>
-        <DailyFeatured/>
 
 
         <Testimonial/>
