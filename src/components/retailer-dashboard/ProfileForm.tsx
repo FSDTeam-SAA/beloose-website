@@ -179,6 +179,8 @@ function ProfileEditor({
         profilePicture={logoPreview || retailer.logo}
         banner={bannerPreview || retailer.banner}
         verified={verificationStatus?.toLowerCase() === "verified"}
+        expanded
+        bannerPreviewing={Boolean(bannerPreview)}
         editable
         onImageChange={chooseLogo}
       />
