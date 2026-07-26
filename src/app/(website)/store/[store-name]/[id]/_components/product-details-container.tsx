@@ -3,14 +3,20 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Beer,
   Check,
+  Coffee,
+  GlassWater,
+  Grape,
   Heart,
   ImageOff,
+  Martini,
   MapPin,
   Package,
   RefreshCw,
   Share2,
   Sparkles,
+  Wine,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,7 +28,7 @@ import {
   InventoryDetailsError,
 } from "@/lib/inventoryDetails";
 import MoreExclusive from "./more-exclusive";
-import PerfectPairings from "./perfect-pairings";
+import SimilarCigars from "./similar-cigars";
 
 const titleCase = (value: string) =>
   value
@@ -30,6 +36,19 @@ const titleCase = (value: string) =>
     .filter(Boolean)
     .map((word) => word[0]?.toUpperCase() + word.slice(1))
     .join(" ");
+
+const getPairingIcon = (pairing: string) => {
+  const value = pairing.toLowerCase();
+
+  if (value.includes("whisky")) return GlassWater;
+  if (value.includes("aged rum")) return Martini;
+  if (value.includes("cognac") || value.includes("brandy")) return Wine;
+  if (value.includes("port")) return Grape;
+  if (value.includes("coffee") || value.includes("espresso")) return Coffee;
+  if (value.includes("dark beer") || value.includes("stout")) return Beer;
+
+  return Wine;
+};
 
 const ProductDetailsContainer = () => {
   const params = useParams<{ "store-name": string; id: string }>();
@@ -304,7 +323,17 @@ const ProductDetailsContainer = () => {
           </div>
         </section>
 
-        {recommendationNote && (
+         <section className="mt-9 rounded-2xl border border-white/[0.09] bg-[#191715] p-6 sm:p-7">
+            <div className="flex items-start gap-3">
+              <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#CBA24A]" />
+              <div>
+                <h2 className="font-playfair text-lg text-[#F5E7D0]">Why You’ll Like This Cigar</h2>
+                <p className="mt-2 text-sm leading-6 text-[#9D958B]">{recommendationNote || "N/A"}</p>
+              </div>
+            </div>
+          </section>
+
+        {/* {recommendationNote && (
           <section className="mt-9 rounded-2xl border border-white/[0.09] bg-[#191715] p-6 sm:p-7">
             <div className="flex items-start gap-3">
               <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#CBA24A]" />
@@ -314,7 +343,7 @@ const ProductDetailsContainer = () => {
               </div>
             </div>
           </section>
-        )}
+        )} */}
 
         <section className="mt-9">
           <h2 className="flex items-center gap-2 font-playfair text-xl text-[#F5E7D0]">
@@ -335,11 +364,54 @@ const ProductDetailsContainer = () => {
           </div>
         </section>
 
-        <PerfectPairings
-          pairings={product.pairingSuggestions || []}
-          note={product.description}
-        />
+        {!!product.pairingSuggestions?.length && (
+          <section
+            className="mt-10"
+            aria-labelledby="perfect-pairings-title"
+          >
+            <h2
+              id="perfect-pairings-title"
+              className="flex items-center gap-2 font-playfair text-lg text-[#F5E7D0] sm:text-xl"
+            >
+              <Wine
+                className="h-5 w-5 text-[#D7AA46]"
+                strokeWidth={1.8}
+              />
+              Perfect Pairings
+            </h2>
+
+            <div className="mt-4 rounded-xl border border-white/[0.1] bg-[#191715] p-4 sm:p-5">
+              <p className="text-sm italic leading-6 text-[#9D958B]">
+                {product?.description ||
+                  "Rich, thoughtfully selected companions can complement the character of a premium cigar."}
+              </p>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {product?.pairingSuggestions?.map((pairing) => {
+                  const PairingIcon = getPairingIcon(pairing);
+
+                  return (
+                    <div
+                      key={pairing}
+                      className="flex min-h-[68px] flex-col items-center justify-center rounded-lg bg-[#2A2725] px-3 py-3 text-center transition hover:bg-[#302D2A]"
+                    >
+                      <PairingIcon
+                        className="h-5 w-5 text-[#F0EBE5]"
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
+                      <p className="mt-1.5 text-xs text-[#F0EBE5]">
+                        {pairing}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
         <MoreExclusive />
+        <SimilarCigars/>
       </div>
     </main>
   );
