@@ -45,7 +45,10 @@ const NewArrivals = () => {
   });
 
   return (
-    <section className="bg-[#0F0E0D] py-14 text-white sm:py-20" id="collection">
+    <section
+      id="new-arrivals"
+      className="store-section scroll-mt-20 bg-[#0F0E0D] text-white"
+    >
       <div className="container">
         <div className="mb-7 flex items-end justify-between gap-5 sm:mb-9">
           <div className="flex items-start gap-3">

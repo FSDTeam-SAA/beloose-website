@@ -214,7 +214,7 @@ export default function QuizContainer() {
 
   if (showingResults) {
     return (
-      <main className="min-h-screen bg-[#130B05] px-4 py-10 text-white sm:py-16">
+      <main className="store-page-section min-h-screen bg-[#130B05] px-4 text-white">
         <div className="container">
           <QuizHeading results />
 
@@ -427,7 +427,7 @@ export default function QuizContainer() {
     : question.options;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#160D06] px-4 py-10 text-white sm:py-16">
+    <main className="store-page-section relative min-h-screen overflow-hidden bg-[#160D06] px-4 text-white">
       <div className="pointer-events-none absolute -left-28 -top-32 h-80 w-80 rounded-full bg-[#CBA24A]/[0.06] blur-3xl" />
       <div className="pointer-events-none absolute -bottom-32 -right-20 h-96 w-96 rounded-full bg-[#8A5528]/10 blur-3xl" />
 

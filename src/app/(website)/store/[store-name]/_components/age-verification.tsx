@@ -52,11 +52,28 @@ const AgeVerification = ({ children }: AgeVerificationProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex min-h-dvh items-center justify-center overflow-y-auto bg-[#0F0D0C] px-4 py-8">
+    <div className="fixed inset-0 z-[100] isolate flex min-h-dvh items-center justify-center overflow-y-auto bg-[#0F0D0C] px-4 py-8">
+      <Image
+        src="/assets/images/auth_bg.png"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="-z-20 object-cover object-center"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 bg-black/60"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(203,162,74,0.09),transparent_48%),linear-gradient(to_bottom,rgba(10,7,4,0.12),rgba(10,7,4,0.48))]"
+      />
+
       {status === "checking" ? (
         <span className="sr-only">Checking age verification</span>
       ) : (
-        <div className="w-full max-w-[510px] rounded-[18px] border border-[#3A3531] bg-[#191715] px-6 py-10 text-center shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:px-10 sm:py-12">
+        <div className="w-full max-w-[510px] rounded-[18px] border border-[#CBA24A]/25 bg-[#15110D]/90 px-6 py-10 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-md sm:px-10 sm:py-12">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#3A3531] bg-[#171513]">
             <Image
               src="/assets/images/logo.png"

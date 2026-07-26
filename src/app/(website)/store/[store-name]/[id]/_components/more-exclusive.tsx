@@ -30,7 +30,7 @@ const MoreExclusive = () => {
   if (query.isError || (!query.isLoading && !products?.length)) return null;
 
   return (
-    <section className="mt-10 border-t border-white/[0.07] pt-8">
+    <section className="store-section-gap border-t border-white/[0.07] pt-8">
       <h2 className="flex items-center gap-2 font-playfair text-lg text-[#F5E7D0] sm:text-xl">
         <Gem className="h-5 w-5 text-[#D7AA46]" strokeWidth={1.8} />
         Looking for Something More Exclusive?

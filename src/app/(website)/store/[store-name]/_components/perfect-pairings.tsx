@@ -31,7 +31,7 @@ const PerfectPairings = ({
 }) => {
   return (
     <section
-      className="bg-[#0F0E0D] py-14 text-white sm:py-16 lg:py-20"
+      className="store-section bg-[#0F0E0D] text-white"
       aria-labelledby="perfect-pairings-title"
     >
       <div className="container">

@@ -11,7 +11,7 @@ const GuidedDiscovery = () => {
   return (
     <section
       id="cigar-finder"
-      className="scroll-mt-24 bg-[#0F0E0D] pb-14 text-white sm:pb-20"
+      className="store-section scroll-mt-24 bg-[#0F0E0D] text-white"
       aria-labelledby="guided-discovery-title"
     >
       <div className="container">

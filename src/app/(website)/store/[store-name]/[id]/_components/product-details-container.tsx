@@ -280,7 +280,7 @@ const ProductDetailsContainer = () => {
           </div>
         </section>
 
-         <section className="mt-9 rounded-2xl border border-white/[0.09] bg-[#191715] p-6 sm:p-7">
+         <section className="store-section-gap rounded-2xl border border-white/[0.09] bg-[#191715] p-6 sm:p-7">
             <div className="flex items-start gap-3">
               <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-[#CBA24A]" />
               <div>
@@ -302,7 +302,7 @@ const ProductDetailsContainer = () => {
           </section>
         )} */}
 
-        <section className="mt-9">
+        <section className="store-section-gap">
           <h2 className="flex items-center gap-2 font-playfair text-xl text-[#F5E7D0]">
             <MapPin className="h-5 w-5 text-[#CBA24A]" /> Find It on the Shelf
           </h2>
@@ -323,7 +323,7 @@ const ProductDetailsContainer = () => {
 
         {!!product.pairingSuggestions?.length && (
           <section
-            className="mt-10"
+            className="store-section-gap"
             aria-labelledby="perfect-pairings-title"
           >
             <h2
