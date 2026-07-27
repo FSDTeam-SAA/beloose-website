@@ -34,6 +34,8 @@ export type StoreInventoryFilters = {
   strength?: string;
   wrapper?: string;
   size?: string;
+  minPrice?: number;
+  maxPrice?: number;
 };
 
 type StoreInventoryResponse = {
@@ -58,7 +60,11 @@ export async function getStoreInventory(
     limit: String(limit),
   });
   Object.entries(filters).forEach(([key, value]) => {
-    if (value?.trim()) query.set(key, value.trim());
+    if (typeof value === "number" && Number.isFinite(value)) {
+      query.set(key, String(value));
+    } else if (typeof value === "string" && value.trim()) {
+      query.set(key, value.trim());
+    }
   });
   const response = await fetch(
     `${apiUrl}/inventory/${encodeURIComponent(storeName)}/inventory-list?${query}`,
