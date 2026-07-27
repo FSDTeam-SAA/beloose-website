@@ -3,8 +3,10 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  DollarSign,
   Filter,
   PackageOpen,
   RefreshCw,
@@ -29,6 +31,29 @@ const PAGE_SIZE = 8;
 const FACET_LIMIT = 500;
 
 type FilterKey = "strength" | "brand" | "wrapper" | "size";
+
+const STRENGTH_OPTIONS = ["mild", "medium", "medium-full", "full"];
+const STRENGTH_LABELS: Record<string, string> = {
+  mild: "Mild",
+  medium: "Medium",
+  "medium-full": "Medium-Full",
+  full: "Full",
+};
+const WRAPPER_OPTIONS = [
+  "Connecticut",
+  "Connecticut Broadleaf",
+  "Natural",
+  "Maduro",
+  "Habano",
+  "Corojo",
+  "Cameroon",
+  "Sumatra",
+  "Oscuro",
+  "Candela",
+  "Colorado",
+  "Criollo",
+  "San Andrés",
+];
 
 const filterLabels: Record<FilterKey, string> = {
   strength: "Strength",
@@ -95,7 +120,8 @@ const AllProductsContainer = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<StoreInventoryFilters>({});
   const deferredSearch = useDeferredValue(search.trim());
-  const appliedFilters = { ...filters, searchTerm: deferredSearch };
+  const deferredFilters = useDeferredValue(filters);
+  const appliedFilters = { ...deferredFilters, searchTerm: deferredSearch };
   const query = useQuery({
     queryKey: [
       "store",
@@ -127,8 +153,8 @@ const AllProductsContainer = () => {
 
   const items = query.data?.items || [];
   const filterOptions = useMemo(
-    () =>
-      (["strength", "brand", "wrapper", "size"] as FilterKey[]).reduce(
+    () => {
+      const options = (["brand", "size"] as FilterKey[]).reduce(
         (options, key) => {
           options[key] = Array.from(
             new Set(
@@ -140,14 +166,32 @@ const AllProductsContainer = () => {
           return options;
         },
         {} as Record<FilterKey, string[]>,
-      ),
+      );
+      options.strength = STRENGTH_OPTIONS;
+      options.wrapper = WRAPPER_OPTIONS;
+      return options;
+    },
     [facetsQuery.data?.items],
   );
+  const priceBounds = useMemo(() => {
+    const prices = (facetsQuery.data?.items || [])
+      .map((item) => Number(item.price))
+      .filter((price) => Number.isFinite(price) && price >= 0);
+    if (!prices.length) return { min: 0, max: 100 };
+    const min = Math.floor(Math.min(...prices));
+    const max = Math.ceil(Math.max(...prices));
+    return { min, max: Math.max(min + 1, max) };
+  }, [facetsQuery.data?.items]);
+  const selectedMinPrice = filters.minPrice ?? priceBounds.min;
+  const selectedMaxPrice = filters.maxPrice ?? priceBounds.max;
+  const priceFilterActive =
+    filters.minPrice !== undefined || filters.maxPrice !== undefined;
   const activeFilterCount =
     (deferredSearch ? 1 : 0) +
     (["strength", "brand", "wrapper", "size"] as FilterKey[]).filter(
       (key) => filters[key],
-    ).length;
+    ).length +
+    (priceFilterActive ? 1 : 0);
   const meta = query.data?.meta;
   const total = meta?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / (meta?.limit || PAGE_SIZE)));
@@ -171,7 +215,19 @@ const AllProductsContainer = () => {
     setPage(1);
     setFilters((current) => ({
       ...current,
-      [key]: current[key] === value ? undefined : value,
+      [key]: value || undefined,
+    }));
+  };
+
+  const updatePrice = (key: "minPrice" | "maxPrice", value: number) => {
+    setPage(1);
+    setFilters((current) => ({
+      ...current,
+      [key]:
+        (key === "minPrice" && value <= priceBounds.min) ||
+        (key === "maxPrice" && value >= priceBounds.max)
+          ? undefined
+          : value,
     }));
   };
 
@@ -259,26 +315,47 @@ const AllProductsContainer = () => {
               aria-expanded={showFilters}
               aria-controls="product-filters"
               onClick={() => setShowFilters((visible) => !visible)}
-              className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-5 text-xs font-medium transition ${
+              className={`group inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-5 text-xs font-medium transition-all duration-300 ${
                 showFilters || activeFilterCount
-                  ? "border-[#CBA24A]/55 bg-[#CBA24A]/10 text-[#E1B957]"
+                  ? "border-[#CBA24A]/55 bg-[#CBA24A]/10 text-[#E1B957] shadow-[0_8px_24px_rgba(203,162,74,0.1)]"
                   : "border-white/[0.1] bg-[#191715] text-[#AAA299] hover:border-[#CBA24A]/35 hover:text-[#D7AA46]"
               }`}
             >
-              <Filter className="h-4 w-4" />
+              <Filter
+                className={`h-4 w-4 transition-transform duration-300 ${
+                  showFilters ? "rotate-[-12deg] scale-110" : ""
+                }`}
+              />
               Filters
               {activeFilterCount > 0 && (
-                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[#CBA24A] px-1 text-[10px] font-bold text-[#171109]">
+                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[#CBA24A] px-1 text-[10px] font-bold text-[#171109] shadow-[0_0_14px_rgba(203,162,74,0.35)]">
                   {activeFilterCount}
                 </span>
               )}
+              <ChevronDown
+                aria-hidden="true"
+                className={`h-3.5 w-3.5 transition-transform duration-300 ${
+                  showFilters ? "rotate-180" : ""
+                }`}
+              />
             </button>
           </div>
 
-          {showFilters && (
+          <div
+            aria-hidden={!showFilters}
+            inert={showFilters ? undefined : true}
+            className={`grid overflow-hidden transition-[grid-template-rows,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${
+              showFilters
+                ? "mt-3 grid-rows-[1fr] opacity-100"
+                : "mt-0 grid-rows-[0fr] opacity-0"
+            }`}
+          >
+            <div className="min-h-0 overflow-hidden">
             <div
               id="product-filters"
-              className="mt-3 rounded-xl border border-white/[0.1] bg-[#191715] p-4 sm:p-5"
+              className={`relative overflow-hidden rounded-xl border border-white/[0.1] bg-[radial-gradient(circle_at_top_right,rgba(203,162,74,0.08),transparent_34%),#191715] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition-transform duration-300 before:absolute before:inset-x-6 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-[#CBA24A]/55 before:to-transparent sm:p-5 ${
+                showFilters ? "translate-y-0" : "-translate-y-2"
+              }`}
             >
               {facetsQuery.isLoading && (
                 <p className="text-xs text-[#8F877E]">
@@ -299,52 +376,117 @@ const AllProductsContainer = () => {
                   </button>
                 </div>
               )}
-              <div className="space-y-5">
-                {(Object.keys(filterLabels) as FilterKey[]).map((key) => {
-                  const options = filterOptions[key];
-                  if (!options.length) return null;
-                  return (
-                    <fieldset key={key}>
-                      <legend className="mb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[#837B72]">
-                        {filterLabels[key]}
-                      </legend>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPage(1);
-                            setFilters((current) => ({
-                              ...current,
-                              [key]: undefined,
-                            }));
-                          }}
-                          className={`rounded-full px-3 py-1.5 text-[10px] transition ${
-                            !filters[key]
-                              ? "bg-[#CBA24A] font-semibold text-[#171109]"
-                              : "bg-white/[0.06] text-[#9D958B] hover:bg-white/[0.1] hover:text-[#E4D8C8]"
-                          }`}
-                        >
-                          All
-                        </button>
-                        {options.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            aria-pressed={filters[key] === option}
-                            onClick={() => updateFilter(key, option)}
-                            className={`rounded-full px-3 py-1.5 text-[10px] capitalize transition ${
-                              filters[key] === option
-                                ? "bg-[#CBA24A] font-semibold text-[#171109]"
-                                : "bg-white/[0.06] text-[#9D958B] hover:bg-white/[0.1] hover:text-[#E4D8C8]"
-                            }`}
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.7fr)]">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {(Object.keys(filterLabels) as FilterKey[]).map((key) => {
+                    const options = filterOptions[key];
+                    if (!options.length) return null;
+                    return (
+                      <label key={key} className="block">
+                        <span className="mb-2 block text-[10px] font-medium uppercase tracking-[0.14em] text-[#8F877E]">
+                          {filterLabels[key]}
+                        </span>
+                        <span className="relative block">
+                          <select
+                            value={filters[key] || ""}
+                            onChange={(event) =>
+                              updateFilter(key, event.target.value)
+                            }
+                            className="h-11 w-full appearance-none rounded-lg border border-white/[0.1] bg-[#211E1B] px-3 pr-9 text-xs text-[#E8DED2] outline-none transition hover:border-[#CBA24A]/30 focus:border-[#CBA24A]/60 focus:ring-2 focus:ring-[#CBA24A]/10"
                           >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                    </fieldset>
-                  );
-                })}
+                            <option value="">All {filterLabels[key]}</option>
+                            {options.map((option) => (
+                              <option key={option} value={option}>
+                                {key === "strength"
+                                  ? STRENGTH_LABELS[option] || option
+                                  : option}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            aria-hidden="true"
+                            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#817970]"
+                          />
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <fieldset className="rounded-xl border border-white/[0.08] bg-[#211E1B]/70 p-4">
+                  <legend className="px-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[#8F877E]">
+                    Price range
+                  </legend>
+                  <div className="mt-1 flex items-center justify-between gap-3">
+                    <p className="inline-flex items-center text-sm font-semibold text-[#F5E7D0]">
+                      <DollarSign className="h-3.5 w-3.5 text-[#CBA24A]" />
+                      {selectedMinPrice.toLocaleString()}
+                    </p>
+                    <span className="h-px flex-1 bg-white/[0.1]" />
+                    <p className="inline-flex items-center text-sm font-semibold text-[#F5E7D0]">
+                      <DollarSign className="h-3.5 w-3.5 text-[#CBA24A]" />
+                      {selectedMaxPrice.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="relative mt-5 h-5">
+                    <div className="absolute left-0 right-0 top-2 h-1 rounded-full bg-white/[0.12]" />
+                    <div
+                      className="absolute top-2 h-1 rounded-full bg-[#CBA24A]"
+                      style={{
+                        left: `${
+                          ((selectedMinPrice - priceBounds.min) /
+                            (priceBounds.max - priceBounds.min)) *
+                          100
+                        }%`,
+                        right: `${
+                          100 -
+                          ((selectedMaxPrice - priceBounds.min) /
+                            (priceBounds.max - priceBounds.min)) *
+                            100
+                        }%`,
+                      }}
+                    />
+                    <input
+                      type="range"
+                      aria-label="Minimum price"
+                      min={priceBounds.min}
+                      max={priceBounds.max}
+                      value={selectedMinPrice}
+                      onChange={(event) =>
+                        updatePrice(
+                          "minPrice",
+                          Math.min(
+                            Number(event.target.value),
+                            selectedMaxPrice - 1,
+                          ),
+                        )
+                      }
+                      className="pointer-events-none absolute inset-0 h-5 w-full appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#171411] [&::-moz-range-thumb]:bg-[#D7AA46] [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#171411] [&::-webkit-slider-thumb]:bg-[#D7AA46]"
+                    />
+                    <input
+                      type="range"
+                      aria-label="Maximum price"
+                      min={priceBounds.min}
+                      max={priceBounds.max}
+                      value={selectedMaxPrice}
+                      onChange={(event) =>
+                        updatePrice(
+                          "maxPrice",
+                          Math.max(
+                            Number(event.target.value),
+                            selectedMinPrice + 1,
+                          ),
+                        )
+                      }
+                      className="pointer-events-none absolute inset-0 h-5 w-full appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#171411] [&::-moz-range-thumb]:bg-[#D7AA46] [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#171411] [&::-webkit-slider-thumb]:bg-[#D7AA46]"
+                    />
+                  </div>
+                  <div className="mt-2 flex justify-between text-[9px] text-[#746E67]">
+                    <span>${priceBounds.min.toLocaleString()}</span>
+                    <span>${priceBounds.max.toLocaleString()}</span>
+                  </div>
+                </fieldset>
               </div>
               {activeFilterCount > 0 && (
                 <div className="mt-5 flex justify-end border-t border-white/[0.07] pt-4">
@@ -359,7 +501,8 @@ const AllProductsContainer = () => {
                 </div>
               )}
             </div>
-          )}
+            </div>
+          </div>
         </section>
 
         {query.isLoading && (

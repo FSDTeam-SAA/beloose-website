@@ -1,8 +1,12 @@
 "use client";
 
 import {
+  BadgeCheck,
+  CalendarDays,
+  Clock3,
   Heart,
   Home,
+  LayoutGrid,
   Menu,
   Search,
   Sparkles,
@@ -13,6 +17,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useSession } from "next-auth/react";
 
 type NavItem = {
   label: string;
@@ -31,12 +36,31 @@ const UserNavbar = () => {
   const favoritesActive = pathname === favoritesPath;
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const session = useSession();
+  const token = (session.data?.user as { token: string } | undefined)?.token;
+
   const navItems: NavItem[] = [
-    { label: "Home", href: storePath },
-    { label: "All Cigars", href: `${storePath}/all-products` },
-    { label: "Daily Featured", href: `${storePath}#daily-featured` },
-    { label: "Staff Picks", href: `${storePath}#staff-picks` },
-    { label: "New Arrivals", href: `${storePath}#new-arrivals` },
+    { label: "Home", href: storePath, icon: Home },
+    {
+      label: "All Cigars",
+      href: `${storePath}/all-products`,
+      icon: LayoutGrid,
+    },
+    {
+      label: "Daily Featured",
+      href: `${storePath}#daily-featured`,
+      icon: CalendarDays,
+    },
+    {
+      label: "Staff Picks",
+      href: `${storePath}#staff-picks`,
+      icon: BadgeCheck,
+    },
+    {
+      label: "New Arrivals",
+      href: `${storePath}#new-arrivals`,
+      icon: Clock3,
+    },
     {
       label: "Surprise Me",
       href: `${storePath}#surprise-me`,
@@ -78,7 +102,7 @@ const UserNavbar = () => {
             priority
             className="h-10 w-10 object-contain sm:h-11 sm:w-11"
           />
-          <span className="font-playfair text-xl text-[#D4A94A] sm:text-2xl">
+          <span className="hidden font-playfair text-xl text-[#D4A94A] sm:inline sm:text-2xl">
             Humidor<small className="text-[10px]">411</small>
           </span>
         </Link>
@@ -102,7 +126,6 @@ const UserNavbar = () => {
                     : "after:scale-x-0 hover:bg-white/[0.04] hover:after:scale-x-100"
                 }`}
               >
-                {item.label === "Home" && <Home className="h-3.5 w-3.5" />}
                 {Icon && <Icon className="h-3.5 w-3.5" />}
                 {item.label}
               </Link>
@@ -112,11 +135,17 @@ const UserNavbar = () => {
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Link
+            href={token ? "/retailer-dashboard" : "/"}
+            className="inline-flex h-6 md:h-7 lg:h-8 items-center justify-center whitespace-nowrap rounded-lg border border-[#CBA24A]/35 bg-[#CBA24A]/10 px-2 text-[10px] font-medium text-[#D7AA46] transition hover:border-[#CBA24A]/60 hover:bg-[#CBA24A]/15 sm:h-10 sm:px-3 sm:text-xs"
+          >
+            {token ? "Go to dashboard" : "Go to website"}
+          </Link>
+          <Link
             href={`${storePath}/all-products`}
             aria-label="Search cigars"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[#A49D95] transition hover:bg-white/[0.05] hover:text-[#D7AA46]"
           >
-            <Search className="h-5 w-5" />
+            <Search className="h-5 w-5 text-white" />
           </Link> 
           <Link
             href={favoritesPath}
@@ -176,6 +205,9 @@ const UserNavbar = () => {
           aria-label="Mobile store navigation"
           className="container flex flex-col gap-1 py-4"
         >
+          <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#746D65]">
+            Explore the store
+          </p>
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -184,20 +216,30 @@ const UserNavbar = () => {
                 key={item.label}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex h-12 items-center gap-3 rounded-xl px-4 text-sm text-white transition ${
+                className={`group flex min-h-12 items-center gap-3 rounded-xl border px-3 text-sm transition ${
                   active
-                    ? "border-l-2 border-[#D7AA46]"
-                    : "border-l-2 border-transparent hover:bg-white/[0.04] hover:border-[#D7AA46]/60"
+                    ? "border-[#CBA24A]/30 bg-gradient-to-r from-[#CBA24A]/15 to-[#CBA24A]/[0.03] text-[#F5E7D0] shadow-[inset_3px_0_0_#D7AA46]"
+                    : "border-transparent text-[#D6D0C9] hover:border-white/[0.07] hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
-                {item.label === "Home" ? (
-                  <Home className="h-4 w-4" />
-                ) : Icon ? (
-                  <Icon className="h-4 w-4" />
-                ) : (
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#CBA24A]/60" />
-                )}
-                {item.label}
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
+                    active
+                      ? "border-[#CBA24A]/35 bg-[#CBA24A]/15 text-[#D7AA46]"
+                      : "border-white/[0.07] bg-white/[0.03] text-[#948C83] group-hover:border-[#CBA24A]/20 group-hover:text-[#D7AA46]"
+                  }`}
+                >
+                  {Icon && <Icon className="h-4 w-4" />}
+                </span>
+                <span className="font-medium">{item.label}</span>
+                <span
+                  aria-hidden="true"
+                  className={`ml-auto h-1.5 w-1.5 rounded-full transition ${
+                    active
+                      ? "bg-[#D7AA46] shadow-[0_0_10px_rgba(215,170,70,0.75)]"
+                      : "bg-white/10 group-hover:bg-[#D7AA46]/60"
+                  }`}
+                />
               </Link>
             );
           })}
