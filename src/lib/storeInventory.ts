@@ -10,6 +10,8 @@ export type StoreInventoryItem = {
   description?: string;
   pairingSuggestions?: string[];
   shelfName?: string;
+  shelfRow?: number;
+  shelfColumn?: number;
   quantity: number;
   price: number;
   isStaffPick: boolean;

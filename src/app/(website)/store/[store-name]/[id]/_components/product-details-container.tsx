@@ -144,6 +144,9 @@ const ProductDetailsContainer = () => {
   }
 
   const product = query.data!;
+  const shelfPosition = product.shelfRow && product.shelfColumn
+    ? `Row ${product.shelfRow}, Column ${product.shelfColumn}`
+    : undefined;
   const displayPrice =
     product.displayPrice ??
     product.featuredPrice ??
@@ -216,7 +219,7 @@ const ProductDetailsContainer = () => {
                 ["Strength", titleCase(product.strength)],
                 ["Size", product.size],
                 ["Wrapper", product.wrapper],
-                ["Location", product.humidorName || product.shelfName],
+                ["Location", [product.humidorName, product.shelfName, shelfPosition].filter(Boolean).join(" · ")],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl border border-white/[0.09] bg-[#191715] p-3">
                   <dt className="text-[10px] text-[#837C74]">{label}</dt>
@@ -306,17 +309,33 @@ const ProductDetailsContainer = () => {
           <h2 className="flex items-center gap-2 font-playfair text-xl text-[#F5E7D0]">
             <MapPin className="h-5 w-5 text-[#CBA24A]" /> Find It on the Shelf
           </h2>
-          <div className="mt-4 flex items-center gap-4 rounded-2xl border border-white/[0.09] bg-[#191715] p-5">
+          <div className="mt-4 flex items-start gap-4 rounded-2xl border border-white/[0.09] bg-[#191715] p-5">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#CBA24A]/25 text-[#CBA24A]">
               <MapPin className="h-5 w-5" />
             </span>
-            <div>
-              <p className="text-sm text-[#E2DCD5]">
-                {[product.humidorName, product.shelfName]
-                  .filter(Boolean)
-                  .join(" · ") || "Ask store staff for shelf location"}
+            <div className="min-w-0 flex-1">
+              <div className="grid gap-2 sm:grid-cols-3">
+                {[
+                  ["Humidor", product.humidorName],
+                  ["Shelf", product.shelfName],
+                  ["Position", shelfPosition],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="rounded-xl border border-white/[0.07] bg-black/15 px-3 py-2.5"
+                  >
+                    <span className="block text-[10px] uppercase tracking-[0.12em] text-[#837C74]">
+                      {label}
+                    </span>
+                    <strong className="mt-1 block text-xs font-medium text-[#E2DCD5]">
+                      {value || "Not specified"}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-[#8F8983]">
+                Ask the tobacconist for help locating this cigar.
               </p>
-              <p className="mt-1 text-xs text-[#8F8983]">Ask the tobacconist for help locating this cigar.</p>
             </div>
           </div>
         </section>

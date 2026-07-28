@@ -128,7 +128,7 @@ export default function DailyFeaturedContainer() {
                   origin: item.humidorName,
                   description:
                     item.featuredNote ||
-                    [item.wrapper, item.size, item.shelfName]
+                    [item.wrapper, item.size, item.shelfName, item.shelfRow && item.shelfColumn ? `R${item.shelfRow} C${item.shelfColumn}` : undefined]
                       .filter(Boolean)
                       .join(" · "),
                   badges: [{ label: "Daily Featured", variant: "gold" }],

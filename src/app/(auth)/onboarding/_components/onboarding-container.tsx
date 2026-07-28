@@ -39,7 +39,7 @@ const initialData: OnboardingData = {
   humidorName: "",
   humidorLocation: "",
   humidorDescription: "",
-  shelfes: [{ name: "", description: "" }],
+  shelfes: [{ name: "", description: "", rows: "1", columns: "1" }],
   humidorId: "",
   inventoryName: "",
   inventoryBrand: "",
@@ -49,6 +49,8 @@ const initialData: OnboardingData = {
   inventoryDescription: "",
   inventoryPairingSuggestions: [],
   inventoryShelfName: "",
+  inventoryShelfRow: "1",
+  inventoryShelfColumn: "1",
   inventoryQuantity: "",
   inventoryPrice: "",
   lowStockThreshold: "5",
@@ -75,7 +77,7 @@ const steps = [
 const requiredFields: (keyof OnboardingData)[][] = [
   ["storeName", "address", "city", "phoneNumber", "description"],
   ["humidorName", "humidorLocation", "humidorDescription"],
-  ["inventoryName", "inventoryBrand", "inventoryStrength", "inventoryWrapper", "inventorySize", "inventoryDescription", "inventoryShelfName", "inventoryQuantity", "inventoryPrice", "lowStockThreshold"],
+  ["inventoryName", "inventoryBrand", "inventoryStrength", "inventoryWrapper", "inventorySize", "inventoryDescription", "inventoryShelfName", "inventoryShelfRow", "inventoryShelfColumn", "inventoryQuantity", "inventoryPrice", "lowStockThreshold"],
   [],
   [],
 ];
@@ -150,7 +152,12 @@ const OnboardingContainer = () => {
           const humidorResult = (await humidorResponse.json()) as {
             data?: Array<{
               _id: string;
-              shelfes?: Array<{ name: string; description?: string }>;
+              shelfes?: Array<{
+                name: string;
+                description?: string;
+                rows?: number;
+                columns?: number;
+              }>;
             }>;
           };
           const humidor = humidorResult.data?.[0];
@@ -162,6 +169,8 @@ const OnboardingContainer = () => {
                 ? humidor.shelfes.map((shelf) => ({
                     name: shelf.name,
                     description: shelf.description || "",
+                    rows: String(shelf.rows || 1),
+                    columns: String(shelf.columns || 1),
                   }))
                 : current.shelfes,
             }));
@@ -179,7 +188,21 @@ const OnboardingContainer = () => {
     const saved = localStorage.getItem("humidor411-onboarding");
     if (saved) {
       try {
-        setData({ ...initialData, ...JSON.parse(saved) });
+        const parsed = JSON.parse(saved) as Partial<OnboardingData>;
+        setData({
+          ...initialData,
+          ...parsed,
+          shelfes: parsed.shelfes?.length
+            ? parsed.shelfes.map((shelf) => {
+                const legacy = shelf as typeof shelf & { row?: string; column?: string };
+                return {
+                  ...shelf,
+                  rows: shelf.rows || legacy.row || "1",
+                  columns: shelf.columns || legacy.column || "1",
+                };
+              })
+            : initialData.shelfes,
+        });
       } catch {
         localStorage.removeItem("humidor411-onboarding");
       }
@@ -213,7 +236,7 @@ const OnboardingContainer = () => {
 
   const updateShelf = (
     index: number,
-    field: "name" | "description",
+    field: "name" | "description" | "rows" | "columns",
     value: string,
   ) => {
     setData((current) => ({
@@ -227,7 +250,15 @@ const OnboardingContainer = () => {
   const addShelf = () => {
     setData((current) => ({
       ...current,
-      shelfes: [...current.shelfes, { name: "", description: "" }],
+      shelfes: [
+        ...current.shelfes,
+        {
+          name: "",
+          description: "",
+          rows: "1",
+          columns: "1",
+        },
+      ],
     }));
   };
 
@@ -301,6 +332,8 @@ const OnboardingContainer = () => {
             shelfes: data.shelfes.map((shelf) => ({
               name: shelf.name.trim(),
               description: shelf.description.trim(),
+              rows: Number(shelf.rows),
+              columns: Number(shelf.columns),
             })),
           }),
         });
@@ -345,6 +378,8 @@ const OnboardingContainer = () => {
         });
         formData.append("humidorId", data.humidorId);
         formData.append("shelfName", data.inventoryShelfName);
+        formData.append("shelfRow", data.inventoryShelfRow);
+        formData.append("shelfColumn", data.inventoryShelfColumn);
         formData.append("quantity", data.inventoryQuantity);
         formData.append("price", data.inventoryPrice);
         formData.append("lowStockThreshold", data.lowStockThreshold);
@@ -390,10 +425,39 @@ const OnboardingContainer = () => {
 
     if (
       step === 1 &&
-      data.shelfes.some((shelf) => !shelf.name.trim() || !shelf.description.trim())
+      data.shelfes.some(
+        (shelf) =>
+          !shelf.name.trim() ||
+          !shelf.description.trim() ||
+          !Number.isInteger(Number(shelf.rows)) ||
+          Number(shelf.rows) < 1 ||
+          Number(shelf.rows) > 100 ||
+          !Number.isInteger(Number(shelf.columns)) ||
+          Number(shelf.columns) < 1 ||
+          Number(shelf.columns) > 100,
+      )
     ) {
-      toast.error("Please complete the name and description for every shelf");
+      toast.error("Every shelf needs a name, description, rows, and columns");
       return;
+    }
+    if (step === 2) {
+      const shelf = data.shelfes.find(
+        (item) => item.name.trim() === data.inventoryShelfName,
+      );
+      const row = Number(data.inventoryShelfRow);
+      const column = Number(data.inventoryShelfColumn);
+      if (
+        !shelf ||
+        !Number.isInteger(row) ||
+        row < 1 ||
+        row > Number(shelf.rows) ||
+        !Number.isInteger(column) ||
+        column < 1 ||
+        column > Number(shelf.columns)
+      ) {
+        toast.error("Choose a valid row and column inside the selected shelf");
+        return;
+      }
     }
 
     if (step === 2 && !inventoryImage && !data.inventoryId) {

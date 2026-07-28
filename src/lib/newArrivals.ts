@@ -14,6 +14,8 @@ export type NewArrival = {
   autoRemoveDays: number;
   newArrivalExpiresAt: string;
   shelfName?: string;
+  shelfRow?: number;
+  shelfColumn?: number;
   humidorName?: string;
 };
 

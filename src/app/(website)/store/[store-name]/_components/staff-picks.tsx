@@ -21,7 +21,7 @@ function toProductCard(item: StaffPick): ProductCardData {
     origin: item.humidorName,
     description:
       item.staffPickNote ||
-      [item.size, item.shelfName].filter(Boolean).join(" · "),
+      [item.size, item.shelfName, item.shelfRow && item.shelfColumn ? `R${item.shelfRow} C${item.shelfColumn}` : undefined].filter(Boolean).join(" · "),
     badges: [{ label: "Staff Pick", variant: "gold" }],
   };
 }
