@@ -5,6 +5,8 @@ export type InventoryItem = {
   masterCigarId?: string;
   name?: string;
   brand?: string;
+  manufacturer?: string;
+  country?: string;
   strength?: "mild" | "medium" | "medium-full" | "full";
   wrapper?: string;
   size?: string;
@@ -37,6 +39,8 @@ export type InventoryInput = {
   masterCigarId: string;
   name: string;
   brand: string;
+  manufacturer: string;
+  country: string;
   strength: "" | "mild" | "medium" | "medium-full" | "full";
   wrapper: string;
   size: string;
@@ -64,6 +68,9 @@ export type MasterCigar = {
   _id: string;
   name: string;
   brand: string;
+  manufacturer?: string;
+  country?: string;
+  price?: number;
   strength?: "mild" | "medium" | "medium-full" | "full";
   wrapper?: string;
   size?: string;
@@ -101,7 +108,7 @@ export async function getShelfInventory(token: string, signal?: AbortSignal) {
 }
 
 export async function getMasterCigars(token: string, searchTerm: string, signal?: AbortSignal): Promise<MasterCigar[]> {
-  const params = new URLSearchParams({ status: "approved", searchTerm: searchTerm.trim(), limit: "10", page: "1", sortBy: "name", sortOrder: "asc" });
+  const params = new URLSearchParams({ status: "active", searchTerm: searchTerm.trim(), limit: "10", page: "1", sortBy: "name", sortOrder: "asc" });
   const result = await request<{ data: MasterCigar[] }>(`/master-database?${params}`, token, undefined, signal);
   return result.data || [];
 }

@@ -121,6 +121,8 @@ const InventoryStep = ({
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block"><span className={labelClassName}>Brand</span><input className={inputClassName} value={data.inventoryBrand} onChange={(e) => onFieldChange("inventoryBrand", e.target.value)} placeholder="Padron" /></label>
+          <label className="block"><span className={labelClassName}>Manufacturer</span><input className={inputClassName} value={data.inventoryManufacturer} onChange={(e) => onFieldChange("inventoryManufacturer", e.target.value)} placeholder="Padron Cigars" /></label>
+          <label className="block"><span className={labelClassName}>Country of origin</span><input className={inputClassName} value={data.inventoryCountry} onChange={(e) => onFieldChange("inventoryCountry", e.target.value)} placeholder="Nicaragua" /></label>
           <label className="block"><span className={labelClassName}>Size</span><input className={inputClassName} value={data.inventorySize} onChange={(e) => onFieldChange("inventorySize", e.target.value)} placeholder="Toro" /></label>
           <div>
             <span className={labelClassName}>Wrapper</span>

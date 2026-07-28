@@ -18,7 +18,8 @@ const StoreUserHero = () => {
     staleTime: 5 * 60_000,
   });
   const retailer = query.data;
-  const banner = retailer?.banner || "/assets/images/hero.png";
+  const banner = retailer?.banner?.trim() || "/assets/images/hero.png";
+  const logo = retailer?.logo?.trim() || "/assets/images/logo.png";
   const location = retailer
     ? [retailer.address, retailer.city].filter(Boolean).join(" · ")
     : "";
@@ -38,7 +39,7 @@ const StoreUserHero = () => {
         fill
         priority
         sizes="100vw"
-        className="z-[-3] object-cover object-center"
+        className="z-[-3] object-cover object-[center_35%]"
       />
 
       {/* <div className="absolute inset-0 z-[-2] bg-[#160B05]/60" /> */}
@@ -46,17 +47,15 @@ const StoreUserHero = () => {
 
       <div className="container py-10 text-center sm:py-12 lg:py-14">
         <div className="mx-auto max-w-3xl">
-          {retailer?.logo && (
-            <div className="relative mx-auto mb-4 h-16 w-16 overflow-hidden rounded-full border border-[#D0A33E]/50 bg-[#17100A]/80 shadow-[0_10px_35px_rgba(0,0,0,0.4)] sm:h-20 sm:w-20">
-              <Image
-                src={retailer.logo}
-                alt={`${retailer.storeName} logo`}
-                fill
-                sizes="(min-width: 640px) 80px, 64px"
-                className="object-cover"
-              />
-            </div>
-          )}
+          <div className="relative mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-[#D0A33E]/60 bg-[#17100A]/80 shadow-[0_10px_35px_rgba(0,0,0,0.4)] sm:h-24 sm:w-24">
+            <Image
+              src={logo}
+              alt={retailer?.storeName ? `${retailer.storeName} logo` : "Humidor411 logo"}
+              fill
+              sizes="(min-width: 640px) 96px, 80px"
+              className="rounded-full object-cover"
+            />
+          </div>
 
           <p className="mb-2 text-[10px] font-normal uppercase tracking-[0.08em] text-[#F2DFC1] sm:text-xs">
             Welcome to

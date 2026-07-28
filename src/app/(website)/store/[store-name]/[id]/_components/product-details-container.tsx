@@ -217,6 +217,8 @@ const ProductDetailsContainer = () => {
             <dl className="mt-6 grid grid-cols-2 gap-3">
               {[
                 ["Strength", titleCase(product.strength)],
+                ["Manufacturer", product.manufacturer],
+                ["Country", product.country],
                 ["Size", product.size],
                 ["Wrapper", product.wrapper],
                 ["Location", [product.humidorName, product.shelfName, shelfPosition].filter(Boolean).join(" · ")],

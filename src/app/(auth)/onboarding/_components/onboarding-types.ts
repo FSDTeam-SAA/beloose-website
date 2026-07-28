@@ -14,6 +14,8 @@ export type OnboardingData = {
   humidorId: string;
   inventoryName: string;
   inventoryBrand: string;
+  inventoryManufacturer: string;
+  inventoryCountry: string;
   inventoryStrength: string;
   inventoryWrapper: string;
   inventorySize: string;
@@ -55,6 +57,8 @@ export type InventoryData = Pick<
   OnboardingData,
   | "inventoryName"
   | "inventoryBrand"
+  | "inventoryManufacturer"
+  | "inventoryCountry"
   | "inventoryStrength"
   | "inventoryWrapper"
   | "inventorySize"

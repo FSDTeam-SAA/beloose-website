@@ -2,6 +2,8 @@ export type StoreInventoryItem = {
   _id: string;
   name: string;
   brand: string;
+  manufacturer?: string;
+  country?: string;
   strength: string;
   wrapper: string;
   size: string;
