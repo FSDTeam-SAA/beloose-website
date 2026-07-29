@@ -1,6 +1,7 @@
 "use client";
 
 import LandingImage from "@/components/website/landing-image";
+import { landingText } from "@/lib/landingText";
 import { getRetailerBenefits } from "@/lib/retailerLanding";
 import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
@@ -32,11 +33,11 @@ const BusinessBenefits = () => {
   const live = query.data;
   const liveImages = live?.images?.filter((image) => image?.trim()) || [];
   const liveFeatures =
-    live?.features?.filter((feature) => feature?.trim()) || [];
+    live?.features?.map(landingText).filter(Boolean) || [];
   const content = {
     images: liveImages.length ? liveImages : fallbackBenefits.images,
-    title: live?.title?.trim() || fallbackBenefits.title,
-    subTitle: live?.subTitle?.trim() || fallbackBenefits.subTitle,
+    title: landingText(live?.title) || fallbackBenefits.title,
+    subTitle: landingText(live?.subTitle) || fallbackBenefits.subTitle,
     features: liveFeatures.length ? liveFeatures : fallbackBenefits.features,
   };
 

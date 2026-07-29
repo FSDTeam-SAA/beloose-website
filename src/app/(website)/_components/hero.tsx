@@ -3,6 +3,7 @@
 import LandingContentState from "@/components/website/landing-content-state";
 import LandingImage from "@/components/website/landing-image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { landingText } from "@/lib/landingText";
 import { getRetailerBanner } from "@/lib/retailerLanding";
 import { useQuery } from "@tanstack/react-query";
 
@@ -29,9 +30,10 @@ const Hero = () => {
   const live = query.data;
   const content = {
     banner: live?.banner?.trim() || fallbackBanner.banner,
-    title: live?.title?.trim() || fallbackBanner.title,
-    mainTitle: live?.mainTitle?.trim() || fallbackBanner.mainTitle,
-    discription: live?.discription?.trim() || fallbackBanner.discription,
+    title: landingText(live?.title) || fallbackBanner.title,
+    mainTitle: landingText(live?.mainTitle) || fallbackBanner.mainTitle,
+    discription:
+      landingText(live?.discription) || fallbackBanner.discription,
   };
 
   return (
@@ -58,17 +60,7 @@ const Hero = () => {
           </p>
 
           <h1 className="font-playfair text-3xl font-semibold leading-normal text-[#F7E4B3] drop-shadow-[0_4px_18px_rgba(0,0,0,0.48)] md:text-4xl lg:text-5xl xl:text-6xl">
-            {live ? (
-              content.mainTitle
-            ) : (
-              <>
-                Spend Less Time Managing Your{" "}
-                <span className="text-[#CBA24A]">
-                  Humidor, Spend More
-                </span>{" "}
-                Time Selling Cigars.
-              </>
-            )}
+            <HeroTitle title={content.mainTitle} />
           </h1>
 
           <p className="mx-auto mt-5 text-balance text-sm leading-relaxed text-[#F7E4B3] drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] sm:text-base">
@@ -93,6 +85,23 @@ const Hero = () => {
     </section>
   );
 };
+
+function HeroTitle({ title }: { title: string }) {
+  const highlight = "Humidor, Spend More";
+  const start = title.toLowerCase().indexOf(highlight.toLowerCase());
+
+  if (start === -1) return title;
+
+  return (
+    <>
+      {title.slice(0, start)}
+      <span className="text-[#CBA24A]">
+        {title.slice(start, start + highlight.length)}
+      </span>
+      {title.slice(start + highlight.length)}
+    </>
+  );
+}
 
 function HeroSkeleton() {
   return (

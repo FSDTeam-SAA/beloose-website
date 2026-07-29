@@ -1,10 +1,10 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useFavorites } from "@/hooks/use-favorites";
+import CigarImage from "./cigar-image";
 
 export type ProductBadge = {
   label: string;
@@ -83,27 +83,14 @@ export default function ProductCard({
             className="absolute inset-0 z-[5]"
           />
         )}
-        {product.image ? (
-          <>
-            <Image
-              src={product.image}
-              alt={product.name}
-              width={1000}
-              height={1000}
-              className="w-full h-[250px] object-cover transition duration-500 group-hover:scale-[1.04]"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#242220]/35 via-transparent to-black/5" />
-          </>
-        ) : (
-          <div className="px-6 text-center">
-            <p className="font-playfair text-6xl text-[#F0ECE7]">
-              {product.name.charAt(0).toUpperCase()}
-            </p>
-            {product.origin && (
-              <p className="mt-2 text-xs text-[#918C86]">{product.origin}</p>
-            )}
-          </div>
-        )}
+        <CigarImage
+          src={product.image}
+          alt={product.name}
+          width={1000}
+          height={1000}
+          className="h-[250px] w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#242220]/35 via-transparent to-black/5" />
 
         <div className="absolute left-2.5 top-2.5 z-10 flex flex-col items-start gap-1">
           {product.badges?.map((badge) => (
@@ -118,7 +105,7 @@ export default function ProductCard({
           ))}
         </div>
 
-        {product.image && product.origin && (
+        {product.origin && (
           <span className="absolute bottom-3 left-1/2 max-w-[85%] -translate-x-1/2 truncate rounded-full bg-black/55 px-3 py-1 text-[10px] text-[#C8C1B8] backdrop-blur-sm">
             {product.origin}
           </span>

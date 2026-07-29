@@ -2,6 +2,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import LandingImage from "@/components/website/landing-image";
+import { landingText } from "@/lib/landingText";
 import { getRetailerAbout } from "@/lib/retailerLanding";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Check } from "lucide-react";
@@ -35,11 +36,11 @@ const ForRetailers = () => {
 
   const live = query.data;
   const features =
-    live?.features?.filter((feature) => feature?.trim()) || [];
+    live?.features?.map(landingText).filter(Boolean) || [];
   const content = {
     image: live?.image?.trim() || fallbackAbout.image,
-    title: live?.title?.trim() || fallbackAbout.title,
-    description: live?.description?.trim() || fallbackAbout.description,
+    title: landingText(live?.title) || fallbackAbout.title,
+    description: landingText(live?.description) || fallbackAbout.description,
     features: features.length ? features : fallbackAbout.features,
   };
   const titleParts = content.title.split(/\s+/);

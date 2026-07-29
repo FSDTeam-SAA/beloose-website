@@ -9,7 +9,6 @@ import {
   GlassWater,
   Grape,
   Heart,
-  ImageOff,
   Martini,
   MapPin,
   Package,
@@ -17,11 +16,11 @@ import {
   Sparkles,
   Wine,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useFavorites } from "@/hooks/use-favorites";
 import SocialShareContent from "@/components/ui/social-share-content";
+import CigarImage from "@/components/common/cigar-image";
 import {
   getInventoryDetails,
   InventoryDetailsError,
@@ -171,14 +170,7 @@ const ProductDetailsContainer = () => {
 
         <section className="relative z-10 mt-7 grid items-center gap-8 md:grid-cols-2 md:gap-12">
           <div className="relative aspect-square overflow-hidden rounded-2xl border border-white/[0.09] bg-[#211F1D]">
-            {product.image ? (
-              <Image src={product.image} alt={product.name} fill priority sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center text-[#8F8983]">
-                <ImageOff className="h-14 w-14" />
-                <p className="mt-3 text-xs">Image unavailable</p>
-              </div>
-            )}
+            <CigarImage src={product.image} alt={product.name} fill priority sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
           </div>
 
           <div>
