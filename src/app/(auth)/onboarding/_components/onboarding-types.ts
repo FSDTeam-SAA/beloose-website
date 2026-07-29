@@ -10,16 +10,20 @@ export type OnboardingData = {
   humidorName: string;
   humidorLocation: string;
   humidorDescription: string;
-  shelfes: Array<{ name: string; description: string }>;
+  shelfes: Array<{ name: string; description: string; rows: string; columns: string }>;
   humidorId: string;
   inventoryName: string;
   inventoryBrand: string;
+  inventoryManufacturer: string;
+  inventoryCountry: string;
   inventoryStrength: string;
   inventoryWrapper: string;
   inventorySize: string;
   inventoryDescription: string;
   inventoryPairingSuggestions: string[];
   inventoryShelfName: string;
+  inventoryShelfRow: string;
+  inventoryShelfColumn: string;
   inventoryQuantity: string;
   inventoryPrice: string;
   lowStockThreshold: string;
@@ -53,12 +57,16 @@ export type InventoryData = Pick<
   OnboardingData,
   | "inventoryName"
   | "inventoryBrand"
+  | "inventoryManufacturer"
+  | "inventoryCountry"
   | "inventoryStrength"
   | "inventoryWrapper"
   | "inventorySize"
   | "inventoryDescription"
   | "inventoryPairingSuggestions"
   | "inventoryShelfName"
+  | "inventoryShelfRow"
+  | "inventoryShelfColumn"
   | "inventoryQuantity"
   | "inventoryPrice"
   | "lowStockThreshold"

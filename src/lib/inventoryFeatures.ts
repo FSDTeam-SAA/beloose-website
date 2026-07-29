@@ -14,6 +14,8 @@ export type FeatureInventoryItem = {
   quantity?: number;
   status?: string;
   shelfName?: string;
+  shelfRow?: number;
+  shelfColumn?: number;
   humidorName?: string;
   isStaffPick?: boolean;
   isNewArrival?: boolean;

@@ -103,6 +103,10 @@ const InventoryStep = ({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const selectedShelf = data.shelfes.find(
+    (shelf) => shelf.name.trim() === data.inventoryShelfName,
+  );
+
   return (
   <div className="space-y-7">
     <section className="rounded-xl border border-[#6f5528]/80 bg-black/10 p-4 sm:p-5">
@@ -117,6 +121,8 @@ const InventoryStep = ({
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block"><span className={labelClassName}>Brand</span><input className={inputClassName} value={data.inventoryBrand} onChange={(e) => onFieldChange("inventoryBrand", e.target.value)} placeholder="Padron" /></label>
+          <label className="block"><span className={labelClassName}>Manufacturer</span><input className={inputClassName} value={data.inventoryManufacturer} onChange={(e) => onFieldChange("inventoryManufacturer", e.target.value)} placeholder="Padron Cigars" /></label>
+          <label className="block"><span className={labelClassName}>Country of origin</span><input className={inputClassName} value={data.inventoryCountry} onChange={(e) => onFieldChange("inventoryCountry", e.target.value)} placeholder="Nicaragua" /></label>
           <label className="block"><span className={labelClassName}>Size</span><input className={inputClassName} value={data.inventorySize} onChange={(e) => onFieldChange("inventorySize", e.target.value)} placeholder="Toro" /></label>
           <div>
             <span className={labelClassName}>Wrapper</span>
@@ -203,7 +209,9 @@ const InventoryStep = ({
         <div><h2 className="text-sm font-semibold text-[#F5E7C2]">Placement & stock</h2><p className="mt-0.5 text-xs text-[#B7A887]">Choose where it is stored and set stock tracking values.</p></div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div><span className={labelClassName}>Shelf</span><Select value={data.inventoryShelfName || undefined} onValueChange={(value) => onFieldChange("inventoryShelfName", value)}><SelectTrigger aria-label="Shelf" className={`${inputClassName} shadow-none`}><SelectValue placeholder="Select a shelf" /></SelectTrigger><SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]">{data.shelfes.filter((shelf) => shelf.name.trim()).map((shelf) => <SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" key={shelf.name} value={shelf.name.trim()}>{shelf.name}</SelectItem>)}</SelectContent></Select></div>
+        <div><span className={labelClassName}>Shelf</span><Select value={data.inventoryShelfName || undefined} onValueChange={(value) => { onFieldChange("inventoryShelfName", value); onFieldChange("inventoryShelfRow", "1"); onFieldChange("inventoryShelfColumn", "1"); }}><SelectTrigger aria-label="Shelf" className={`${inputClassName} shadow-none`}><SelectValue placeholder="Select a shelf" /></SelectTrigger><SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]">{data.shelfes.filter((shelf) => shelf.name.trim()).map((shelf) => <SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" key={shelf.name} value={shelf.name.trim()}>{shelf.name} — {shelf.rows} × {shelf.columns} grid</SelectItem>)}</SelectContent></Select></div>
+        <label className="block"><span className={labelClassName}>Shelf row</span><input className={inputClassName} type="number" min="1" max={selectedShelf ? Number(selectedShelf.rows) : undefined} value={data.inventoryShelfRow} onChange={(e) => onFieldChange("inventoryShelfRow", e.target.value)} placeholder="1" /></label>
+        <label className="block"><span className={labelClassName}>Shelf column</span><input className={inputClassName} type="number" min="1" max={selectedShelf ? Number(selectedShelf.columns) : undefined} value={data.inventoryShelfColumn} onChange={(e) => onFieldChange("inventoryShelfColumn", e.target.value)} placeholder="1" /></label>
         <label className="block"><span className={labelClassName}>Quantity</span><input className={inputClassName} type="number" min="0" value={data.inventoryQuantity} onChange={(e) => onFieldChange("inventoryQuantity", e.target.value)} placeholder="10" /></label>
         <label className="block"><span className={labelClassName}>Price ($)</span><input className={inputClassName} type="number" min="0" step="0.01" value={data.inventoryPrice} onChange={(e) => onFieldChange("inventoryPrice", e.target.value)} placeholder="25.99" /></label>
         <label className="block"><span className={labelClassName}>Low stock alert</span><input className={inputClassName} type="number" min="0" value={data.lowStockThreshold} onChange={(e) => onFieldChange("lowStockThreshold", e.target.value)} placeholder="5" /></label>

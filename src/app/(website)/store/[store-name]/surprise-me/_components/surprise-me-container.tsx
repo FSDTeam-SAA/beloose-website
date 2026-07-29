@@ -155,7 +155,7 @@ const SurpriseMeContainer = () => {
                     <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-[#0F0E0D]/60 p-4">
                       <MapPin className="h-4 w-4 shrink-0 text-[#CBA24A]" />
                       <span>
-                        {[item.location.humidorName, item.location.shelfName]
+                        {[item.location.humidorName, item.location.shelfName, item.location.shelfRow && item.location.shelfColumn ? `Row ${item.location.shelfRow}, Column ${item.location.shelfColumn}` : undefined]
                           .filter(Boolean)
                           .join(" · ") || "Ask staff for location"}
                       </span>

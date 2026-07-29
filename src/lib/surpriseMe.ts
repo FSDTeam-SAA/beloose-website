@@ -12,6 +12,8 @@ export type SurprisePickItem = {
   location: {
     humidorName?: string;
     shelfName?: string;
+    shelfRow?: number;
+    shelfColumn?: number;
   };
   whyThisCigar: string;
 };

@@ -5,6 +5,8 @@ export type InventoryItem = {
   masterCigarId?: string;
   name?: string;
   brand?: string;
+  manufacturer?: string;
+  country?: string;
   strength?: "mild" | "medium" | "medium-full" | "full";
   wrapper?: string;
   size?: string;
@@ -14,6 +16,8 @@ export type InventoryItem = {
   pairingSuggestions?: string[];
   humidorId: string;
   shelfName: string;
+  shelfRow: number;
+  shelfColumn: number;
   quantity: number;
   price: number;
   lowStockThreshold?: number;
@@ -35,6 +39,8 @@ export type InventoryInput = {
   masterCigarId: string;
   name: string;
   brand: string;
+  manufacturer: string;
+  country: string;
   strength: "" | "mild" | "medium" | "medium-full" | "full";
   wrapper: string;
   size: string;
@@ -43,6 +49,8 @@ export type InventoryInput = {
   pairingSuggestions: string[];
   humidorId: string;
   shelfName: string;
+  shelfRow: string;
+  shelfColumn: string;
   quantity: string;
   price: string;
   lowStockThreshold: string;
@@ -60,6 +68,9 @@ export type MasterCigar = {
   _id: string;
   name: string;
   brand: string;
+  manufacturer?: string;
+  country?: string;
+  price?: number;
   strength?: "mild" | "medium" | "medium-full" | "full";
   wrapper?: string;
   size?: string;
@@ -90,8 +101,14 @@ export async function getInventory(token: string, page: number, searchTerm: stri
   return { data: result.data || [], meta: result.meta };
 }
 
+export async function getShelfInventory(token: string, signal?: AbortSignal) {
+  const params = new URLSearchParams({ page: "1", limit: "500", sortBy: "createdAt", sortOrder: "desc" });
+  const result = await request<{ data: InventoryItem[] }>(`/inventory/my-inventory?${params}`, token, undefined, signal);
+  return result.data || [];
+}
+
 export async function getMasterCigars(token: string, searchTerm: string, signal?: AbortSignal): Promise<MasterCigar[]> {
-  const params = new URLSearchParams({ status: "approved", searchTerm: searchTerm.trim(), limit: "10", page: "1", sortBy: "name", sortOrder: "asc" });
+  const params = new URLSearchParams({ status: "active", searchTerm: searchTerm.trim(), limit: "10", page: "1", sortBy: "name", sortOrder: "asc" });
   const result = await request<{ data: MasterCigar[] }>(`/master-database?${params}`, token, undefined, signal);
   return result.data || [];
 }

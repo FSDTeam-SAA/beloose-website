@@ -2,6 +2,8 @@ export type InventoryDetails = {
   _id: string;
   name: string;
   brand: string;
+  manufacturer?: string;
+  country?: string;
   strength: string;
   wrapper: string;
   size: string;
@@ -11,6 +13,8 @@ export type InventoryDetails = {
   flavorNotes?: string[];
   pairingSuggestions?: string[];
   shelfName?: string;
+  shelfRow?: number;
+  shelfColumn?: number;
   humidorName?: string;
   quantity: number;
   price: number;

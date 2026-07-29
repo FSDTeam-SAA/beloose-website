@@ -2,6 +2,8 @@ export type HumidorShelf = {
   _id: string;
   name: string;
   description?: string;
+  rows: number;
+  columns: number;
   cigarCount: number;
 };
 
@@ -53,6 +55,17 @@ export function deleteHumidor(token: string, id: string) {
   return humidorRequest<Humidor>(`/humidor/${id}`, token, { method: "DELETE" });
 }
 
-export function addHumidorShelf(token: string, id: string, payload: { name: string; description?: string }) {
+export type HumidorShelfInput = {
+  name: string;
+  description?: string;
+  rows: number;
+  columns: number;
+};
+
+export function addHumidorShelf(token: string, id: string, payload: HumidorShelfInput) {
   return humidorRequest<Humidor>(`/humidor/${id}/shelf`, token, { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function updateHumidorShelfGrid(token: string, id: string, shelfId: string, payload: Pick<HumidorShelfInput, "rows" | "columns">) {
+  return humidorRequest<Humidor>(`/humidor/${id}/shelf/${shelfId}/grid`, token, { method: "PUT", body: JSON.stringify(payload) });
 }

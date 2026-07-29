@@ -36,8 +36,8 @@ const UserNavbar = () => {
   const favoritesActive = pathname === favoritesPath;
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const session = useSession();
-  const token = (session.data?.user as { token: string } | undefined)?.token;
+  const { data: session } = useSession();
+  const isRetailer = session?.user?.role === "retailer";
 
   const navItems: NavItem[] = [
     { label: "Home", href: storePath, icon: Home },
@@ -134,12 +134,14 @@ const UserNavbar = () => {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <Link
-            href={token ? "/retailer-dashboard" : "/"}
-            className="inline-flex h-6 md:h-7 lg:h-8 items-center justify-center whitespace-nowrap rounded-lg border border-[#CBA24A]/35 bg-[#CBA24A]/10 px-2 text-[10px] font-medium text-[#D7AA46] transition hover:border-[#CBA24A]/60 hover:bg-[#CBA24A]/15 sm:h-10 sm:px-3 sm:text-xs"
-          >
-            {token ? "Go to dashboard" : "Go to website"}
-          </Link>
+          {isRetailer && (
+            <Link
+              href="/retailer-dashboard"
+              className="inline-flex h-6 items-center justify-center whitespace-nowrap rounded-lg border border-[#CBA24A]/35 bg-[#CBA24A]/10 px-2 text-[10px] font-medium text-[#D7AA46] transition hover:border-[#CBA24A]/60 hover:bg-[#CBA24A]/15 sm:h-10 sm:px-3 sm:text-xs md:h-7 lg:h-8"
+            >
+              Go to dashboard
+            </Link>
+          )}
           <Link
             href={`${storePath}/all-products`}
             aria-label="Search cigars"

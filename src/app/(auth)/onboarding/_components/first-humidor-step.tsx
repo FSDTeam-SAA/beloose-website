@@ -10,7 +10,7 @@ import {
 type FirstHumidorStepProps = OnboardingStepProps & {
   onShelfChange: (
     index: number,
-    field: "name" | "description",
+    field: "name" | "description" | "rows" | "columns",
     value: string,
   ) => void;
   onAddShelf: () => void;
@@ -104,6 +104,14 @@ const FirstHumidorStep = ({
               <label className="block">
                 <span className={labelClassName}>Contents <Required /></span>
                 <input className={inputClassName} value={shelf.description} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "description", event.target.value)} placeholder="e.g. Premium cigars" required />
+              </label>
+              <label className="block">
+                <span className={labelClassName}>Rows <Required /></span>
+                <input className={inputClassName} type="number" min="1" max="100" step="1" inputMode="numeric" value={shelf.rows} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "rows", event.target.value)} placeholder="e.g. 5" required />
+              </label>
+              <label className="block">
+                <span className={labelClassName}>Columns <Required /></span>
+                <input className={inputClassName} type="number" min="1" max="100" step="1" inputMode="numeric" value={shelf.columns} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "columns", event.target.value)} placeholder="e.g. 4" required />
               </label>
             </div>
           </div>

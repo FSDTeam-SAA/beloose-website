@@ -212,6 +212,18 @@ export default function QuizContainer() {
     setStep((current) => current + 1);
   };
 
+  const skipQuestion = () => {
+    const nextAnswers = { ...answers };
+    delete nextAnswers[question.key];
+    setAnswers(nextAnswers);
+
+    if (step === questions.length - 1) {
+      setSubmittedAnswers(nextAnswers);
+    }
+
+    setStep((current) => current + 1);
+  };
+
   if (showingResults) {
     return (
       <main className="store-page-section min-h-screen bg-[#130B05] px-4 text-white">
@@ -318,7 +330,7 @@ export default function QuizContainer() {
                             </span>
                             <span className="inline-flex items-center gap-1 text-[#A88E6D]">
                               <MapPin className="h-3 w-3" />
-                              {item.shelfName || "Ask store staff"}
+                              {[item.shelfName, item.shelfRow && item.shelfColumn ? `R${item.shelfRow} C${item.shelfColumn}` : undefined].filter(Boolean).join(" · ") || "Ask store staff"}
                             </span>
                           </div>
                         </div>
@@ -343,7 +355,7 @@ export default function QuizContainer() {
                                 strength: item.strength,
                                 image: item.image,
                                 origin: item.wrapper,
-                                description: [item.size, item.shelfName]
+                                description: [item.size, item.shelfName, item.shelfRow && item.shelfColumn ? `R${item.shelfRow} C${item.shelfColumn}` : undefined]
                                   .filter(Boolean)
                                   .join(" · "),
                                 badges: [
@@ -468,7 +480,12 @@ export default function QuizContainer() {
           <h2 className="font-playfair text-xl font-semibold text-[#D9AD4A] sm:text-2xl">
             {question.title}
           </h2>
-          <p className="mt-1 text-xs text-[#92795D]">{question.subtitle}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <p className="text-xs text-[#92795D]">{question.subtitle}</p>
+            <span className="rounded-full border border-[#CBA24A]/25 bg-[#CBA24A]/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.1em] text-[#C9A45F]">
+              Optional
+            </span>
+          </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {visibleOptions.map((option) => {
@@ -535,15 +552,24 @@ export default function QuizContainer() {
             ) : (
               <span />
             )}
-            <button
-              type="button"
-              disabled={!selectedValue}
-              onClick={continueQuiz}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#D2A440] px-8 text-xs font-semibold text-[#211305] transition hover:bg-[#E0B44F] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {step === questions.length - 1 ? "Find my matches" : "Continue"}
-              <ArrowRight className="h-4 w-4" />
-            </button>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={skipQuestion}
+                className="inline-flex h-11 items-center justify-center rounded-lg border border-[#CBA24A]/50 px-7 text-xs font-medium text-[#CDB68B] transition hover:bg-[#CBA24A]/10"
+              >
+                Skip
+              </button>
+              <button
+                type="button"
+                disabled={!selectedValue}
+                onClick={continueQuiz}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#D2A440] px-8 text-xs font-semibold text-[#211305] transition hover:bg-[#E0B44F] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {step === questions.length - 1 ? "Find my matches" : "Continue"}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -82,7 +82,7 @@ function toProductCard(item: StoreInventoryItem): ProductCardData {
     image: item.image,
     origin: item.wrapper,
     description:
-      [item.size, item.shelfName].filter(Boolean).join(" · ") ||
+      [item.size, item.shelfName, item.shelfRow && item.shelfColumn ? `R${item.shelfRow} C${item.shelfColumn}` : undefined].filter(Boolean).join(" · ") ||
       item.description,
     badges: productBadges(item),
   };

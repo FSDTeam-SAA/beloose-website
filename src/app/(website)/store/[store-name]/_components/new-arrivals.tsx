@@ -20,6 +20,8 @@ function toProductCard(item: {
   image?: string;
   humidorName?: string;
   shelfName?: string;
+  shelfRow?: number;
+  shelfColumn?: number;
 }): ProductCardData {
   return {
     id: item._id,
@@ -29,7 +31,7 @@ function toProductCard(item: {
     strength: item.strength,
     image: item.image,
     origin: item.humidorName,
-    description: [item.size, item.shelfName].filter(Boolean).join(" · "),
+    description: [item.size, item.shelfName, item.shelfRow && item.shelfColumn ? `R${item.shelfRow} C${item.shelfColumn}` : undefined].filter(Boolean).join(" · "),
     badges: [{ label: "New Arrival", variant: "blue" }],
   };
 }
