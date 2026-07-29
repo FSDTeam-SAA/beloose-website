@@ -169,7 +169,7 @@ const ProductDetailsContainer = () => {
           <ArrowLeft className="h-4 w-4" /> Back to store
         </Link>
 
-        <section className="mt-7 grid items-center gap-8 md:grid-cols-2 md:gap-12">
+        <section className="relative z-10 mt-7 grid items-center gap-8 md:grid-cols-2 md:gap-12">
           <div className="relative aspect-square overflow-hidden rounded-2xl border border-white/[0.09] bg-[#211F1D]">
             {product.image ? (
               <Image src={product.image} alt={product.name} fill priority sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
