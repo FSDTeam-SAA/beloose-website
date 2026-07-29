@@ -12,7 +12,7 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
-import Image from "next/image";
+import CigarImage from "@/components/common/cigar-image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -298,19 +298,13 @@ export default function QuizContainer() {
                     >
                       <div className="flex min-w-0 flex-1 items-center gap-4">
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-[#1B1008]">
-                          {item.image ? (
-                            <Image
-                              src={item.image}
-                              alt={item.name}
-                              fill
-                              sizes="64px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <span className="flex h-full items-center justify-center font-playfair text-2xl text-[#D9AD4A]">
-                              {item.name.charAt(0).toUpperCase()}
-                            </span>
-                          )}
+                          <CigarImage
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            sizes="64px"
+                            className="object-cover"
+                          />
                         </div>
 
                         <div className="min-w-0">

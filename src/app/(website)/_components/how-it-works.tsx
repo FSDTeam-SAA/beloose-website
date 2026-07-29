@@ -1,6 +1,7 @@
 "use client";
 
 import LandingImage from "@/components/website/landing-image";
+import { landingText } from "@/lib/landingText";
 import {
   getRetailerHowItWorks,
   type RetailerHowItWork,
@@ -44,11 +45,11 @@ const HowItWorks = () => {
     ? liveSteps.map((step, index) => {
         const fallback = fallbackSteps[index % fallbackSteps.length];
         return {
-          title: step.title?.trim() || fallback.title,
-          description: step.description?.trim() || fallback.description,
+          title: landingText(step.title) || fallback.title,
+          description: landingText(step.description) || fallback.description,
           image: step.image?.trim() || fallback.image,
           fallbackImage: fallback.image,
-          alt: step.title?.trim() || fallback.alt,
+          alt: landingText(step.title) || fallback.alt,
         };
       })
     : fallbackSteps.map((step) => ({
@@ -105,8 +106,8 @@ const HowItWorks = () => {
 function hasStepContent(step: RetailerHowItWork) {
   return Boolean(
     step.image?.trim() ||
-      step.title?.trim() ||
-      step.description?.trim(),
+      landingText(step.title) ||
+      landingText(step.description),
   );
 }
 

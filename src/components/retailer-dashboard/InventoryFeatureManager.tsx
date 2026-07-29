@@ -1,11 +1,11 @@
 "use client";
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import CigarImage from "@/components/common/cigar-image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { clearTodayFeatured, getActiveFeatureItems, getFeatureInventory, removeFeature, saveFeature, type DailyFeaturedInput, type FeatureInput, type FeatureInventoryItem, type FeatureKind, type NewArrivalInput, type StaffPickInput } from "@/lib/inventoryFeatures";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, LoaderCircle, PackageOpen, Pencil, TriangleAlert } from "lucide-react";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -69,7 +69,7 @@ export default function InventoryFeatureManager({ kind }: { kind: FeatureKind })
 function FeatureRow({ item, kind, active, activate, edit, remove }: { item: FeatureInventoryItem; kind: FeatureKind; active: boolean; activate: () => void; edit: () => void; remove: () => void }) {
   const price = kind === "daily-featured" && active && item.featuredPrice !== undefined ? item.featuredPrice : item.price;
   return <article className="flex min-h-[102px] items-center gap-3 rounded-lg border border-[#76552b] bg-[#2d1a08] p-3 transition hover:border-[#977039] sm:p-4">
-    <span className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-md bg-[#513719] font-playfair text-lg text-[#d5a744]">{item.image ? <Image src={item.image} alt="" fill sizes="56px" className="object-cover"/> : (item.brand || item.name || "C").charAt(0).toUpperCase()}</span>
+    <span className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-md bg-[#513719]"><CigarImage src={item.image} alt={item.name || "Cigar"} fill sizes="56px" className="object-cover"/></span>
     <div className="min-w-0 flex-1"><small className="block truncate text-[9px] uppercase tracking-wider text-[#a98b5c]">{item.brand || "Brand not set"}</small><h3 className="truncate font-playfair text-sm text-[#f1dbac]">{item.name || "Unnamed cigar"}</h3><div className="mt-1 flex flex-wrap items-center gap-1.5 text-[9px] text-[#a98b5c]">{item.strength && <span className="rounded-full border border-[#9d6d18] bg-[#5a3d10] px-2 py-0.5 capitalize text-[#efbd43]">{item.strength}</span>}{item.wrapper && <span>{item.wrapper}</span>}{item.size && <><i>·</i><span>{item.size}</span></>}<span>·</span><span>{formatPrice(price)}</span></div>{active && <FeatureMeta kind={kind} item={item}/>}</div>
     <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">{active ? <><button type="button" onClick={edit} aria-label={`Edit ${item.name || "item"}`} className="grid h-9 w-9 place-items-center rounded border border-[#76552b] text-[#d5a744] transition hover:bg-[#513719]"><Pencil size={14}/></button><span className="flex h-9 min-w-[76px] items-center justify-center gap-1.5 rounded border border-[#9d7631] px-3 text-[10px] text-[#e5b64e]"><Check size={13}/>Active</span><button type="button" onClick={remove} className="h-9 rounded border border-red-400/40 px-3 text-[10px] text-red-300 transition hover:bg-red-500/10">Deactivate</button></> : <button type="button" onClick={activate} className="flex h-9 min-w-[92px] items-center justify-center gap-1.5 rounded border border-transparent bg-[#513719] px-3 text-[10px] text-[#a98b5c] transition hover:text-[#e5b64e]"><Check size={13}/>Activate</button>}</div>
   </article>;

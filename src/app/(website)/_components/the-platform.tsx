@@ -3,6 +3,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import LandingContentState from "@/components/website/landing-content-state";
 import LandingImage from "@/components/website/landing-image";
+import { landingText } from "@/lib/landingText";
 import {
   getRetailerPlatform,
   type RetailerPlatformFeature,
@@ -109,18 +110,21 @@ const ThePlatform = () => {
   const live = query.data;
   const liveFeatures =
     live?.features?.filter(
-      (feature) => feature?.title?.trim() || feature?.description?.trim(),
+      (feature) =>
+        landingText(feature?.title) || landingText(feature?.description),
     ) || [];
   const content = {
     image: live?.image?.trim() || fallbackPlatform.image,
     platformLabel:
-      live?.platformLabel?.trim() || fallbackPlatform.platformLabel,
-    title: live?.title?.trim() || fallbackPlatform.title,
+      landingText(live?.platformLabel) || fallbackPlatform.platformLabel,
+    title: landingText(live?.title) || fallbackPlatform.title,
     highlightedTitle:
-      live?.highlightedTitle?.trim() || fallbackPlatform.highlightedTitle,
-    description: live?.description?.trim() || fallbackPlatform.description,
-    imageLabel: live?.imageLabel?.trim() || fallbackPlatform.imageLabel,
-    imageTitle: live?.imageTitle?.trim() || fallbackPlatform.imageTitle,
+      landingText(live?.highlightedTitle) ||
+      fallbackPlatform.highlightedTitle,
+    description:
+      landingText(live?.description) || fallbackPlatform.description,
+    imageLabel: landingText(live?.imageLabel) || fallbackPlatform.imageLabel,
+    imageTitle: landingText(live?.imageTitle) || fallbackPlatform.imageTitle,
     features: liveFeatures.length ? liveFeatures : fallbackPlatform.features,
   };
 
@@ -178,10 +182,10 @@ const ThePlatform = () => {
                   <Icon className="h-4 w-4" strokeWidth={1.6} />
                 </div>
                 <h3 className="font-serif text-[14px] font-bold leading-none text-[#f2ddb0]">
-                  {feature.title?.trim() || "Platform feature"}
+                  {landingText(feature.title) || "Platform feature"}
                 </h3>
                 <p className="mt-4 text-[10px] leading-[1.35] text-[#a98f5d]">
-                  {feature.description?.trim() ||
+                  {landingText(feature.description) ||
                     "More details about this platform feature are coming soon."}
                 </p>
               </article>
