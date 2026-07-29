@@ -2,8 +2,6 @@ export type InventoryDetails = {
   _id: string;
   name: string;
   brand: string;
-  manufacturer?: string;
-  country?: string;
   strength: string;
   wrapper: string;
   size: string;
@@ -18,6 +16,7 @@ export type InventoryDetails = {
   humidorName?: string;
   quantity: number;
   price: number;
+  pricePerBox?: number;
   displayPrice?: number;
   discountPrice?: number;
   featuredPrice?: number;

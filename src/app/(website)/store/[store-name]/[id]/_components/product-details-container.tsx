@@ -38,7 +38,7 @@ const titleCase = (value: string) =>
 const getPairingIcon = (pairing: string) => {
   const value = pairing.toLowerCase();
 
-  if (value.includes("whisky")) return GlassWater;
+  if (value.includes("whiskey") || value.includes("whisky")) return GlassWater;
   if (value.includes("aged rum")) return Martini;
   if (value.includes("cognac") || value.includes("brandy")) return Wine;
   if (value.includes("port")) return Grape;
@@ -209,8 +209,6 @@ const ProductDetailsContainer = () => {
             <dl className="mt-6 grid grid-cols-2 gap-3">
               {[
                 ["Strength", titleCase(product.strength)],
-                ["Manufacturer", product.manufacturer],
-                ["Country", product.country],
                 ["Size", product.size],
                 ["Wrapper", product.wrapper],
                 ["Location", [product.humidorName, product.shelfName, shelfPosition].filter(Boolean).join(" · ")],
@@ -239,9 +237,17 @@ const ProductDetailsContainer = () => {
             )}
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <p className="mr-2 font-playfair text-3xl text-[#D7AA46]">
-                ${Number(displayPrice).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-              </p>
+              <div className="mr-2">
+                <p className="font-playfair text-3xl text-[#D7AA46]">
+                  ${Number(displayPrice).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  <span className="ml-1 text-xs text-[#9D958B]">each</span>
+                </p>
+                {typeof product.pricePerBox === "number" && (
+                  <p className="mt-1 text-xs text-[#C8BFB4]">
+                    ${product.pricePerBox.toLocaleString(undefined, { maximumFractionDigits: 2 })} per box
+                  </p>
+                )}
+              </div>
               {displayPrice < product.price && (
                 <p className="text-sm text-[#817A72] line-through">
                   ${Number(product.price).toLocaleString(undefined, {

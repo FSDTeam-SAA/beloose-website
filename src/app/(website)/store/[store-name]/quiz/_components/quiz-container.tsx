@@ -21,6 +21,7 @@ import {
   getGuidedDiscoveryResults,
   type GuidedDiscoveryAnswers,
 } from "@/lib/guidedDiscovery";
+import { CIGAR_PAIRING_OPTIONS, CIGAR_STRENGTH_OPTIONS, CIGAR_WRAPPER_OPTIONS } from "@/lib/cigarOptions";
 
 type AnswerKey = keyof GuidedDiscoveryAnswers;
 
@@ -43,12 +44,7 @@ const questions: Question[] = [
     key: "strength",
     title: "How strong do you like it?",
     subtitle: "Pick your preferred intensity.",
-    options: [
-      { value: "mild", title: "Mild", description: "Smooth & gentle", icon: "🙂" },
-      { value: "medium", title: "Medium", description: "Balanced & approachable", icon: "😊" },
-      { value: "medium-full", title: "Medium-Full", description: "Rich & flavorful", icon: "😋" },
-      { value: "full", title: "Full", description: "Bold & intense", icon: "💪" },
-    ],
+    options: [...CIGAR_STRENGTH_OPTIONS],
   },
   {
     key: "budget",
@@ -74,64 +70,13 @@ const questions: Question[] = [
     key: "wrapper",
     title: "Which wrapper do you prefer?",
     subtitle: "Choose the wrapper style that best suits your taste.",
-    options: [
-      { value: "Connecticut", title: "Connecticut", description: "Creamy, mild & smooth", icon: "🍃" },
-      { value: "Connecticut Broadleaf", title: "Connecticut Broadleaf", description: "Earthy, sweet & robust", icon: "🍂" },
-      { value: "Natural", title: "Natural", description: "Balanced & approachable", icon: "🌿" },
-      { value: "Maduro", title: "Maduro", description: "Dark, rich & naturally sweet", icon: "🍫" },
-      { value: "Habano", title: "Habano", description: "Spicy, aromatic & full-flavored", icon: "🔥" },
-      { value: "Corojo", title: "Corojo", description: "Peppery, bold & complex", icon: "🌶️" },
-      { value: "Cameroon", title: "Cameroon", description: "Toasty, sweet & distinctive", icon: "🌰" },
-      { value: "Sumatra", title: "Sumatra", description: "Earthy, mellow & subtly sweet", icon: "☕" },
-      { value: "Oscuro", title: "Oscuro", description: "Very dark, intense & bold", icon: "🌑" },
-      { value: "Candela", title: "Candela", description: "Fresh, grassy & mild", icon: "🌱" },
-      { value: "Colorado", title: "Colorado", description: "Rich, balanced & aromatic", icon: "🪵" },
-      { value: "Criollo", title: "Criollo", description: "Nutty, spicy & refined", icon: "✨" },
-      { value: "San Andrés", title: "San Andrés", description: "Earthy, bold & chocolatey", icon: "🏔️" },
-    ],
+    options: [...CIGAR_WRAPPER_OPTIONS],
   },
   {
     key: "pairingSuggestions",
     title: "What would you pair it with?",
     subtitle: "Choose one companion for your cigar.",
-    options: [
-      {
-        value: "Cigar + Whisky",
-        title: "Cigar + Whisky",
-        description: "Classic pairing for medium or full-bodied cigars",
-        icon: "🥃",
-      },
-      {
-        value: "Cigar + Aged Rum",
-        title: "Cigar + Aged Rum",
-        description: "Sweet caramel and vanilla notes",
-        icon: "🍹",
-      },
-      {
-        value: "Cigar + Cognac / Brandy",
-        title: "Cigar + Cognac / Brandy",
-        description: "Smooth, premium pairing",
-        icon: "🍷",
-      },
-      {
-        value: "Cigar + Port",
-        title: "Cigar + Port",
-        description: "Sweetness balances tobacco spice and earthiness",
-        icon: "🍇",
-      },
-      {
-        value: "Cigar + Coffee / Espresso",
-        title: "Cigar + Coffee / Espresso",
-        description: "Non-alcoholic pairing for creamy or nutty cigars",
-        icon: "☕",
-      },
-      {
-        value: "Cigar + Dark Beer / Stout",
-        title: "Cigar + Dark Beer / Stout",
-        description: "Rich pairing for bold cigars",
-        icon: "🍺",
-      },
-    ],
+    options: [...CIGAR_PAIRING_OPTIONS],
   },
   {
     key: "profile",

@@ -43,8 +43,6 @@ const initialData: OnboardingData = {
   humidorId: "",
   inventoryName: "",
   inventoryBrand: "",
-  inventoryManufacturer: "",
-  inventoryCountry: "",
   inventoryStrength: "medium",
   inventoryWrapper: "",
   inventorySize: "",
@@ -371,8 +369,6 @@ const OnboardingContainer = () => {
         const formData = new FormData();
         formData.append("name", data.inventoryName.trim());
         formData.append("brand", data.inventoryBrand.trim());
-        formData.append("manufacturer", data.inventoryManufacturer.trim());
-        formData.append("country", data.inventoryCountry.trim());
         formData.append("strength", data.inventoryStrength);
         formData.append("wrapper", data.inventoryWrapper.trim());
         formData.append("size", data.inventorySize.trim());

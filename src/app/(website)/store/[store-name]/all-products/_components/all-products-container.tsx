@@ -26,34 +26,16 @@ import {
   type StoreInventoryFilters,
   type StoreInventoryItem,
 } from "@/lib/storeInventory";
+import { CIGAR_STRENGTH_OPTIONS, CIGAR_WRAPPER_OPTIONS } from "@/lib/cigarOptions";
 
 const PAGE_SIZE = 8;
 const FACET_LIMIT = 500;
 
 type FilterKey = "strength" | "brand" | "wrapper" | "size";
 
-const STRENGTH_OPTIONS = ["mild", "medium", "medium-full", "full"];
-const STRENGTH_LABELS: Record<string, string> = {
-  mild: "Mild",
-  medium: "Medium",
-  "medium-full": "Medium-Full",
-  full: "Full",
-};
-const WRAPPER_OPTIONS = [
-  "Connecticut",
-  "Connecticut Broadleaf",
-  "Natural",
-  "Maduro",
-  "Habano",
-  "Corojo",
-  "Cameroon",
-  "Sumatra",
-  "Oscuro",
-  "Candela",
-  "Colorado",
-  "Criollo",
-  "San Andrés",
-];
+const STRENGTH_OPTIONS = CIGAR_STRENGTH_OPTIONS.map(option => option.value);
+const STRENGTH_LABELS = Object.fromEntries(CIGAR_STRENGTH_OPTIONS.map(option => [option.value, option.title]));
+const WRAPPER_OPTIONS = CIGAR_WRAPPER_OPTIONS.map(option => option.value);
 
 const filterLabels: Record<FilterKey, string> = {
   strength: "Strength",
