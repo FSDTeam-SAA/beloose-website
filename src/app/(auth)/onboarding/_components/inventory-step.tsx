@@ -11,6 +11,7 @@ import {
 import Image from "next/image";
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CIGAR_PAIRING_OPTIONS, CIGAR_STRENGTH_OPTIONS, CIGAR_WRAPPER_OPTIONS } from "@/lib/cigarOptions";
 import {
   inputClassName,
   labelClassName,
@@ -28,31 +29,6 @@ type InventoryStepProps = {
   ) => void;
   onImageChange: (file: File | null) => void;
 };
-
-const pairingOptions = [
-  "Cigar + Whisky",
-  "Cigar + Aged Rum",
-  "Cigar + Cognac / Brandy",
-  "Cigar + Port",
-  "Cigar + Coffee / Espresso",
-  "Cigar + Dark Beer / Stout",
-];
-
-const wrapperOptions = [
-  "Connecticut",
-  "Connecticut Broadleaf",
-  "Natural",
-  "Maduro",
-  "Habano",
-  "Corojo",
-  "Cameroon",
-  "Sumatra",
-  "Oscuro",
-  "Candela",
-  "Colorado",
-  "Criollo",
-  "San Andrés",
-];
 
 const Toggle = ({
   label,
@@ -121,8 +97,6 @@ const InventoryStep = ({
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block"><span className={labelClassName}>Brand</span><input className={inputClassName} value={data.inventoryBrand} onChange={(e) => onFieldChange("inventoryBrand", e.target.value)} placeholder="Padron" /></label>
-          <label className="block"><span className={labelClassName}>Manufacturer</span><input className={inputClassName} value={data.inventoryManufacturer} onChange={(e) => onFieldChange("inventoryManufacturer", e.target.value)} placeholder="Padron Cigars" /></label>
-          <label className="block"><span className={labelClassName}>Country of origin</span><input className={inputClassName} value={data.inventoryCountry} onChange={(e) => onFieldChange("inventoryCountry", e.target.value)} placeholder="Nicaragua" /></label>
           <label className="block"><span className={labelClassName}>Size</span><input className={inputClassName} value={data.inventorySize} onChange={(e) => onFieldChange("inventorySize", e.target.value)} placeholder="Toro" /></label>
           <div>
             <span className={labelClassName}>Wrapper</span>
@@ -139,19 +113,19 @@ const InventoryStep = ({
                 <SelectValue placeholder="Choose one" />
               </SelectTrigger>
               <SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]">
-                {wrapperOptions.map((option) => (
+                {CIGAR_WRAPPER_OPTIONS.map((option) => (
                   <SelectItem
-                    key={option}
-                    value={option}
+                    key={option.value}
+                    value={option.value}
                     className="focus:bg-[#4b391b] focus:text-[#f1d993]"
                   >
-                    {option}
+                    {option.title}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div><span className={labelClassName}>Strength</span><Select value={data.inventoryStrength} onValueChange={(value) => onFieldChange("inventoryStrength", value)}><SelectTrigger aria-label="Strength" className={`${inputClassName} shadow-none`}><SelectValue placeholder="Select strength" /></SelectTrigger><SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]"><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="mild">Mild</SelectItem><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="medium">Medium</SelectItem><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="medium-full">Medium-Full</SelectItem><SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" value="full">Full</SelectItem></SelectContent></Select></div>
+          <div><span className={labelClassName}>Strength</span><Select value={data.inventoryStrength} onValueChange={(value) => onFieldChange("inventoryStrength", value)}><SelectTrigger aria-label="Strength" className={`${inputClassName} shadow-none`}><SelectValue placeholder="Select strength" /></SelectTrigger><SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]">{CIGAR_STRENGTH_OPTIONS.map(option => <SelectItem key={option.value} className="focus:bg-[#4b391b] focus:text-[#f1d993]" value={option.value}>{option.title}</SelectItem>)}</SelectContent></Select></div>
         </div>
         <label className="block"><span className={labelClassName}>Description</span><textarea className={textareaClassName} value={data.inventoryDescription} onChange={(e) => onFieldChange("inventoryDescription", e.target.value)} placeholder="A premium handmade Nicaraguan cigar." /></label>
         <div>
@@ -160,7 +134,7 @@ const InventoryStep = ({
             Choose any pairings that complement this cigar.
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {pairingOptions.map((option) => {
+            {CIGAR_PAIRING_OPTIONS.map(({ value: option }) => {
               const selected =
                 data.inventoryPairingSuggestions.includes(option);
 

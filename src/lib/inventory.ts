@@ -5,9 +5,7 @@ export type InventoryItem = {
   masterCigarId?: string;
   name?: string;
   brand?: string;
-  manufacturer?: string;
-  country?: string;
-  strength?: "mild" | "medium" | "medium-full" | "full";
+  strength?: "mild" | "mild-medium" | "medium" | "medium-full" | "full";
   wrapper?: string;
   size?: string;
   smokingTime?: "30" | "60" | "90" | "120+";
@@ -20,6 +18,7 @@ export type InventoryItem = {
   shelfColumn: number;
   quantity: number;
   price: number;
+  pricePerBox: number;
   lowStockThreshold?: number;
   status?: "active" | "under_review" | "out_of_stock" | "inactive";
   isStaffPick?: boolean;
@@ -39,9 +38,7 @@ export type InventoryInput = {
   masterCigarId: string;
   name: string;
   brand: string;
-  manufacturer: string;
-  country: string;
-  strength: "" | "mild" | "medium" | "medium-full" | "full";
+  strength: "" | "mild" | "mild-medium" | "medium" | "medium-full" | "full";
   wrapper: string;
   size: string;
   smokingTime: "" | "30" | "60" | "90" | "120+";
@@ -53,6 +50,7 @@ export type InventoryInput = {
   shelfColumn: string;
   quantity: string;
   price: string;
+  pricePerBox: string;
   lowStockThreshold: string;
   isStaffPick: boolean;
   staffPickNote: string;
@@ -66,17 +64,14 @@ export type InventoryInput = {
 
 export type MasterCigar = {
   _id: string;
-  name: string;
+  productLine: string;
   brand: string;
-  manufacturer?: string;
-  country?: string;
-  price?: number;
-  strength?: "mild" | "medium" | "medium-full" | "full";
+  strength?: string;
   wrapper?: string;
-  size?: string;
-  smokingTime?: string;
-  image?: string;
-  description?: string;
+  estimatedSmokingTime?: string;
+  pairingSuggestions?: string[];
+  suggestedRetailPriceEach?: number;
+  suggestedRetailPricePerBox?: number;
 };
 
 export type InventoryPage = { data: InventoryItem[]; meta: { page: number; limit: number; total: number } };
@@ -108,7 +103,7 @@ export async function getShelfInventory(token: string, signal?: AbortSignal) {
 }
 
 export async function getMasterCigars(token: string, searchTerm: string, signal?: AbortSignal): Promise<MasterCigar[]> {
-  const params = new URLSearchParams({ status: "active", searchTerm: searchTerm.trim(), limit: "10", page: "1", sortBy: "name", sortOrder: "asc" });
+  const params = new URLSearchParams({ status: "active", searchTerm: searchTerm.trim(), limit: "10", page: "1", sortBy: "productLine", sortOrder: "asc" });
   const result = await request<{ data: MasterCigar[] }>(`/master-database?${params}`, token, undefined, signal);
   return result.data || [];
 }

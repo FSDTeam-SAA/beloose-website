@@ -34,6 +34,7 @@ type ProductCardProps = {
 
 const strengthStyles: Record<string, string> = {
   mild: "border-emerald-600/60 bg-emerald-950/70 text-emerald-400",
+  "mild-medium": "border-lime-600/60 bg-lime-950/60 text-lime-400",
   medium: "border-amber-600/55 bg-amber-950/60 text-amber-400",
   "medium-full": "border-orange-600/60 bg-orange-950/60 text-orange-400",
   full: "border-red-600/55 bg-red-950/60 text-red-400",
