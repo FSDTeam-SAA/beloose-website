@@ -13,8 +13,11 @@ export type InventoryItem = {
   description?: string;
   pairingSuggestions?: string[];
   humidorId: string;
+  wallId?: string;
+  wallName?: string;
+  shelfId?: string;
   shelfName: string;
-  shelfRow: number;
+  shelfRow?: number;
   shelfColumn: number;
   quantity: number;
   price: number;
@@ -45,8 +48,9 @@ export type InventoryInput = {
   description: string;
   pairingSuggestions: string[];
   humidorId: string;
+  wallId: string;
+  shelfId: string;
   shelfName: string;
-  shelfRow: string;
   shelfColumn: string;
   quantity: string;
   price: string;

@@ -269,7 +269,7 @@ export default function QuizContainer() {
                             </span>
                             <span className="inline-flex items-center gap-1 text-[#A88E6D]">
                               <MapPin className="h-3 w-3" />
-                              {[item.shelfName, item.shelfRow && item.shelfColumn ? `R${item.shelfRow} C${item.shelfColumn}` : undefined].filter(Boolean).join(" · ") || "Ask store staff"}
+                              {[item.wallName, item.shelfName, item.shelfColumn ? `C${item.shelfColumn}` : undefined].filter(Boolean).join(" · ") || "Ask store staff"}
                             </span>
                           </div>
                         </div>
@@ -294,7 +294,7 @@ export default function QuizContainer() {
                                 strength: item.strength,
                                 image: item.image,
                                 origin: item.wrapper,
-                                description: [item.size, item.shelfName, item.shelfRow && item.shelfColumn ? `R${item.shelfRow} C${item.shelfColumn}` : undefined]
+                                description: [item.size, item.wallName, item.shelfName, item.shelfColumn ? `C${item.shelfColumn}` : undefined]
                                   .filter(Boolean)
                                   .join(" · "),
                                 badges: [

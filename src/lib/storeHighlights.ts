@@ -10,6 +10,7 @@ export type StoreHighlight = {
   quantity: number;
   description?: string;
   shelfName?: string;
+  wallName?: string;
   shelfRow?: number;
   shelfColumn?: number;
   humidorName?: string;

@@ -11,6 +11,7 @@ export type CustomerSearchItem = {
   quantity: number;
   inStock: boolean;
   shelfName?: string;
+  wallName?: string;
   shelfRow?: number;
   shelfColumn?: number;
   humidorName?: string;
@@ -24,7 +25,7 @@ export type CustomerSearchDetail = CustomerSearchItem & {
   isOnDiscount?: boolean;
   isFeaturedToday?: boolean;
   recommendationNote?: string;
-  location?: { humidorName?: string; shelfName?: string; shelfRow?: number; shelfColumn?: number };
+  location?: { humidorName?: string; wallName?: string; shelfName?: string; shelfRow?: number; shelfColumn?: number };
 };
 
 export type CustomerSearchFilters = {

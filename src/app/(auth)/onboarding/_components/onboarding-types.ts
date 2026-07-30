@@ -10,8 +10,13 @@ export type OnboardingData = {
   humidorName: string;
   humidorLocation: string;
   humidorDescription: string;
-  shelfes: Array<{ name: string; description: string; rows: string; columns: string }>;
+  wallName: string;
+  wallDescription: string;
+  wallColumns: string;
+  shelfes: Array<{ _id?: string; name: string; description: string }>;
   humidorId: string;
+  inventoryWallId: string;
+  inventoryShelfId: string;
   inventoryName: string;
   inventoryBrand: string;
   inventoryStrength: string;
@@ -20,7 +25,6 @@ export type OnboardingData = {
   inventoryDescription: string;
   inventoryPairingSuggestions: string[];
   inventoryShelfName: string;
-  inventoryShelfRow: string;
   inventoryShelfColumn: string;
   inventoryQuantity: string;
   inventoryPrice: string;
@@ -60,8 +64,11 @@ export type InventoryData = Pick<
   | "inventorySize"
   | "inventoryDescription"
   | "inventoryPairingSuggestions"
+  | "wallName"
+  | "wallColumns"
   | "inventoryShelfName"
-  | "inventoryShelfRow"
+  | "inventoryWallId"
+  | "inventoryShelfId"
   | "inventoryShelfColumn"
   | "inventoryQuantity"
   | "inventoryPrice"
@@ -76,7 +83,7 @@ export type InventoryData = Pick<
   | "shelfes"
 >;
 
-export type InventoryField = Exclude<keyof InventoryData, "shelfes">;
+export type InventoryField = Exclude<keyof InventoryData, "shelfes" | "wallName" | "wallColumns">;
 
 export const inputClassName =
   "h-11 w-full rounded-[7px] border border-[#6f5528] bg-[#3B2D16]/65 px-3.5 text-sm text-white outline-none transition placeholder:text-[#9E9277] hover:border-[#8B6A32] focus:border-[#CBA24A] focus:ring-2 focus:ring-[#CBA24A]/20";

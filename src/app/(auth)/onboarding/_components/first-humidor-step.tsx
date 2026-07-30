@@ -10,7 +10,7 @@ import {
 type FirstHumidorStepProps = OnboardingStepProps & {
   onShelfChange: (
     index: number,
-    field: "name" | "description" | "rows" | "columns",
+    field: "name" | "description",
     value: string,
   ) => void;
   onAddShelf: () => void;
@@ -33,9 +33,9 @@ const FirstHumidorStep = ({
           <Box className="h-4 w-4" />
         </span>
         <div>
-          <h2 className="text-sm font-semibold text-[#F5E7C2]">Humidor details</h2>
+          <h2 className="text-sm font-semibold text-[#F5E7C2]">Humidor room details</h2>
           <p className="mt-0.5 text-xs text-[#B7A887]">
-            Create the storage area for your first inventory items.
+            The humidor represents the complete shop room.
           </p>
         </div>
       </div>
@@ -63,9 +63,9 @@ const FirstHumidorStep = ({
             <Layers3 className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-[#F5E7C2]">Shelves</h2>
+            <h2 className="text-sm font-semibold text-[#F5E7C2]">First wall and shelf rows</h2>
             <p className="mt-0.5 text-xs text-[#B7A887]">
-              Add and label the shelves inside this humidor.
+              A wall contains horizontal shelf rows and numbered columns.
             </p>
           </div>
         </div>
@@ -74,22 +74,27 @@ const FirstHumidorStep = ({
           onClick={onAddShelf}
           className="flex h-9 shrink-0 items-center gap-1.5 rounded-[7px] border border-[#D5AB48]/60 px-3 text-xs font-medium text-[#D5AB48] transition hover:bg-[#D5AB48]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CBA24A]"
         >
-          <Plus className="h-4 w-4" /> Add shelf
+          <Plus className="h-4 w-4" /> Add shelf row
         </button>
       </div>
 
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <label className="block"><span className={labelClassName}>Wall name <Required /></span><input className={inputClassName} name="wallName" value={data.wallName} onChange={onChange} placeholder="e.g. Wall 1" required /></label>
+        <label className="block"><span className={labelClassName}>Wall columns <Required /></span><input className={inputClassName} name="wallColumns" type="number" min="1" max="100" value={data.wallColumns} onChange={onChange} required /></label>
+        <label className="block sm:col-span-2"><span className={labelClassName}>Wall description</span><input className={inputClassName} name="wallDescription" value={data.wallDescription} onChange={onChange} placeholder="e.g. Left-side wall" /></label>
+      </div>
       <div className="space-y-3">
         {data.shelfes.map((shelf, index) => (
           <div key={index} className="rounded-lg border border-[#6f5528] bg-[#3B2D16]/35 p-4">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[#D5AB48]">
-                Shelf {index + 1}
+                Shelf row {index + 1}
               </span>
               {data.shelfes.length > 1 ? (
                 <button
                   type="button"
                   onClick={() => onRemoveShelf(index)}
-                  aria-label={`Remove shelf ${index + 1}`}
+                  aria-label={`Remove shelf row ${index + 1}`}
                   className="flex h-8 w-8 items-center justify-center rounded-md text-[#B7A887] transition hover:bg-red-400/10 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -99,19 +104,11 @@ const FirstHumidorStep = ({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className={labelClassName}>Shelf name <Required /></span>
-                <input className={inputClassName} value={shelf.name} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "name", event.target.value)} placeholder="e.g. Top shelf" required />
+                <input className={inputClassName} value={shelf.name} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "name", event.target.value)} placeholder="e.g. Shelf 1" required />
               </label>
               <label className="block">
                 <span className={labelClassName}>Contents <Required /></span>
                 <input className={inputClassName} value={shelf.description} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "description", event.target.value)} placeholder="e.g. Premium cigars" required />
-              </label>
-              <label className="block">
-                <span className={labelClassName}>Rows <Required /></span>
-                <input className={inputClassName} type="number" min="1" max="100" step="1" inputMode="numeric" value={shelf.rows} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "rows", event.target.value)} placeholder="e.g. 5" required />
-              </label>
-              <label className="block">
-                <span className={labelClassName}>Columns <Required /></span>
-                <input className={inputClassName} type="number" min="1" max="100" step="1" inputMode="numeric" value={shelf.columns} onChange={(event: ChangeEvent<HTMLInputElement>) => onShelfChange(index, "columns", event.target.value)} placeholder="e.g. 4" required />
               </label>
             </div>
           </div>
