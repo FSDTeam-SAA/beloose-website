@@ -143,9 +143,9 @@ const ProductDetailsContainer = () => {
   }
 
   const product = query.data!;
-  const shelfPosition = product.shelfRow && product.shelfColumn
-    ? `Row ${product.shelfRow}, Column ${product.shelfColumn}`
-    : undefined;
+  const shelfPosition = [product.wallName, product.shelfName, product.shelfColumn ? `Column ${product.shelfColumn}` : undefined]
+    .filter(Boolean)
+    .join(" · ") || undefined;
   const displayPrice =
     product.displayPrice ??
     product.featuredPrice ??

@@ -11,6 +11,7 @@ export type InventoryDetails = {
   flavorNotes?: string[];
   pairingSuggestions?: string[];
   shelfName?: string;
+  wallName?: string;
   shelfRow?: number;
   shelfColumn?: number;
   humidorName?: string;

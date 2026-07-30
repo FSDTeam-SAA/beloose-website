@@ -10,6 +10,7 @@ export type StoreInventoryItem = {
   description?: string;
   pairingSuggestions?: string[];
   shelfName?: string;
+  wallName?: string;
   shelfRow?: number;
   shelfColumn?: number;
   quantity: number;

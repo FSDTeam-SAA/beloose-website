@@ -2,9 +2,15 @@ export type HumidorShelf = {
   _id: string;
   name: string;
   description?: string;
-  rows: number;
-  columns: number;
   cigarCount: number;
+};
+
+export type HumidorWall = {
+  _id: string;
+  name: string;
+  description?: string;
+  columns: number;
+  shelves: HumidorShelf[];
 };
 
 export type Humidor = {
@@ -12,7 +18,9 @@ export type Humidor = {
   name: string;
   location?: string;
   description?: string;
-  shelfes: HumidorShelf[];
+  walls: HumidorWall[];
+  /** Legacy data returned for rooms created before wall management. */
+  shelfes?: (HumidorShelf & { rows: number; columns: number })[];
   isActive: boolean;
 };
 
@@ -58,14 +66,27 @@ export function deleteHumidor(token: string, id: string) {
 export type HumidorShelfInput = {
   name: string;
   description?: string;
-  rows: number;
-  columns: number;
 };
 
-export function addHumidorShelf(token: string, id: string, payload: HumidorShelfInput) {
-  return humidorRequest<Humidor>(`/humidor/${id}/shelf`, token, { method: "POST", body: JSON.stringify(payload) });
+export type HumidorWallInput = {
+  name: string;
+  description?: string;
+  columns: number;
+  shelves?: HumidorShelfInput[];
+};
+
+export function addHumidorWall(token: string, id: string, payload: HumidorWallInput) {
+  return humidorRequest<Humidor>(`/humidor/${id}/wall`, token, { method: "POST", body: JSON.stringify(payload) });
 }
 
-export function updateHumidorShelfGrid(token: string, id: string, shelfId: string, payload: Pick<HumidorShelfInput, "rows" | "columns">) {
-  return humidorRequest<Humidor>(`/humidor/${id}/shelf/${shelfId}/grid`, token, { method: "PUT", body: JSON.stringify(payload) });
+export function updateHumidorWall(token: string, id: string, wallId: string, payload: Partial<HumidorWallInput>) {
+  return humidorRequest<Humidor>(`/humidor/${id}/wall/${wallId}`, token, { method: "PUT", body: JSON.stringify(payload) });
+}
+
+export function deleteHumidorWall(token: string, id: string, wallId: string) {
+  return humidorRequest<Humidor>(`/humidor/${id}/wall/${wallId}`, token, { method: "DELETE" });
+}
+
+export function addHumidorShelf(token: string, id: string, wallId: string, payload: HumidorShelfInput) {
+  return humidorRequest<Humidor>(`/humidor/${id}/wall/${wallId}/shelf`, token, { method: "POST", body: JSON.stringify(payload) });
 }

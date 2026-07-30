@@ -11,6 +11,7 @@ export type SurprisePickItem = {
   quantity: number;
   location: {
     humidorName?: string;
+    wallName?: string;
     shelfName?: string;
     shelfRow?: number;
     shelfColumn?: number;
