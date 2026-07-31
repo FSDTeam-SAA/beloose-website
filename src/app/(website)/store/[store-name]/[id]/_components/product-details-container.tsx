@@ -143,7 +143,7 @@ const ProductDetailsContainer = () => {
   }
 
   const product = query.data!;
-  const shelfPosition = [product.wallName, product.shelfName, product.shelfColumn ? `Column ${product.shelfColumn}` : undefined]
+  const shelfLocation = [product.humidorName, product.wallName, product.shelfName]
     .filter(Boolean)
     .join(" · ") || undefined;
   const displayPrice =
@@ -211,7 +211,8 @@ const ProductDetailsContainer = () => {
                 ["Strength", titleCase(product.strength)],
                 ["Size", product.size],
                 ["Wrapper", product.wrapper],
-                ["Location", [product.humidorName, product.shelfName, shelfPosition].filter(Boolean).join(" · ")],
+                ["Location", shelfLocation],
+                ["Shelf Column", product.shelfColumn],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl border border-white/[0.09] bg-[#191715] p-3">
                   <dt className="text-[10px] text-[#837C74]">{label}</dt>
@@ -314,11 +315,12 @@ const ProductDetailsContainer = () => {
               <MapPin className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="grid gap-2 sm:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   ["Humidor", product.humidorName],
-                  ["Shelf", product.shelfName],
-                  ["Position", shelfPosition],
+                  ["Wall", product.wallName],
+                  ["Shelf Row", product.shelfName],
+                  ["Shelf Column", product.shelfColumn],
                 ].map(([label, value]) => (
                   <div
                     key={label}

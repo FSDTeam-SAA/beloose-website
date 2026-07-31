@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import CigarImage from "@/components/common/cigar-image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { searchCustomerInventory, type CustomerSearchFilters, type CustomerSearchItem } from "@/lib/customerSearch";
-import { CIGAR_STRENGTH_OPTIONS } from "@/lib/cigarOptions";
+import { CIGAR_SIZE_OPTIONS, CIGAR_STRENGTH_OPTIONS } from "@/lib/cigarOptions";
 import { getMyRetailer } from "@/lib/retailer";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Compass, Filter, PackageSearch, Search, X } from "lucide-react";

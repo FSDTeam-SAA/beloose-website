@@ -11,7 +11,7 @@ import {
 import Image from "next/image";
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CIGAR_PAIRING_OPTIONS, CIGAR_STRENGTH_OPTIONS, CIGAR_WRAPPER_OPTIONS } from "@/lib/cigarOptions";
+import { CIGAR_PAIRING_OPTIONS, CIGAR_SIZE_OPTIONS, CIGAR_STRENGTH_OPTIONS, CIGAR_WRAPPER_OPTIONS } from "@/lib/cigarOptions";
 import {
   inputClassName,
   labelClassName,
@@ -93,7 +93,31 @@ const InventoryStep = ({
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block"><span className={labelClassName}>Brand</span><input className={inputClassName} value={data.inventoryBrand} onChange={(e) => onFieldChange("inventoryBrand", e.target.value)} placeholder="Padron" /></label>
-          <label className="block"><span className={labelClassName}>Size</span><input className={inputClassName} value={data.inventorySize} onChange={(e) => onFieldChange("inventorySize", e.target.value)} placeholder="Toro" /></label>
+          <div>
+            <span className={labelClassName}>Size</span>
+            <Select
+              value={data.inventorySize || undefined}
+              onValueChange={(value) => onFieldChange("inventorySize", value)}
+            >
+              <SelectTrigger
+                aria-label="Size"
+                className={`${inputClassName} shadow-none`}
+              >
+                <SelectValue placeholder="Choose one" />
+              </SelectTrigger>
+              <SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]">
+                {CIGAR_SIZE_OPTIONS.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    className="focus:bg-[#4b391b] focus:text-[#f1d993]"
+                  >
+                    {option.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <span className={labelClassName}>Wrapper</span>
             <Select
@@ -181,7 +205,7 @@ const InventoryStep = ({
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block"><span className={labelClassName}>Wall</span><input className={inputClassName} value={data.wallName} disabled /></label>
         <div><span className={labelClassName}>Shelf row</span><Select value={data.inventoryShelfId || undefined} onValueChange={(value) => { const shelf = data.shelfes.find(item => item._id === value); onFieldChange("inventoryShelfId", value); onFieldChange("inventoryShelfName", shelf?.name.trim() || ""); onFieldChange("inventoryShelfColumn", "1"); }}><SelectTrigger aria-label="Shelf row" className={`${inputClassName} shadow-none`}><SelectValue placeholder="Select a shelf row" /></SelectTrigger><SelectContent className="border-[#6f5528] bg-[#2b2112] text-[#e5e1dc]">{data.shelfes.filter(shelf => shelf._id).map(shelf => <SelectItem className="focus:bg-[#4b391b] focus:text-[#f1d993]" key={shelf._id} value={shelf._id!}>{shelf.name}</SelectItem>)}</SelectContent></Select></div>
-        <label className="block"><span className={labelClassName}>Column</span><input className={inputClassName} type="number" min="1" max={Number(data.wallColumns)} value={data.inventoryShelfColumn} onChange={(e) => onFieldChange("inventoryShelfColumn", e.target.value)} placeholder="1" /></label>
+        <label className="block"><span className={labelClassName}>Shelf column</span><input className={inputClassName} type="number" min="1" max={Number(data.wallColumns)} step="1" inputMode="numeric" value={data.inventoryShelfColumn} onChange={(e) => onFieldChange("inventoryShelfColumn", e.target.value)} placeholder="1" /></label>
         <label className="block"><span className={labelClassName}>Quantity</span><input className={inputClassName} type="number" min="0" value={data.inventoryQuantity} onChange={(e) => onFieldChange("inventoryQuantity", e.target.value)} placeholder="10" /></label>
         <label className="block"><span className={labelClassName}>Price ($)</span><input className={inputClassName} type="number" min="0" step="0.01" value={data.inventoryPrice} onChange={(e) => onFieldChange("inventoryPrice", e.target.value)} placeholder="25.99" /></label>
         <label className="block"><span className={labelClassName}>Low stock alert</span><input className={inputClassName} type="number" min="0" value={data.lowStockThreshold} onChange={(e) => onFieldChange("lowStockThreshold", e.target.value)} placeholder="5" /></label>

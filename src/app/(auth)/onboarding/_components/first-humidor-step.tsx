@@ -80,7 +80,22 @@ const FirstHumidorStep = ({
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
         <label className="block"><span className={labelClassName}>Wall name <Required /></span><input className={inputClassName} name="wallName" value={data.wallName} onChange={onChange} placeholder="e.g. Wall 1" required /></label>
-        <label className="block"><span className={labelClassName}>Wall columns <Required /></span><input className={inputClassName} name="wallColumns" type="number" min="1" max="100" value={data.wallColumns} onChange={onChange} required /></label>
+        <label className="block">
+          <span className={labelClassName}>Shelf columns per row <Required /></span>
+          <input
+            className={inputClassName}
+            name="wallColumns"
+            type="number"
+            min="1"
+            max="100"
+            step="1"
+            inputMode="numeric"
+            value={data.wallColumns}
+            onChange={onChange}
+            placeholder="e.g. 4"
+            required
+          />
+        </label>
         <label className="block sm:col-span-2"><span className={labelClassName}>Wall description</span><input className={inputClassName} name="wallDescription" value={data.wallDescription} onChange={onChange} placeholder="e.g. Left-side wall" /></label>
       </div>
       <div className="space-y-3">

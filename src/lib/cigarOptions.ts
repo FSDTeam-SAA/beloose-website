@@ -29,6 +29,23 @@ export const CIGAR_WRAPPER_OPTIONS = [
   { value: "Pennsylvania Broadleaf", title: "Pennsylvania Broadleaf", description: "Dark, earthy & powerfully rich", icon: "🍂" },
 ] as const;
 
+export const CIGAR_SIZE_OPTIONS = [
+  { value: "Petit Corona", title: "Petit Corona" },
+  { value: "Gordito", title: "Gordito" },
+  { value: "Robusto", title: "Robusto" },
+  { value: "Corona", title: "Corona" },
+  { value: "Toro", title: "Toro" },
+  { value: "Gordo", title: "Gordo" },
+  { value: "Panatela", title: "Panatela" },
+  { value: "Lonsdale", title: "Lonsdale" },
+  { value: "Churchill", title: "Churchill" },
+  { value: "Lancero", title: "Lancero" },
+  { value: "Double Corona", title: "Double Corona" },
+  { value: "Gran Corona", title: "Gran Corona" },
+] as const;
+
+export type CigarSize = (typeof CIGAR_SIZE_OPTIONS)[number]["value"];
+
 export const CIGAR_PAIRING_OPTIONS = [
   { value: "Cigar + Whiskey", title: "Cigar + Whiskey", description: "Classic pairing for medium or full-bodied cigars", icon: "🥃" },
   { value: "Cigar + Aged Rum", title: "Cigar + Aged Rum", description: "Sweet caramel and vanilla notes", icon: "🍹" },
