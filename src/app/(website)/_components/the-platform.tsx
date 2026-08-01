@@ -1,16 +1,16 @@
-"use client";
+'use client'
 
-import { Skeleton } from "@/components/ui/skeleton";
-import LandingContentState from "@/components/website/landing-content-state";
-import LandingImage from "@/components/website/landing-image";
-import { landingText } from "@/lib/landingText";
+import { Skeleton } from '@/components/ui/skeleton'
+import LandingContentState from '@/components/website/landing-content-state'
+import LandingImage from '@/components/website/landing-image'
+import { landingText } from '@/lib/landingText'
 import {
   getRetailerPlatform,
   type RetailerPlatformFeature,
-} from "@/lib/retailerLanding";
-import { useQuery } from "@tanstack/react-query";
+} from '@/lib/retailerLanding'
+import { useQuery } from '@tanstack/react-query'
 import {
-  ArrowRight,
+  // ArrowRight,
   BarChart3,
   Box,
   Crown,
@@ -20,58 +20,58 @@ import {
   Users,
   Warehouse,
   type LucideIcon,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+} from 'lucide-react'
+import Image from 'next/image'
+// import Link from "next/link";
 
 const fallbackPlatform = {
-  image: "/assets/images/the-platform.jpg",
-  platformLabel: "The Platform",
-  title: "Why Retailers Choose",
-  highlightedTitle: "Humidor411",
+  image: '/assets/images/the-platform.jpg',
+  platformLabel: 'The Platform',
+  title: 'Why Retailers Choose',
+  highlightedTitle: 'Humidor411',
   description:
-    "Purpose-built for premium cigar retailers — not adapted from generic inventory software. Every feature serves the specific demands of your business and your customers.",
-  imageLabel: "Designed for the Discerning Retailer",
-  imageTitle: "Six tools. One seamless platform.",
+    'Purpose-built for premium cigar retailers — not adapted from generic inventory software. Every feature serves the specific demands of your business and your customers.',
+  imageLabel: 'Designed for the Discerning Retailer',
+  imageTitle: 'Six tools. One seamless platform.',
   features: [
     {
-      icon: "package",
-      title: "Inventory Management",
+      icon: 'package',
+      title: 'Inventory Management',
       description:
-        "Receive shipments, track stock levels, and manage your entire catalog with precision. Never lose sight of what you carry.",
+        'Receive shipments, track stock levels, and manage your entire catalog with precision. Never lose sight of what you carry.',
     },
     {
-      icon: "warehouse",
-      title: "Humidor Management",
+      icon: 'warehouse',
+      title: 'Humidor Management',
       description:
-        "Map every cigar to its exact location inside any humidor. Know where everything lives, down to the shelf.",
+        'Map every cigar to its exact location inside any humidor. Know where everything lives, down to the shelf.',
     },
     {
-      icon: "qr-code",
-      title: "QR Customer Experience",
+      icon: 'qr-code',
+      title: 'QR Customer Experience',
       description:
-        "Customers scan, discover, and explore your inventory independently - freeing staff to sell, recommend, and build relationships.",
+        'Customers scan, discover, and explore your inventory independently - freeing staff to sell, recommend, and build relationships.',
     },
     {
-      icon: "grid",
-      title: "Shelf Assignment",
+      icon: 'grid',
+      title: 'Shelf Assignment',
       description:
-        "Assign precise shelf locations for every product. Build a living, accurate map of your floor at all times.",
+        'Assign precise shelf locations for every product. Build a living, accurate map of your floor at all times.',
     },
     {
-      icon: "users",
-      title: "Staff Productivity",
+      icon: 'users',
+      title: 'Staff Productivity',
       description:
-        "Streamline daily workflows so your team focuses on high-value interactions - recommendations, upsells, and loyal relationships.",
+        'Streamline daily workflows so your team focuses on high-value interactions - recommendations, upsells, and loyal relationships.',
     },
     {
-      icon: "bar-chart",
-      title: "Business Insights",
+      icon: 'bar-chart',
+      title: 'Business Insights',
       description:
-        "Understand what sells, what sits, and where revenue comes from. Make smarter buying decisions with every reorder.",
+        'Understand what sells, what sits, and where revenue comes from. Make smarter buying decisions with every reorder.',
     },
   ],
-};
+}
 
 const iconMap: Record<string, LucideIcon> = {
   box: Box,
@@ -79,54 +79,56 @@ const iconMap: Record<string, LucideIcon> = {
   inventory: Package,
   warehouse: Warehouse,
   humidor: Warehouse,
-  "qr-code": QrCode,
+  'qr-code': QrCode,
   qrcode: QrCode,
   qr: QrCode,
   grid: Grid2X2,
   shelf: Grid2X2,
   users: Users,
   staff: Users,
-  "bar-chart": BarChart3,
+  'bar-chart': BarChart3,
   analytics: BarChart3,
   insights: BarChart3,
-};
+}
 
 function getFeatureIcon(feature: RetailerPlatformFeature) {
-  const key = feature.icon?.trim().toLowerCase().replace(/[\s_]+/g, "-") || "";
-  return iconMap[key] || Box;
+  const key =
+    feature.icon
+      ?.trim()
+      .toLowerCase()
+      .replace(/[\s_]+/g, '-') || ''
+  return iconMap[key] || Box
 }
 
 const ThePlatform = () => {
   const query = useQuery({
-    queryKey: ["retailer-landing", "platform"],
+    queryKey: ['retailer-landing', 'platform'],
     queryFn: ({ signal }) => getRetailerPlatform(signal),
     staleTime: 5 * 60_000,
     retry: 1,
     refetchOnWindowFocus: false,
-  });
+  })
 
-  if (query.isLoading) return <PlatformSkeleton />;
+  if (query.isLoading) return <PlatformSkeleton />
 
-  const live = query.data;
+  const live = query.data
   const liveFeatures =
     live?.features?.filter(
-      (feature) =>
+      feature =>
         landingText(feature?.title) || landingText(feature?.description),
-    ) || [];
+    ) || []
   const content = {
     image: live?.image?.trim() || fallbackPlatform.image,
     platformLabel:
       landingText(live?.platformLabel) || fallbackPlatform.platformLabel,
     title: landingText(live?.title) || fallbackPlatform.title,
     highlightedTitle:
-      landingText(live?.highlightedTitle) ||
-      fallbackPlatform.highlightedTitle,
-    description:
-      landingText(live?.description) || fallbackPlatform.description,
+      landingText(live?.highlightedTitle) || fallbackPlatform.highlightedTitle,
+    description: landingText(live?.description) || fallbackPlatform.description,
     imageLabel: landingText(live?.imageLabel) || fallbackPlatform.imageLabel,
     imageTitle: landingText(live?.imageTitle) || fallbackPlatform.imageTitle,
     features: liveFeatures.length ? liveFeatures : fallbackPlatform.features,
-  };
+  }
 
   return (
     <section className="bg-[#150b04] py-16 text-[#d7c08c] sm:py-20 lg:py-[88px]">
@@ -137,7 +139,7 @@ const ThePlatform = () => {
               {content.platformLabel}
             </p>
             <h2 className="max-w-[470px] font-serif text-[36px] font-bold leading-[1.02] text-[#f3dfaf] sm:text-[44px] lg:text-[48px]">
-              {content.title}{" "}
+              {content.title}{' '}
               <span className="block italic text-[#d4a23f]">
                 {content.highlightedTitle}
               </span>
@@ -172,34 +174,34 @@ const ThePlatform = () => {
 
         <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {content.features.map((feature, index) => {
-            const Icon = getFeatureIcon(feature);
+            const Icon = getFeatureIcon(feature)
             return (
               <article
-                key={`${feature.title || "Platform feature"}-${index}`}
+                key={`${feature.title || 'Platform feature'}-${index}`}
                 className="rounded-[5px] border border-[#5c3714]/45 bg-[#201207] p-5 shadow-[0_18px_38px_rgba(0,0,0,0.12)]"
               >
                 <div className="mb-5 flex h-8 w-8 items-center justify-center rounded-[5px] border border-[#d3a33e]/45 bg-[#9e741e]/35 text-[#d3a33e]">
                   <Icon className="h-4 w-4" strokeWidth={1.6} />
                 </div>
                 <h3 className="font-serif text-[14px] font-bold leading-none text-[#f2ddb0]">
-                  {landingText(feature.title) || "Platform feature"}
+                  {landingText(feature.title) || 'Platform feature'}
                 </h3>
                 <p className="mt-4 text-[10px] leading-[1.35] text-[#a98f5d]">
                   {landingText(feature.description) ||
-                    "More details about this platform feature are coming soon."}
+                    'More details about this platform feature are coming soon.'}
                 </p>
               </article>
-            );
+            )
           })}
         </div>
 
         {(query.isError || !live) && (
           <LandingContentState
-            type={query.isError ? "error" : "empty"}
+            type={query.isError ? 'error' : 'empty'}
             message={
               query.isError
-                ? "Live platform content could not be loaded. Showing the default content."
-                : "No platform content was found. Showing the default content."
+                ? 'Live platform content could not be loaded. Showing the default content.'
+                : 'No platform content was found. Showing the default content.'
             }
             onRetry={query.isError ? () => void query.refetch() : undefined}
           />
@@ -224,19 +226,19 @@ const ThePlatform = () => {
             <h3 className="max-w-[720px] font-serif text-[22px] font-bold leading-tight text-[#f4dfad] sm:text-[24px]">
               Subscribe To Our Monthly Package to Get The Best Experience
             </h3>
-            <Link
+            {/* <Link
               href="/subscription"
               className="mt-5 inline-flex h-8 min-w-[162px] items-center justify-center gap-3 rounded-[3px] bg-[#d5a33d] px-5 text-[11px] font-semibold text-[#1c1006] transition hover:bg-[#e0b657] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f0cf76]"
             >
               Subscribe Now
               <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
 function PlatformSkeleton() {
   return (
@@ -261,7 +263,7 @@ function PlatformSkeleton() {
         <Skeleton className="mt-20 h-[142px] w-full bg-[#34200e]" />
       </div>
     </section>
-  );
+  )
 }
 
-export default ThePlatform;
+export default ThePlatform
