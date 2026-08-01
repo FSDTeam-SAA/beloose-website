@@ -1,50 +1,49 @@
-"use client";
+'use client'
 
-import { Skeleton } from "@/components/ui/skeleton";
-import LandingImage from "@/components/website/landing-image";
-import { landingText } from "@/lib/landingText";
-import { getRetailerAbout } from "@/lib/retailerLanding";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Check } from "lucide-react";
-import Link from "next/link";
+import { Skeleton } from '@/components/ui/skeleton'
+import LandingImage from '@/components/website/landing-image'
+import { landingText } from '@/lib/landingText'
+import { getRetailerAbout } from '@/lib/retailerLanding'
+import { useQuery } from '@tanstack/react-query'
+import { Check } from 'lucide-react'
+// import Link from "next/link";
 
 const fallbackAbout = {
-  image: "/assets/images/ForRetailers.png",
-  title: "Run Your Shop Smarter",
+  image: '/assets/images/ForRetailers.png',
+  title: 'Run Your Shop Smarter',
   description:
-    "Manage cigars, humidors, and inventory with precision. Humidor411 gives your team the tools to organize every product, every shelf, and every walk-in with confidence.",
+    'Manage cigars, humidors, and inventory with precision. Humidor411 gives your team the tools to organize every product, every shelf, and every walk-in with confidence.',
   features: [
-    "Organize cigars by humidor, shelf, and row",
-    "Real-time inventory tracking and alerts",
-    "QR codes generated per product location",
-    "Staff management and role-based access",
-    "Sales analytics and trending product reports",
-    "Multi-location humidor management",
+    'Organize cigars by humidor, shelf, and row',
+    'Real-time inventory tracking and alerts',
+    'QR codes generated per product location',
+    'Staff management and role-based access',
+    'Sales analytics and trending product reports',
+    'Multi-location humidor management',
   ],
-};
+}
 
 const ForRetailers = () => {
   const query = useQuery({
-    queryKey: ["retailer-landing", "about"],
+    queryKey: ['retailer-landing', 'about'],
     queryFn: ({ signal }) => getRetailerAbout(signal),
     staleTime: 5 * 60_000,
     retry: 1,
     refetchOnWindowFocus: false,
-  });
+  })
 
-  if (query.isLoading) return <ForRetailersSkeleton />;
+  if (query.isLoading) return <ForRetailersSkeleton />
 
-  const live = query.data;
-  const features =
-    live?.features?.map(landingText).filter(Boolean) || [];
+  const live = query.data
+  const features = live?.features?.map(landingText).filter(Boolean) || []
   const content = {
     image: live?.image?.trim() || fallbackAbout.image,
     title: landingText(live?.title) || fallbackAbout.title,
     description: landingText(live?.description) || fallbackAbout.description,
     features: features.length ? features : fallbackAbout.features,
-  };
-  const titleParts = content.title.split(/\s+/);
-  const highlightedTitle = titleParts.pop();
+  }
+  const titleParts = content.title.split(/\s+/)
+  const highlightedTitle = titleParts.pop()
 
   return (
     <section className="bg-[#150b04] py-14 text-[#d4bd86] sm:py-16 lg:py-[76px]">
@@ -68,11 +67,9 @@ const ForRetailers = () => {
             </p>
 
             <h2 className="max-w-[480px] font-serif text-[38px] font-bold leading-[0.95] text-[#f5dfaa] sm:text-[48px] lg:text-[56px]">
-              {titleParts.join(" ")}{" "}
+              {titleParts.join(' ')}{' '}
               {highlightedTitle && (
-                <span className="block text-[#d1a13c]">
-                  {highlightedTitle}
-                </span>
+                <span className="block text-[#d1a13c]">{highlightedTitle}</span>
               )}
             </h2>
 
@@ -81,7 +78,7 @@ const ForRetailers = () => {
             </p>
 
             <ul className="mt-8 space-y-3">
-              {content.features.map((feature) => (
+              {content.features.map(feature => (
                 <li
                   key={feature}
                   className="flex items-start gap-3 text-[13px] leading-none text-[#c3aa78]"
@@ -92,19 +89,19 @@ const ForRetailers = () => {
               ))}
             </ul>
 
-            <Link
+            {/* <Link
               href="/services"
               className="mt-9 inline-flex h-10 items-center justify-center gap-3 rounded-[4px] bg-[#d4a43d] px-5 text-[12px] font-semibold text-[#1c1006] shadow-[0_16px_32px_rgba(0,0,0,0.18)] transition hover:bg-[#e0b657] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f0cf76]"
             >
               Explore More Products
               <ArrowRight className="h-4 w-4" />
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
 function ForRetailersSkeleton() {
   return (
@@ -127,7 +124,7 @@ function ForRetailersSkeleton() {
         </div>
       </div>
     </section>
-  );
+  )
 }
 
-export default ForRetailers;
+export default ForRetailers

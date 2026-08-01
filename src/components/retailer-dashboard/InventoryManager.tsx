@@ -1,178 +1,1963 @@
-"use client";
+'use client'
 
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select as ShadcnSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import CigarImage from "@/components/common/cigar-image";
-import { CIGAR_PAIRING_OPTIONS, CIGAR_STRENGTH_OPTIONS, CIGAR_WRAPPER_OPTIONS } from "@/lib/cigarOptions";
-import { getHumidors, type Humidor } from "@/lib/humidors";
-import { createInventory, deleteInventory, getInventory, getInventoryOpportunities, getMasterCigars, recordInventorySale, updateInventory, type InventoryInput, type InventoryItem, type MasterCigar } from "@/lib/inventory";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Check, ChevronsUpDown, CircleMinus, Eye, LoaderCircle, PackageOpen, Pencil, Plus, Search, Trash2, TriangleAlert, X } from "lucide-react";
-import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { FormEvent, useDeferredValue, useEffect, useState } from "react";
-import { toast } from "sonner";
-import DashboardState from "./DashboardState";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Calendar } from '@/components/ui/calendar'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  Select as ShadcnSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import CigarImage from '@/components/common/cigar-image'
+import {
+  CIGAR_PAIRING_OPTIONS,
+  CIGAR_SIZE_OPTIONS,
+  CIGAR_STRENGTH_OPTIONS,
+  CIGAR_WRAPPER_OPTIONS,
+} from '@/lib/cigarOptions'
+import { getHumidors, type Humidor } from '@/lib/humidors'
+import {
+  createInventory,
+  deleteInventory,
+  getInventory,
+  getInventoryOpportunities,
+  getMasterCigars,
+  recordInventorySale,
+  updateInventory,
+  type InventoryInput,
+  type InventoryItem,
+  type MasterCigar,
+} from '@/lib/inventory'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  CalendarDays,
+  Check,
+  ChevronsUpDown,
+  CircleMinus,
+  Eye,
+  LoaderCircle,
+  PackageOpen,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  TriangleAlert,
+  X,
+} from 'lucide-react'
+import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+import { FormEvent, useDeferredValue, useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import DashboardState from './DashboardState'
 
-type Mode = "inventory" | "opportunities";
-type Modal = { type: "add" } | { type: "sale" | "view" | "edit" | "delete"; item: InventoryItem } | null;
-const inputClass = "h-10 w-full rounded border border-[#9c7b49] bg-[#68462f] px-3 text-xs text-[#eadcb9] outline-none placeholder:text-[#bca37b] focus:border-[#d1a23f]";
-const wrapperOptions = CIGAR_WRAPPER_OPTIONS.map(option => option.value);
-const smokingTimeOptions = [{ value: "30", label: "30 minutes" }, { value: "60", label: "1 hour" }, { value: "90", label: "1.5 hours" }, { value: "120+", label: "2+ hours" }];
-const pairingOptions = CIGAR_PAIRING_OPTIONS;
+type Mode = 'inventory' | 'opportunities'
+type Modal =
+  | { type: 'add' }
+  | { type: 'sale' | 'view' | 'edit' | 'delete'; item: InventoryItem }
+  | null
+const inputClass =
+  'h-10 w-full rounded border border-[#9c7b49] bg-[#68462f] px-3 text-xs text-[#eadcb9] outline-none placeholder:text-[#bca37b] focus:border-[#d1a23f]'
+const wrapperOptions = CIGAR_WRAPPER_OPTIONS.map(option => option.value)
+const sizeOptions = CIGAR_SIZE_OPTIONS.map(option => ({
+  value: option.value,
+  label: option.title,
+}))
+const smokingTimeOptions = [
+  { value: '30', label: '30 minutes' },
+  { value: '60', label: '1 hour' },
+  { value: '90', label: '1.5 hours' },
+  { value: '120+', label: '2+ hours' },
+]
+const pairingOptions = CIGAR_PAIRING_OPTIONS
 
-export default function InventoryManager({ mode = "inventory" }: { mode?: Mode }) {
-  const { data: session, status } = useSession();
-  const token = (session?.user as { accessToken?: string } | undefined)?.accessToken;
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [days, setDays] = useState(90);
-  const [modal, setModal] = useState<Modal>(null);
-  const queryClient = useQueryClient();
-  useEffect(() => { const timer = window.setTimeout(() => { setPage(1); setDebouncedSearch(search); }, 350); return () => window.clearTimeout(timer); }, [search]);
-  const inventoryQuery = useQuery({ queryKey: ["inventory", page, debouncedSearch], queryFn: ({ signal }) => getInventory(token!, page, debouncedSearch, signal), enabled: Boolean(token) && mode === "inventory" });
-  const opportunityQuery = useQuery({ queryKey: ["inventory-opportunities", days], queryFn: ({ signal }) => getInventoryOpportunities(token!, days, signal), enabled: Boolean(token) && mode === "opportunities" });
-  const humidorQuery = useQuery({ queryKey: ["humidors"], queryFn: ({ signal }) => getHumidors(token!, signal), enabled: Boolean(token) });
-  const refresh = async () => { await Promise.all([queryClient.invalidateQueries({ queryKey: ["inventory"] }), queryClient.invalidateQueries({ queryKey: ["inventory-opportunities"] }), queryClient.invalidateQueries({ queryKey: ["feature-inventory"] }), queryClient.invalidateQueries({ queryKey: ["customer-search"] }), queryClient.invalidateQueries({ queryKey: ["retailer-dashboard"] })]); setModal(null); };
-  const createMutation = useMutation({ mutationFn: (input: InventoryInput) => createInventory(token!, input), onSuccess: async () => { toast.success("Inventory added successfully"); await refresh(); }, onError: showError });
-  const updateMutation = useMutation({ mutationFn: ({ id, input }: { id: string; input: InventoryInput }) => updateInventory(token!, id, input), onSuccess: async () => { toast.success("Inventory updated successfully"); await refresh(); }, onError: showError });
-  const deleteMutation = useMutation({ mutationFn: (id: string) => deleteInventory(token!, id), onSuccess: async () => { toast.success("Inventory deleted successfully"); await refresh(); }, onError: showError });
-  const saleMutation = useMutation({ mutationFn: ({ item, quantitySold }: { item: InventoryItem; quantitySold: number }) => recordInventorySale(token!, item._id, quantitySold), onSuccess: async (result, { quantitySold }) => { toast.success(`${quantitySold} ${quantitySold === 1 ? "unit" : "units"} sold successfully`); if (result.notification) toast.warning(result.notification.message); await refresh(); }, onError: showError });
-  const currentQuery = mode === "inventory" ? inventoryQuery : opportunityQuery;
-  const pending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending || saleMutation.isPending;
-
-  if (status === "loading" || currentQuery.isLoading || humidorQuery.isLoading || (status === "authenticated" && !token)) return <InventorySkeleton mode={mode}/>;
-  if (!token) return <DashboardState type="error" title="Couldn’t load inventory" message="Your session token is missing. Please log in again."/>;
-  if (currentQuery.isError || humidorQuery.isError) { const error = currentQuery.error || humidorQuery.error; return <DashboardState type="error" title={`Couldn’t load ${mode === "inventory" ? "inventory" : "opportunities"}`} message={error instanceof Error ? error.message : "Something went wrong while loading inventory."} onRetry={() => { currentQuery.refetch(); humidorQuery.refetch(); }}/>; }
-
-  const items = mode === "inventory" ? inventoryQuery.data?.data || [] : opportunityQuery.data?.data || [];
-  const humidors = humidorQuery.data || [];
-  const total = inventoryQuery.data?.meta.total || 0;
-  const limit = inventoryQuery.data?.meta.limit || 12;
-  const pageCount = Math.max(1, Math.ceil(total / limit));
-
-  return <div className="min-h-[calc(100vh-72px)] bg-[#3b2918] p-3 sm:p-4">
-    {mode === "inventory" ? <><div className="flex justify-end"><button type="button" onClick={() => setModal({ type: "add" })} className="flex h-10 min-w-40 items-center justify-center gap-2 rounded bg-[#d3a440] px-5 text-xs font-semibold text-[#291806] transition hover:-translate-y-0.5 hover:bg-[#e0b653]"><Plus size={16}/>Add Inventory</button></div><label className="mt-4 flex h-11 items-center gap-2 rounded-lg border border-[#76552b] bg-[#2d1a08] px-3"><Search size={16} className="text-[#a98b5c]"/><span className="sr-only">Search inventory</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search inventory..." className="h-full flex-1 bg-transparent text-xs outline-none placeholder:text-[#a98b5c]"/></label></> : <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#76552b] bg-[#2d1a08] p-3"><p className="text-[10px] text-[#a98b5c]">Showing active cigars with no sale for the selected period.</p><div className="flex items-center gap-2 text-[10px]"><span>Lookback</span><ShadcnSelect value={String(days)} onValueChange={value => setDays(Number(value))}><SelectTrigger aria-label="Lookback period" className="h-9 w-[116px] border-[#80602f] bg-[#513719] px-3 text-[10px] shadow-none focus:ring-[#d1a23f]"><SelectValue /></SelectTrigger><SelectContent className="border-[#80602f] bg-[#2d1a08] text-[#eadcb9]">{[30, 60, 90, 180].map(value => <SelectItem className="text-[10px] focus:bg-[#513719] focus:text-[#f3dda4]" key={value} value={String(value)}>{value} days</SelectItem>)}</SelectContent></ShadcnSelect></div></div>}
-
-    {items.length ? mode === "inventory" ? <InventoryTable items={items} humidors={humidors} recordSale={item => setModal({ type: "sale", item })} view={item => setModal({ type: "view", item })} edit={item => setModal({ type: "edit", item })} remove={item => setModal({ type: "delete", item })}/> : <OpportunityList items={items} edit={item => setModal({ type: "edit", item })} remove={item => setModal({ type: "delete", item })}/> : <Empty mode={mode} searching={Boolean(debouncedSearch)}/>}
-    {mode === "inventory" && items.length > 0 && pageCount > 1 && <nav className="mt-4 flex flex-wrap items-center justify-between gap-3 text-[10px]" aria-label="Inventory pagination"><span>Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}</span><div className="flex gap-2"><button type="button" disabled={page === 1} onClick={() => setPage(value => Math.max(1, value - 1))} className="h-9 rounded border border-[#8d7144] px-4 disabled:opacity-40">Previous</button><span className="grid h-9 min-w-9 place-items-center rounded bg-[#d1a13d] px-2 text-[#2a1807]">{page} / {pageCount}</span><button type="button" disabled={page === pageCount} onClick={() => setPage(value => Math.min(pageCount, value + 1))} className="h-9 rounded border border-[#8d7144] px-4 disabled:opacity-40">Next</button></div></nav>}
-
-    <Dialog open={Boolean(modal)} onOpenChange={open => { if (!open && !pending) setModal(null); }}><DialogContent className="dashboard-copy dashboard-scrollbar max-h-[90vh] max-w-[560px] overflow-y-auto border-[#76552b] bg-[#573621] text-[#f4dfa8]">
-      {modal?.type === "add" && <InventoryForm token={token} humidors={humidors} pending={pending} close={() => setModal(null)} submit={input => createMutation.mutate(input)}/>}
-      {modal?.type === "edit" && <InventoryForm key={modal.item._id} item={modal.item} humidors={humidors} pending={pending} close={() => setModal(null)} submit={input => updateMutation.mutate({ id: modal.item._id, input })}/>}
-      {modal?.type === "sale" && <RecordSaleDialog key={modal.item._id} item={modal.item} pending={pending} close={() => setModal(null)} confirm={quantitySold => saleMutation.mutate({ item: modal.item, quantitySold })}/>}
-      {modal?.type === "view" && <InventoryDetails item={modal.item} humidors={humidors}/>}
-      {modal?.type === "delete" && <DeleteDialog item={modal.item} pending={pending} close={() => setModal(null)} confirm={() => deleteMutation.mutate(modal.item._id)}/>}
-    </DialogContent></Dialog>
-  </div>;
-}
-
-function InventoryTable({ items, humidors, recordSale, view, edit, remove }: { items: InventoryItem[]; humidors: Humidor[]; recordSale: (item: InventoryItem) => void; view: (item: InventoryItem) => void; edit: (item: InventoryItem) => void; remove: (item: InventoryItem) => void }) {
-  const headers = ["Product", "Brand", "Location", "Qty", "Minimum", "Retail", "Stock", "Review Status", "Actions"];
-
-  return <div className="dashboard-scrollbar mt-4 overflow-x-auto rounded-lg border border-[#745326]">
-    <table className="w-full min-w-[1040px] border-collapse bg-[#2d1a08] text-[10px]">
-      <thead className="bg-[#211305]"><tr>{headers.map(label => <th key={label} className="h-11 px-4 text-left text-[10px] font-medium text-[#a98b5c]">{label}</th>)}</tr></thead>
-      <tbody>{items.map(item => {
-        const low = item.quantity <= (item.lowStockThreshold ?? 5);
-        const humidor = humidors.find(value => value._id === item.humidorId);
-        return <tr key={item._id} className="border-t border-[#5f401d] transition hover:bg-[#34200e]">
-          <td className="h-[58px] px-4"><div className="flex items-center gap-2"><Thumbnail item={item}/><strong className="max-w-52 truncate text-xs font-medium text-[#ead8ae]">{item.name || "Unnamed cigar"}</strong></div></td>
-          <Cell>{item.brand || "—"}</Cell>
-          <td className="whitespace-nowrap px-4"><span className="block text-[10px] text-[#d8bc84]">{[humidor?.name, item.wallName, item.shelfName].filter(Boolean).join(" · ") || "Not set"}</span><small className="mt-0.5 block text-[9px] text-[#8d7651]">{item.shelfColumn ? `Column ${item.shelfColumn}` : "Position not set"}</small></td>
-          <Cell>{item.quantity}</Cell>
-          <Cell>{item.lowStockThreshold ?? 5}</Cell>
-          <Cell gold>{formatPrice(item.price)}</Cell>
-          <td className="px-4"><StockBadge low={low} empty={item.quantity === 0}/></td>
-          <td className="px-4"><StatusBadge status={item.status}/></td>
-          <td className="px-4"><div className="flex gap-1"><IconButton label={`Record sale for ${item.name || "inventory"}`} onClick={() => recordSale(item)} disabled={item.quantity === 0}><CircleMinus size={15}/></IconButton><IconButton label={`View ${item.name || "inventory"}`} onClick={() => view(item)}><Eye size={15}/></IconButton><IconButton label={`Edit ${item.name || "inventory"}`} onClick={() => edit(item)}><Pencil size={15}/></IconButton><IconButton label={`Delete ${item.name || "inventory"}`} onClick={() => remove(item)} danger><Trash2 size={15}/></IconButton></div></td>
-        </tr>;
-      })}</tbody>
-    </table>
-  </div>;
-}
-function OpportunityList({ items, edit, remove }: { items: InventoryItem[]; edit: (item: InventoryItem) => void; remove: (item: InventoryItem) => void }) { return <section className="space-y-2.5">{items.map(item => <article key={item._id} className="flex items-center gap-3 rounded-lg border border-[#80602f] bg-[#2d1a08] p-4"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-amber-500/50 bg-amber-500/10 text-amber-400"><TriangleAlert size={17}/></span><div className="min-w-0 flex-1"><h2 className="truncate font-playfair text-sm text-[#ead8ae]">{item.name || "Unnamed cigar"}</h2><p className="mt-1 flex flex-wrap gap-x-2 text-[9px] text-[#a98b5c]"><span>Stock: <b className="text-[#d5a744]">{item.quantity}</b></span><span>Minimum: {item.lowStockThreshold ?? 5}</span><span>Retail: {formatPrice(item.price)}</span>{item.daysSinceLastSale !== null && item.daysSinceLastSale !== undefined && <span>No sale for {item.daysSinceLastSale} days</span>}{item.neverSearched && <span>Never searched</span>}</p></div><div className="flex shrink-0 gap-2"><IconButton label={`Edit ${item.name || "inventory"}`} onClick={() => edit(item)}><Pencil size={15}/></IconButton><IconButton label={`Delete ${item.name || "inventory"}`} onClick={() => remove(item)} danger><Trash2 size={15}/></IconButton></div></article>)}</section>; }
-
-function InventoryForm({ item, token, humidors, pending, close, submit }: { item?: InventoryItem; token?: string; humidors: Humidor[]; pending: boolean; close: () => void; submit: (input: InventoryInput) => void }) {
-  const initialHumidor = item?.humidorId || humidors[0]?._id || "";
-  const initialWalls = humidors.find(humidor => humidor._id === initialHumidor)?.walls || [];
-  const initialWall = item?.wallId || (initialWalls.length === 1 ? initialWalls[0]._id : "");
-  const initialShelves = initialWalls.find(wall => wall._id === initialWall)?.shelves || [];
-  const [values, setValues] = useState<InventoryInput>({ masterCigarId: item?.masterCigarId || "", name: item?.name || "", brand: item?.brand || "", strength: item?.strength || "", wrapper: item?.wrapper || "", size: item?.size || "", smokingTime: item?.smokingTime || "", description: item?.description || "", pairingSuggestions: item?.pairingSuggestions || [], humidorId: initialHumidor, wallId: initialWall, shelfId: item?.shelfId || (initialShelves.length === 1 ? initialShelves[0]._id : ""), shelfName: item?.shelfName || (initialShelves.length === 1 ? initialShelves[0].name : ""), shelfColumn: String(item?.shelfColumn || 1), quantity: String(item?.quantity ?? 0), price: String(item?.price ?? 0), pricePerBox: String(item?.pricePerBox ?? 0), lowStockThreshold: String(item?.lowStockThreshold ?? 5), isStaffPick: item?.isStaffPick || false, staffPickNote: item?.staffPickNote || "", staffPickBy: item?.staffPickBy || "", isNewArrival: item?.isNewArrival || false, arrivalDate: dateInput(item?.arrivalDate), isDailyFeatured: item?.isDailyFeatured || false, featuredNote: item?.featuredNote || "" });
-  const [imagePreview, setImagePreview] = useState(item?.image || "");
-  const selectedHumidor = humidors.find(humidor => humidor._id === values.humidorId);
-  const selectedWall = selectedHumidor?.walls?.find(wall => wall._id === values.wallId);
-  const selectedShelf = selectedWall?.shelves?.find(shelf => shelf._id === values.shelfId);
-  const [error, setError] = useState("");
+export default function InventoryManager({
+  mode = 'inventory',
+}: {
+  mode?: Mode
+}) {
+  const { data: session, status } = useSession()
+  const token = (session?.user as { accessToken?: string } | undefined)
+    ?.accessToken
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [days, setDays] = useState(90)
+  const [modal, setModal] = useState<Modal>(null)
+  const queryClient = useQueryClient()
   useEffect(() => {
-    if (!values.wallId && selectedHumidor?.walls?.length === 1) setValues(current => ({ ...current, wallId: selectedHumidor.walls[0]._id }));
-    else if (!values.shelfId && selectedWall?.shelves?.length === 1) setValues(current => ({ ...current, shelfId: selectedWall.shelves[0]._id, shelfName: selectedWall.shelves[0].name }));
-  }, [selectedHumidor, selectedWall, values.wallId, values.shelfId]);
-  useEffect(() => () => { if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview); }, [imagePreview]);
-  const chooseMasterCigar = (master?: MasterCigar) => { if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview); setValues(current => master ? ({ ...current, masterCigarId: master._id, name: master.productLine, brand: master.brand, strength: normalizeStrength(master.strength) || current.strength, wrapper: master.wrapper || current.wrapper, smokingTime: normalizeSmokingTime(master.estimatedSmokingTime) || current.smokingTime, pairingSuggestions: master.pairingSuggestions?.filter(Boolean) || [], price: typeof master.suggestedRetailPriceEach === "number" ? String(master.suggestedRetailPriceEach) : current.price, pricePerBox: typeof master.suggestedRetailPricePerBox === "number" ? String(master.suggestedRetailPricePerBox) : current.pricePerBox, image: undefined }) : ({ ...current, masterCigarId: "" })); };
-  const chooseInventoryImage = (file?: File) => { if (imagePreview.startsWith("blob:")) URL.revokeObjectURL(imagePreview); setImagePreview(file ? URL.createObjectURL(file) : item?.image || ""); setValues(current => ({ ...current, image: file })); };
-  const onSubmit = (event: FormEvent) => { event.preventDefault(); setError(""); if (!values.name.trim()) return setError("Product line is required."); if (!values.strength) return setError("Please choose a strength."); if (!values.wrapper) return setError("Please choose a wrapper."); if (!values.smokingTime) return setError("Please choose a smoking time."); if (!values.humidorId) return setError("Please choose a humidor room."); if (!selectedWall) return setError("Please choose a wall."); if (!selectedShelf) return setError("Please choose a shelf."); const column = Number(values.shelfColumn); if (!Number.isInteger(column) || column < 1 || column > selectedWall.columns) return setError(`Choose a column from 1–${selectedWall.columns}.`); if (Number(values.quantity) < 0 || Number(values.price) < 0 || Number(values.pricePerBox) < 0 || Number(values.lowStockThreshold) < 0) return setError("Quantity, prices, and minimum stock cannot be negative."); if (values.isStaffPick && (!values.staffPickBy.trim() || !values.staffPickNote.trim())) return setError("Staff name and note are required for a Staff Pick."); submit({ ...values, shelfName: selectedShelf.name, name: values.name.trim(), brand: values.brand.trim(), wrapper: values.wrapper.trim(), size: values.size.trim(), description: values.description.trim(), staffPickBy: values.staffPickBy.trim(), staffPickNote: values.staffPickNote.trim(), featuredNote: values.featuredNote.trim() }); };
-  return <><DialogHeader><DialogTitle className="font-playfair text-lg text-[#d5a744]">{item ? "Edit Inventory" : "Add Inventory"}</DialogTitle><DialogDescription className="text-[10px] text-[#bca37b]">Choose an active master cigar to fill all available product details, or enter a custom cigar for review.</DialogDescription></DialogHeader><form onSubmit={onSubmit} className="space-y-3">{!item && token && <MasterCigarPicker token={token} selectedId={values.masterCigarId} selectedLabel={values.masterCigarId ? `${values.brand} — ${values.name}` : undefined} onSelect={chooseMasterCigar}/>}<div className="grid gap-3 sm:grid-cols-2"><Field label="Product Line" value={values.name} onChange={name => setValues(current => ({ ...current, name }))} required/><Field label="Brand" value={values.brand} onChange={brand => setValues(current => ({ ...current, brand }))}/><Select label="Strength" value={values.strength} onChange={strength => setValues(current => ({ ...current, strength: strength as InventoryInput["strength"] }))} options={CIGAR_STRENGTH_OPTIONS.map(option => ({ value: option.value, label: option.title }))} required/><Select label="Wrapper" value={values.wrapper} onChange={wrapper => setValues(current => ({ ...current, wrapper }))} options={wrapperOptions} required/><Field label="Size" value={values.size} onChange={size => setValues(current => ({ ...current, size }))}/><Select label="Smoking Time" value={values.smokingTime} onChange={smokingTime => setValues(current => ({ ...current, smokingTime: smokingTime as InventoryInput["smokingTime"] }))} options={smokingTimeOptions} required/><Select label="Discovery Type" value={values.isNewArrival ? "new" : "familiar"} onChange={value => setValues(current => ({ ...current, isNewArrival: value === "new", arrivalDate: value === "new" ? current.arrivalDate : "" }))} options={[{ value: "familiar", label: "Something Familiar" }, { value: "new", label: "Try Something New" }]} required/><Select label="Humidor Room" value={values.humidorId} onChange={humidorId => setValues(current => ({ ...current, humidorId, wallId: "", shelfId: "", shelfName: "", shelfColumn: "1" }))} options={humidors.map(humidor => ({ value: humidor._id, label: humidor.name }))} required/><Select label="Wall" value={values.wallId} onChange={wallId => setValues(current => ({ ...current, wallId, shelfId: "", shelfName: "", shelfColumn: "1" }))} options={(selectedHumidor?.walls || []).map(wall => ({ value: wall._id, label: `${wall.name} — ${wall.columns} columns` }))} required/><Select label="Shelf Row" value={values.shelfId} onChange={shelfId => { const shelf = selectedWall?.shelves.find(value => value._id === shelfId); setValues(current => ({ ...current, shelfId, shelfName: shelf?.name || "", shelfColumn: "1" })); setError(""); }} options={(selectedWall?.shelves || []).map(shelf => ({ value: shelf._id, label: shelf.name }))} required/><GridPositionField label="Column" value={values.shelfColumn} max={selectedWall?.columns} onChange={shelfColumn => setValues(current => ({ ...current, shelfColumn }))}/><Field label="Quantity" type="number" value={values.quantity} onChange={quantity => setValues(current => ({ ...current, quantity }))} required/><Field label="Retail Price (Each)" type="number" value={values.price} onChange={price => setValues(current => ({ ...current, price }))} required/><Field label="Retail Price (Box)" type="number" value={values.pricePerBox} onChange={pricePerBox => setValues(current => ({ ...current, pricePerBox }))} required/><Field label="Minimum Stock" type="number" value={values.lowStockThreshold} onChange={lowStockThreshold => setValues(current => ({ ...current, lowStockThreshold }))}/></div><TextArea label="Description" value={values.description} onChange={description => setValues(current => ({ ...current, description }))}/><PairingSuggestionsInput values={values.pairingSuggestions} onChange={pairingSuggestions => setValues(current => ({ ...current, pairingSuggestions }))}/><InventoryImageField name={values.name} preview={imagePreview} onChange={chooseInventoryImage}/><FeatureFields values={values} setValues={setValues}/>{error && <p role="alert" className="rounded border border-red-400/30 bg-red-500/10 p-2 text-[10px] text-red-200">{error}</p>}<Actions pending={pending} close={close} action={item ? "Save Changes" : "Add Inventory"}/></form></>;
+    const timer = window.setTimeout(() => {
+      setPage(1)
+      setDebouncedSearch(search)
+    }, 350)
+    return () => window.clearTimeout(timer)
+  }, [search])
+  const inventoryQuery = useQuery({
+    queryKey: ['inventory', page, debouncedSearch],
+    queryFn: ({ signal }) =>
+      getInventory(token!, page, debouncedSearch, signal),
+    enabled: Boolean(token) && mode === 'inventory',
+  })
+  const opportunityQuery = useQuery({
+    queryKey: ['inventory-opportunities', days],
+    queryFn: ({ signal }) => getInventoryOpportunities(token!, days, signal),
+    enabled: Boolean(token) && mode === 'opportunities',
+  })
+  const humidorQuery = useQuery({
+    queryKey: ['humidors'],
+    queryFn: ({ signal }) => getHumidors(token!, signal),
+    enabled: Boolean(token),
+  })
+  const refresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['inventory'] }),
+      queryClient.invalidateQueries({ queryKey: ['inventory-opportunities'] }),
+      queryClient.invalidateQueries({ queryKey: ['feature-inventory'] }),
+      queryClient.invalidateQueries({ queryKey: ['customer-search'] }),
+      queryClient.invalidateQueries({ queryKey: ['retailer-dashboard'] }),
+    ])
+    setModal(null)
+  }
+  const createMutation = useMutation({
+    mutationFn: (input: InventoryInput) => createInventory(token!, input),
+    onSuccess: async () => {
+      toast.success('Inventory added successfully')
+      await refresh()
+    },
+    onError: showError,
+  })
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: InventoryInput }) =>
+      updateInventory(token!, id, input),
+    onSuccess: async () => {
+      toast.success('Inventory updated successfully')
+      await refresh()
+    },
+    onError: showError,
+  })
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteInventory(token!, id),
+    onSuccess: async () => {
+      toast.success('Inventory deleted successfully')
+      await refresh()
+    },
+    onError: showError,
+  })
+  const saleMutation = useMutation({
+    mutationFn: ({
+      item,
+      quantitySold,
+    }: {
+      item: InventoryItem
+      quantitySold: number
+    }) => recordInventorySale(token!, item._id, quantitySold),
+    onSuccess: async (result, { quantitySold }) => {
+      toast.success(
+        `${quantitySold} ${quantitySold === 1 ? 'unit' : 'units'} sold successfully`,
+      )
+      if (result.notification) toast.warning(result.notification.message)
+      await refresh()
+    },
+    onError: showError,
+  })
+  const currentQuery = mode === 'inventory' ? inventoryQuery : opportunityQuery
+  const pending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending ||
+    saleMutation.isPending
+
+  if (
+    status === 'loading' ||
+    currentQuery.isLoading ||
+    humidorQuery.isLoading ||
+    (status === 'authenticated' && !token)
+  )
+    return <InventorySkeleton mode={mode} />
+  if (!token)
+    return (
+      <DashboardState
+        type="error"
+        title="Couldn’t load inventory"
+        message="Your session token is missing. Please log in again."
+      />
+    )
+  if (currentQuery.isError || humidorQuery.isError) {
+    const error = currentQuery.error || humidorQuery.error
+    return (
+      <DashboardState
+        type="error"
+        title={`Couldn’t load ${mode === 'inventory' ? 'inventory' : 'opportunities'}`}
+        message={
+          error instanceof Error
+            ? error.message
+            : 'Something went wrong while loading inventory.'
+        }
+        onRetry={() => {
+          currentQuery.refetch()
+          humidorQuery.refetch()
+        }}
+      />
+    )
+  }
+
+  const items =
+    mode === 'inventory'
+      ? inventoryQuery.data?.data || []
+      : opportunityQuery.data?.data || []
+  const humidors = humidorQuery.data || []
+  const total = inventoryQuery.data?.meta.total || 0
+  const limit = inventoryQuery.data?.meta.limit || 12
+  const pageCount = Math.max(1, Math.ceil(total / limit))
+
+  return (
+    <div className="min-h-[calc(100vh-72px)] bg-[#3b2918] p-3 sm:p-4">
+      {mode === 'inventory' ? (
+        <>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setModal({ type: 'add' })}
+              className="flex h-10 min-w-40 items-center justify-center gap-2 rounded bg-[#d3a440] px-5 text-xs font-semibold text-[#291806] transition hover:-translate-y-0.5 hover:bg-[#e0b653]"
+            >
+              <Plus size={16} />
+              Add Inventory
+            </button>
+          </div>
+          <label className="mt-4 flex h-11 items-center gap-2 rounded-lg border border-[#76552b] bg-[#2d1a08] px-3">
+            <Search size={16} className="text-[#a98b5c]" />
+            <span className="sr-only">Search inventory</span>
+            <input
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder="Search inventory..."
+              className="h-full flex-1 bg-transparent text-xs outline-none placeholder:text-[#a98b5c]"
+            />
+          </label>
+        </>
+      ) : (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#76552b] bg-[#2d1a08] p-3">
+          <p className="text-[10px] text-[#a98b5c]">
+            Showing active cigars with no sale for the selected period.
+          </p>
+          <div className="flex items-center gap-2 text-[10px]">
+            <span>Lookback</span>
+            <ShadcnSelect
+              value={String(days)}
+              onValueChange={value => setDays(Number(value))}
+            >
+              <SelectTrigger
+                aria-label="Lookback period"
+                className="h-9 w-[116px] border-[#80602f] bg-[#513719] px-3 text-[10px] shadow-none focus:ring-[#d1a23f]"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-[#80602f] bg-[#2d1a08] text-[#eadcb9]">
+                {[30, 60, 90, 180].map(value => (
+                  <SelectItem
+                    className="text-[10px] focus:bg-[#513719] focus:text-[#f3dda4]"
+                    key={value}
+                    value={String(value)}
+                  >
+                    {value} days
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </ShadcnSelect>
+          </div>
+        </div>
+      )}
+
+      {items.length ? (
+        mode === 'inventory' ? (
+          <InventoryTable
+            items={items}
+            humidors={humidors}
+            recordSale={item => setModal({ type: 'sale', item })}
+            view={item => setModal({ type: 'view', item })}
+            edit={item => setModal({ type: 'edit', item })}
+            remove={item => setModal({ type: 'delete', item })}
+          />
+        ) : (
+          <OpportunityList
+            items={items}
+            edit={item => setModal({ type: 'edit', item })}
+            remove={item => setModal({ type: 'delete', item })}
+          />
+        )
+      ) : (
+        <Empty mode={mode} searching={Boolean(debouncedSearch)} />
+      )}
+      {mode === 'inventory' && items.length > 0 && pageCount > 1 && (
+        <nav
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 text-[10px]"
+          aria-label="Inventory pagination"
+        >
+          <span>
+            Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of{' '}
+            {total}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={page === 1}
+              onClick={() => setPage(value => Math.max(1, value - 1))}
+              className="h-9 rounded border border-[#8d7144] px-4 disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <span className="grid h-9 min-w-9 place-items-center rounded bg-[#d1a13d] px-2 text-[#2a1807]">
+              {page} / {pageCount}
+            </span>
+            <button
+              type="button"
+              disabled={page === pageCount}
+              onClick={() => setPage(value => Math.min(pageCount, value + 1))}
+              className="h-9 rounded border border-[#8d7144] px-4 disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        </nav>
+      )}
+
+      <Dialog
+        open={Boolean(modal)}
+        onOpenChange={open => {
+          if (!open && !pending) setModal(null)
+        }}
+      >
+        <DialogContent className="dashboard-copy dashboard-scrollbar max-h-[90vh] max-w-[560px] overflow-y-auto border-[#76552b] bg-[#573621] text-[#f4dfa8]">
+          {modal?.type === 'add' && (
+            <InventoryForm
+              token={token}
+              humidors={humidors}
+              pending={pending}
+              close={() => setModal(null)}
+              submit={input => createMutation.mutate(input)}
+            />
+          )}
+          {modal?.type === 'edit' && (
+            <InventoryForm
+              key={modal.item._id}
+              item={modal.item}
+              humidors={humidors}
+              pending={pending}
+              close={() => setModal(null)}
+              submit={input =>
+                updateMutation.mutate({ id: modal.item._id, input })
+              }
+            />
+          )}
+          {modal?.type === 'sale' && (
+            <RecordSaleDialog
+              key={modal.item._id}
+              item={modal.item}
+              pending={pending}
+              close={() => setModal(null)}
+              confirm={quantitySold =>
+                saleMutation.mutate({ item: modal.item, quantitySold })
+              }
+            />
+          )}
+          {modal?.type === 'view' && (
+            <InventoryDetails item={modal.item} humidors={humidors} />
+          )}
+          {modal?.type === 'delete' && (
+            <DeleteDialog
+              item={modal.item}
+              pending={pending}
+              close={() => setModal(null)}
+              confirm={() => deleteMutation.mutate(modal.item._id)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
 }
 
-function MasterCigarPicker({ token, selectedId, selectedLabel, onSelect }: { token: string; selectedId: string; selectedLabel?: string; onSelect: (cigar?: MasterCigar) => void }) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const deferredSearch = useDeferredValue(search.trim());
-  const canSearch = deferredSearch.length >= 2;
-  const query = useQuery({ queryKey: ["master-cigars", deferredSearch], queryFn: ({ signal }) => getMasterCigars(token, deferredSearch, signal), enabled: open && canSearch, staleTime: 60_000 });
-  const choose = (cigar?: MasterCigar) => { onSelect(cigar); setOpen(false); setSearch(""); };
-  return <div className="rounded border border-[#80602f] bg-[#34200e] p-3"><span className="mb-1.5 block text-[11px] text-[#f4dfa8]">Master Database Cigar</span><Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><button type="button" role="combobox" aria-controls="master-cigar-suggestions" aria-expanded={open} className={`${inputClass} flex items-center justify-between text-left shadow-none`}><span className={`truncate ${selectedId ? "text-[#eadcb9]" : "text-[#bca37b]"}`}>{selectedLabel || "Search by product line or brand"}</span><ChevronsUpDown className="h-4 w-4 shrink-0 opacity-60"/></button></PopoverTrigger><PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] border-[#9c7b49] bg-[#573621] p-0 text-[#eadcb9]"><label className="flex h-11 items-center gap-2 border-b border-[#80602f] px-3"><Search size={15} className="shrink-0 text-[#d5a744]"/><span className="sr-only">Search master database</span><input autoFocus value={search} onChange={event => setSearch(event.target.value)} placeholder="Type at least 2 characters..." className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-[#bca37b]"/></label><div id="master-cigar-suggestions" role="listbox" className="dashboard-scrollbar max-h-56 overflow-y-auto p-1"><button role="option" aria-selected={!selectedId} type="button" onClick={() => choose()} className="flex w-full items-center gap-2 rounded px-2.5 py-2 text-left text-xs transition hover:bg-[#68462f]"><Check className={`h-4 w-4 text-[#d5a744] ${selectedId ? "opacity-0" : "opacity-100"}`}/><span>Custom cigar — keep entered details</span></button>{!canSearch ? <p className="px-3 py-5 text-center text-[10px] text-[#bca37b]">Enter at least 2 characters to see suggestions.</p> : query.isLoading ? <p className="flex items-center justify-center gap-2 px-3 py-5 text-[10px] text-[#bca37b]"><LoaderCircle size={13} className="animate-spin"/>Searching master database...</p> : query.isError ? <div className="px-3 py-4 text-center"><p className="text-[10px] text-red-200">Couldn’t load suggestions.</p><button type="button" onClick={() => query.refetch()} className="mt-2 text-[10px] font-medium text-[#d5a744]">Try again</button></div> : query.data?.length ? query.data.map(cigar => <button role="option" aria-selected={selectedId === cigar._id} type="button" key={cigar._id} onClick={() => choose(cigar)} className="flex w-full items-start gap-2 rounded px-2.5 py-2 text-left transition hover:bg-[#68462f]"><Check className={`mt-0.5 h-4 w-4 shrink-0 text-[#d5a744] ${selectedId === cigar._id ? "opacity-100" : "opacity-0"}`}/><span className="min-w-0"><strong className="block truncate text-xs font-medium text-[#f1dbac]">{cigar.productLine}</strong><small className="mt-0.5 block truncate text-[10px] text-[#bca37b]">{[cigar.brand, cigar.strength, cigar.wrapper].filter(Boolean).join(" · ")}</small></span></button>) : <p className="px-3 py-5 text-center text-[10px] text-[#bca37b]">No active cigar matches “{deferredSearch}”.</p>}</div></PopoverContent></Popover><p className="mt-1.5 text-[9px] text-[#bca37b]">Selecting a master cigar fills every available master field. You can edit both retail prices and remaining details before saving.</p></div>;
+function InventoryTable({
+  items,
+  humidors,
+  recordSale,
+  view,
+  edit,
+  remove,
+}: {
+  items: InventoryItem[]
+  humidors: Humidor[]
+  recordSale: (item: InventoryItem) => void
+  view: (item: InventoryItem) => void
+  edit: (item: InventoryItem) => void
+  remove: (item: InventoryItem) => void
+}) {
+  const headers = [
+    'Product',
+    'Brand',
+    'Location',
+    'Qty',
+    'Minimum',
+    'Retail',
+    'Stock',
+    'Review Status',
+    'Actions',
+  ]
+
+  return (
+    <div className="dashboard-scrollbar mt-4 overflow-x-auto rounded-lg border border-[#745326]">
+      <table className="w-full min-w-[1040px] border-collapse bg-[#2d1a08] text-[10px]">
+        <thead className="bg-[#211305]">
+          <tr>
+            {headers.map(label => (
+              <th
+                key={label}
+                className="h-11 px-4 text-left text-[10px] font-medium text-[#a98b5c]"
+              >
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map(item => {
+            const low = item.quantity <= (item.lowStockThreshold ?? 5)
+            const humidor = humidors.find(value => value._id === item.humidorId)
+            return (
+              <tr
+                key={item._id}
+                className="border-t border-[#5f401d] transition hover:bg-[#34200e]"
+              >
+                <td className="h-[58px] px-4">
+                  <div className="flex items-center gap-2">
+                    <Thumbnail item={item} />
+                    <strong className="max-w-52 truncate text-xs font-medium text-[#ead8ae]">
+                      {item.name || 'Unnamed cigar'}
+                    </strong>
+                  </div>
+                </td>
+                <Cell>{item.brand || '—'}</Cell>
+                <td className="whitespace-nowrap px-4">
+                  <span className="block text-[10px] text-[#d8bc84]">
+                    {[humidor?.name, item.wallName, item.shelfName]
+                      .filter(Boolean)
+                      .join(' · ') || 'Not set'}
+                  </span>
+                  <small className="mt-0.5 block text-[9px] text-[#8d7651]">
+                    {item.shelfColumn
+                      ? `Column ${item.shelfColumn}`
+                      : 'Position not set'}
+                  </small>
+                </td>
+                <Cell>{item.quantity}</Cell>
+                <Cell>{item.lowStockThreshold ?? 5}</Cell>
+                <Cell gold>{formatPrice(item.price)}</Cell>
+                <td className="px-4">
+                  <StockBadge low={low} empty={item.quantity === 0} />
+                </td>
+                <td className="px-4">
+                  <StatusBadge status={item.status} />
+                </td>
+                <td className="px-4">
+                  <div className="flex gap-1">
+                    <IconButton
+                      label={`Record sale for ${item.name || 'inventory'}`}
+                      onClick={() => recordSale(item)}
+                      disabled={item.quantity === 0}
+                    >
+                      <CircleMinus size={15} />
+                    </IconButton>
+                    <IconButton
+                      label={`View ${item.name || 'inventory'}`}
+                      onClick={() => view(item)}
+                    >
+                      <Eye size={15} />
+                    </IconButton>
+                    <IconButton
+                      label={`Edit ${item.name || 'inventory'}`}
+                      onClick={() => edit(item)}
+                    >
+                      <Pencil size={15} />
+                    </IconButton>
+                    <IconButton
+                      label={`Delete ${item.name || 'inventory'}`}
+                      onClick={() => remove(item)}
+                      danger
+                    >
+                      <Trash2 size={15} />
+                    </IconButton>
+                  </div>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+function OpportunityList({
+  items,
+  edit,
+  remove,
+}: {
+  items: InventoryItem[]
+  edit: (item: InventoryItem) => void
+  remove: (item: InventoryItem) => void
+}) {
+  return (
+    <section className="space-y-2.5">
+      {items.map(item => (
+        <article
+          key={item._id}
+          className="flex items-center gap-3 rounded-lg border border-[#80602f] bg-[#2d1a08] p-4"
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-amber-500/50 bg-amber-500/10 text-amber-400">
+            <TriangleAlert size={17} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate font-playfair text-sm text-[#ead8ae]">
+              {item.name || 'Unnamed cigar'}
+            </h2>
+            <p className="mt-1 flex flex-wrap gap-x-2 text-[9px] text-[#a98b5c]">
+              <span>
+                Stock: <b className="text-[#d5a744]">{item.quantity}</b>
+              </span>
+              <span>Minimum: {item.lowStockThreshold ?? 5}</span>
+              <span>Retail: {formatPrice(item.price)}</span>
+              {item.daysSinceLastSale !== null &&
+                item.daysSinceLastSale !== undefined && (
+                  <span>No sale for {item.daysSinceLastSale} days</span>
+                )}
+              {item.neverSearched && <span>Never searched</span>}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <IconButton
+              label={`Edit ${item.name || 'inventory'}`}
+              onClick={() => edit(item)}
+            >
+              <Pencil size={15} />
+            </IconButton>
+            <IconButton
+              label={`Delete ${item.name || 'inventory'}`}
+              onClick={() => remove(item)}
+              danger
+            >
+              <Trash2 size={15} />
+            </IconButton>
+          </div>
+        </article>
+      ))}
+    </section>
+  )
 }
 
-function FeatureFields({ values, setValues }: { values: InventoryInput; setValues: React.Dispatch<React.SetStateAction<InventoryInput>> }) { return <div className="space-y-3 rounded border border-[#80602f] bg-[#34200e] p-3"><p className="text-[10px] font-semibold text-[#d5a744]">Optional customer features</p><div className="flex flex-wrap gap-4 text-[10px]">{[["isStaffPick", "Staff Pick"], ["isDailyFeatured", "Daily Featured"]].map(([key, label]) => <label key={key} className="flex items-center gap-1.5"><input type="checkbox" checked={Boolean(values[key as keyof InventoryInput])} onChange={event => setValues(current => ({ ...current, [key]: event.target.checked }))} className="accent-[#d1a23f]"/>{label}</label>)}</div>{values.isStaffPick && <div className="grid gap-3 sm:grid-cols-2"><Field label="Staff Pick By" value={values.staffPickBy} onChange={staffPickBy => setValues(current => ({ ...current, staffPickBy }))}/><Field label="Staff Pick Note" value={values.staffPickNote} onChange={staffPickNote => setValues(current => ({ ...current, staffPickNote }))}/></div>}{values.isNewArrival && <DateField label="Arrival Date" value={values.arrivalDate} onChange={arrivalDate => setValues(current => ({ ...current, arrivalDate }))}/>} {values.isDailyFeatured && <Field label="Featured Note" value={values.featuredNote} onChange={featuredNote => setValues(current => ({ ...current, featuredNote }))}/>}</div>; }
-function InventoryDetails({ item, humidors }: { item: InventoryItem; humidors: Humidor[] }) { const humidor = humidors.find(value => value._id === item.humidorId); return <><DialogHeader><DialogTitle className="font-playfair text-lg text-[#d5a744]">Inventory Details</DialogTitle><DialogDescription className="text-[10px] text-[#bca37b]">Current API data for this inventory item.</DialogDescription></DialogHeader><div className="flex items-center gap-3"><Thumbnail item={item} large/><div><h3 className="font-playfair text-lg text-[#ead8ae]">{item.name || "Unnamed cigar"}</h3><p className="text-[10px] text-[#a98b5c]">{item.brand || "Brand not set"}</p></div></div><div className="grid grid-cols-2 gap-3 rounded border border-[#80602f] bg-[#34200e] p-3 text-[10px] sm:grid-cols-3">{[["Strength", item.strength], ["Wrapper", item.wrapper], ["Size", item.size], ["Smoking Time", formatSmokingTime(item.smokingTime)], ["Quantity", item.quantity], ["Minimum", item.lowStockThreshold ?? 5], ["Retail (Each)", formatPrice(item.price)], ["Retail (Box)", formatPrice(item.pricePerBox)], ["Humidor Room", humidor?.name], ["Wall", item.wallName], ["Shelf Row", item.shelfName], ["Column", item.shelfColumn], ["Status", statusLabel(item.status)]].map(([label, value]) => <div key={String(label)}><span className="block text-[9px] text-[#a98b5c]">{label}</span><strong className="mt-0.5 block font-medium capitalize text-[#ead8ae]">{value ?? "—"}</strong></div>)}</div>{item.description && <p className="text-[10px] leading-relaxed text-[#bca37b]">{item.description}</p>}{item.pairingSuggestions?.length ? <div className="rounded border border-[#80602f] bg-[#34200e] p-3"><span className="text-[9px] text-[#a98b5c]">Pairing Suggestions</span><div className="mt-2 flex flex-wrap gap-1.5">{item.pairingSuggestions.map(suggestion => <span key={suggestion} className="rounded-full border border-[#9d6d18] bg-[#5a3d10] px-2.5 py-1 text-[9px] text-[#efbd43]">{suggestion}</span>)}</div></div> : null}</>; }
-function RecordSaleDialog({ item, pending, close, confirm }: { item: InventoryItem; pending: boolean; close: () => void; confirm: (quantitySold: number) => void }) {
-  const [quantity, setQuantity] = useState("1");
-  const [error, setError] = useState("");
-  const quantitySold = Number(quantity);
-  const valid = Number.isInteger(quantitySold) && quantitySold >= 1 && quantitySold <= item.quantity;
-  const remaining = valid ? item.quantity - quantitySold : item.quantity;
-  const submit = (event: FormEvent) => { event.preventDefault(); if (!Number.isInteger(quantitySold) || quantitySold < 1) return setError("Enter a whole number of at least 1."); if (quantitySold > item.quantity) return setError(`Only ${item.quantity} ${item.quantity === 1 ? "unit is" : "units are"} currently in stock.`); confirm(quantitySold); };
-  return <><DialogHeader><DialogTitle className="font-playfair text-lg text-[#d5a744]">Record Sale</DialogTitle><DialogDescription className="text-xs text-[#c6ad7e]">Record a sale of <strong className="text-[#f1dbac]">{item.name || "this inventory item"}</strong>. Current stock: <strong className="text-[#d5a744]">{item.quantity}</strong></DialogDescription></DialogHeader><form onSubmit={submit} className="mt-2 space-y-4"><label className="block text-[11px]"><span className="mb-1.5 block uppercase tracking-[0.12em] text-[#bca37b]">Quantity Sold</span><input autoFocus disabled={pending} type="number" min="1" max={item.quantity} step="1" inputMode="numeric" value={quantity} onChange={event => { setQuantity(event.target.value); setError(""); }} aria-invalid={Boolean(error)} className={inputClass}/></label><div className="flex items-center justify-between rounded-md border border-[#76552b] bg-[#34200e] px-3 py-3 text-xs"><span className="text-[#bca37b]">New stock after sale</span><strong className={remaining <= (item.lowStockThreshold ?? 5) ? "text-amber-300" : "text-[#f1dbac]"}>{remaining}</strong></div>{error && <p role="alert" className="rounded border border-red-400/30 bg-red-500/10 p-2.5 text-[10px] text-red-200">{error}</p>}<DialogFooter className="flex-row gap-2 sm:space-x-0"><button disabled={pending} type="button" onClick={close} className="h-10 flex-1 rounded border border-[#9c7b49] text-xs font-medium transition hover:bg-[#68462f] disabled:opacity-60">Cancel</button><button disabled={pending || !valid} type="submit" className="flex h-10 flex-1 items-center justify-center gap-2 rounded bg-[#d1a23f] text-xs font-semibold text-[#2e1a09] transition hover:bg-[#e0b653] disabled:cursor-not-allowed disabled:opacity-50">{pending && <LoaderCircle size={14} className="animate-spin"/>}{pending ? "Recording..." : "Confirm Sale"}</button></DialogFooter></form></>;
+function InventoryForm({
+  item,
+  token,
+  humidors,
+  pending,
+  close,
+  submit,
+}: {
+  item?: InventoryItem
+  token?: string
+  humidors: Humidor[]
+  pending: boolean
+  close: () => void
+  submit: (input: InventoryInput) => void
+}) {
+  const initialHumidor = item?.humidorId || humidors[0]?._id || ''
+  const initialWalls =
+    humidors.find(humidor => humidor._id === initialHumidor)?.walls || []
+  const initialWall =
+    item?.wallId || (initialWalls.length === 1 ? initialWalls[0]._id : '')
+  const initialShelves =
+    initialWalls.find(wall => wall._id === initialWall)?.shelves || []
+  const [values, setValues] = useState<InventoryInput>({
+    masterCigarId: item?.masterCigarId || '',
+    name: item?.name || '',
+    brand: item?.brand || '',
+    strength: item?.strength || '',
+    wrapper: item?.wrapper || '',
+    size: item?.size || '',
+    smokingTime: item?.smokingTime || '',
+    description: item?.description || '',
+    pairingSuggestions: item?.pairingSuggestions || [],
+    humidorId: initialHumidor,
+    wallId: initialWall,
+    shelfId:
+      item?.shelfId ||
+      (initialShelves.length === 1 ? initialShelves[0]._id : ''),
+    shelfName:
+      item?.shelfName ||
+      (initialShelves.length === 1 ? initialShelves[0].name : ''),
+    shelfColumn: String(item?.shelfColumn || 1),
+    quantity: String(item?.quantity ?? 0),
+    price: String(item?.price ?? 0),
+    pricePerBox: String(item?.pricePerBox ?? 0),
+    lowStockThreshold: String(item?.lowStockThreshold ?? 5),
+    isStaffPick: item?.isStaffPick || false,
+    staffPickNote: item?.staffPickNote || '',
+    staffPickBy: item?.staffPickBy || '',
+    isNewArrival: item?.isNewArrival || false,
+    arrivalDate: dateInput(item?.arrivalDate),
+    isDailyFeatured: item?.isDailyFeatured || false,
+    featuredNote: item?.featuredNote || '',
+  })
+  const [imagePreview, setImagePreview] = useState(item?.image || '')
+  const selectedHumidor = humidors.find(
+    humidor => humidor._id === values.humidorId,
+  )
+  const selectedWall = selectedHumidor?.walls?.find(
+    wall => wall._id === values.wallId,
+  )
+  const selectedShelf = selectedWall?.shelves?.find(
+    shelf => shelf._id === values.shelfId,
+  )
+  const [error, setError] = useState('')
+  useEffect(() => {
+    if (!values.wallId && selectedHumidor?.walls?.length === 1)
+      setValues(current => ({
+        ...current,
+        wallId: selectedHumidor.walls[0]._id,
+      }))
+    else if (!values.shelfId && selectedWall?.shelves?.length === 1)
+      setValues(current => ({
+        ...current,
+        shelfId: selectedWall.shelves[0]._id,
+        shelfName: selectedWall.shelves[0].name,
+      }))
+  }, [selectedHumidor, selectedWall, values.wallId, values.shelfId])
+  useEffect(
+    () => () => {
+      if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview)
+    },
+    [imagePreview],
+  )
+  const chooseMasterCigar = (master?: MasterCigar) => {
+    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview)
+    setValues(current =>
+      master
+        ? {
+            ...current,
+            masterCigarId: master._id,
+            name: master.productLine,
+            brand: master.brand,
+            strength: normalizeStrength(master.strength) || current.strength,
+            wrapper: master.wrapper || current.wrapper,
+            smokingTime:
+              normalizeSmokingTime(master.estimatedSmokingTime) ||
+              current.smokingTime,
+            pairingSuggestions:
+              master.pairingSuggestions?.filter(Boolean) || [],
+            price:
+              typeof master.suggestedRetailPriceEach === 'number'
+                ? String(master.suggestedRetailPriceEach)
+                : current.price,
+            pricePerBox:
+              typeof master.suggestedRetailPricePerBox === 'number'
+                ? String(master.suggestedRetailPricePerBox)
+                : current.pricePerBox,
+            image: undefined,
+          }
+        : { ...current, masterCigarId: '' },
+    )
+  }
+  const chooseInventoryImage = (file?: File) => {
+    if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview)
+    setImagePreview(file ? URL.createObjectURL(file) : item?.image || '')
+    setValues(current => ({ ...current, image: file }))
+  }
+  const onSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    setError('')
+    if (!values.name.trim()) return setError('Product line is required.')
+    if (!values.strength) return setError('Please choose a strength.')
+    if (!values.wrapper) return setError('Please choose a wrapper.')
+    if (!values.smokingTime) return setError('Please choose a smoking time.')
+    if (!values.humidorId) return setError('Please choose a humidor room.')
+    if (!selectedWall) return setError('Please choose a wall.')
+    if (!selectedShelf) return setError('Please choose a shelf.')
+    const column = Number(values.shelfColumn)
+    if (
+      !Number.isInteger(column) ||
+      column < 1 ||
+      column > selectedWall.columns
+    )
+      return setError(`Choose a column from 1–${selectedWall.columns}.`)
+    if (
+      Number(values.quantity) < 0 ||
+      Number(values.price) < 0 ||
+      Number(values.pricePerBox) < 0 ||
+      Number(values.lowStockThreshold) < 0
+    )
+      return setError('Quantity, prices, and minimum stock cannot be negative.')
+    if (
+      values.isStaffPick &&
+      (!values.staffPickBy.trim() || !values.staffPickNote.trim())
+    )
+      return setError('Staff name and note are required for a Staff Pick.')
+    submit({
+      ...values,
+      shelfName: selectedShelf.name,
+      name: values.name.trim(),
+      brand: values.brand.trim(),
+      wrapper: values.wrapper.trim(),
+      size: values.size.trim(),
+      description: values.description.trim(),
+      staffPickBy: values.staffPickBy.trim(),
+      staffPickNote: values.staffPickNote.trim(),
+      featuredNote: values.featuredNote.trim(),
+    })
+  }
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="font-playfair text-lg text-[#d5a744]">
+          {item ? 'Edit Inventory' : 'Add Inventory'}
+        </DialogTitle>
+        <DialogDescription className="text-[10px] text-[#bca37b]">
+          Choose an active master cigar to fill all available product details,
+          or enter a custom cigar for review.
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={onSubmit} className="space-y-3">
+        {!item && token && (
+          <MasterCigarPicker
+            token={token}
+            selectedId={values.masterCigarId}
+            selectedLabel={
+              values.masterCigarId
+                ? `${values.brand} — ${values.name}`
+                : undefined
+            }
+            onSelect={chooseMasterCigar}
+          />
+        )}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            label="Product Line"
+            value={values.name}
+            onChange={name => setValues(current => ({ ...current, name }))}
+            required
+          />
+          <Field
+            label="Brand"
+            value={values.brand}
+            onChange={brand => setValues(current => ({ ...current, brand }))}
+          />
+          <Select
+            label="Strength"
+            value={values.strength}
+            onChange={strength =>
+              setValues(current => ({
+                ...current,
+                strength: strength as InventoryInput['strength'],
+              }))
+            }
+            options={CIGAR_STRENGTH_OPTIONS.map(option => ({
+              value: option.value,
+              label: option.title,
+            }))}
+            required
+          />
+          <Select
+            label="Wrapper"
+            value={values.wrapper}
+            onChange={wrapper =>
+              setValues(current => ({ ...current, wrapper }))
+            }
+            options={wrapperOptions}
+            required
+          />
+          <Select
+            label="Size"
+            value={values.size}
+            onChange={size => setValues(current => ({ ...current, size }))}
+            options={sizeOptions}
+          />
+          <Select
+            label="Smoking Time"
+            value={values.smokingTime}
+            onChange={smokingTime =>
+              setValues(current => ({
+                ...current,
+                smokingTime: smokingTime as InventoryInput['smokingTime'],
+              }))
+            }
+            options={smokingTimeOptions}
+            required
+          />
+          <Select
+            label="Discovery Type"
+            value={values.isNewArrival ? 'new' : 'familiar'}
+            onChange={value =>
+              setValues(current => ({
+                ...current,
+                isNewArrival: value === 'new',
+                arrivalDate: value === 'new' ? current.arrivalDate : '',
+              }))
+            }
+            options={[
+              { value: 'familiar', label: 'Something Familiar' },
+              { value: 'new', label: 'Try Something New' },
+            ]}
+            required
+          />
+          <Select
+            label="Humidor Room"
+            value={values.humidorId}
+            onChange={humidorId =>
+              setValues(current => ({
+                ...current,
+                humidorId,
+                wallId: '',
+                shelfId: '',
+                shelfName: '',
+                shelfColumn: '1',
+              }))
+            }
+            options={humidors.map(humidor => ({
+              value: humidor._id,
+              label: humidor.name,
+            }))}
+            required
+          />
+          <Select
+            label="Wall"
+            value={values.wallId}
+            onChange={wallId =>
+              setValues(current => ({
+                ...current,
+                wallId,
+                shelfId: '',
+                shelfName: '',
+                shelfColumn: '1',
+              }))
+            }
+            options={(selectedHumidor?.walls || []).map(wall => ({
+              value: wall._id,
+              label: `${wall.name} — ${wall.columns} columns`,
+            }))}
+            required
+          />
+          <Select
+            label="Shelf Row"
+            value={values.shelfId}
+            onChange={shelfId => {
+              const shelf = selectedWall?.shelves.find(
+                value => value._id === shelfId,
+              )
+              setValues(current => ({
+                ...current,
+                shelfId,
+                shelfName: shelf?.name || '',
+                shelfColumn: '1',
+              }))
+              setError('')
+            }}
+            options={(selectedWall?.shelves || []).map(shelf => ({
+              value: shelf._id,
+              label: shelf.name,
+            }))}
+            required
+          />
+          <GridPositionField
+            label="Column"
+            value={values.shelfColumn}
+            max={selectedWall?.columns}
+            onChange={shelfColumn =>
+              setValues(current => ({ ...current, shelfColumn }))
+            }
+          />
+          <Field
+            label="Quantity"
+            type="number"
+            value={values.quantity}
+            onChange={quantity =>
+              setValues(current => ({ ...current, quantity }))
+            }
+            required
+          />
+          <Field
+            label="Retail Price (Each)"
+            type="number"
+            value={values.price}
+            onChange={price => setValues(current => ({ ...current, price }))}
+            required
+          />
+          <Field
+            label="Retail Price (Box)"
+            type="number"
+            value={values.pricePerBox}
+            onChange={pricePerBox =>
+              setValues(current => ({ ...current, pricePerBox }))
+            }
+            required
+          />
+          <Field
+            label="Minimum Stock"
+            type="number"
+            value={values.lowStockThreshold}
+            onChange={lowStockThreshold =>
+              setValues(current => ({ ...current, lowStockThreshold }))
+            }
+          />
+        </div>
+        <TextArea
+          label="Description"
+          value={values.description}
+          onChange={description =>
+            setValues(current => ({ ...current, description }))
+          }
+        />
+        <PairingSuggestionsInput
+          values={values.pairingSuggestions}
+          onChange={pairingSuggestions =>
+            setValues(current => ({ ...current, pairingSuggestions }))
+          }
+        />
+        <InventoryImageField
+          name={values.name}
+          preview={imagePreview}
+          onChange={chooseInventoryImage}
+        />
+        <FeatureFields values={values} setValues={setValues} />
+        {error && (
+          <p
+            role="alert"
+            className="rounded border border-red-400/30 bg-red-500/10 p-2 text-[10px] text-red-200"
+          >
+            {error}
+          </p>
+        )}
+        <Actions
+          pending={pending}
+          close={close}
+          action={item ? 'Save Changes' : 'Add Inventory'}
+        />
+      </form>
+    </>
+  )
 }
-function DeleteDialog({ item, pending, close, confirm }: { item: InventoryItem; pending: boolean; close: () => void; confirm: () => void }) { return <><DialogHeader><span className="mb-2 grid h-10 w-10 place-items-center rounded-full bg-red-500/10 text-red-400"><TriangleAlert size={18}/></span><DialogTitle className="font-playfair text-lg text-[#d5a744]">Delete Inventory</DialogTitle><DialogDescription className="text-xs text-[#c6ad7e]">Permanently delete <strong className="text-[#f1dbac]">{item.name || "this inventory item"}</strong>? This cannot be undone.</DialogDescription></DialogHeader><DialogFooter className="mt-3 flex-row gap-2 sm:space-x-0"><button disabled={pending} type="button" onClick={close} className="h-9 flex-1 rounded border border-[#c8983b] text-[10px] disabled:opacity-60">Cancel</button><button disabled={pending} type="button" onClick={confirm} className="h-9 flex-1 rounded bg-red-500 text-[10px] font-semibold text-white disabled:opacity-60">{pending ? "Deleting..." : "Delete"}</button></DialogFooter></>; }
 
-function Empty({ mode, searching }: { mode: Mode; searching: boolean }) { return <div className="mt-4 flex min-h-80 flex-col items-center justify-center rounded-lg border border-[#76552b] bg-[#2d1a08] px-5 text-center"><PackageOpen size={28} className="text-[#d5a744]"/><h2 className="mt-3 font-playfair text-lg">{mode === "opportunities" ? "No inventory opportunities" : searching ? "No matching inventory" : "No inventory yet"}</h2><p className="mt-1 text-xs text-[#a98b5c]">{mode === "opportunities" ? "No active cigar currently matches this slow-moving window." : searching ? "Try a different search term." : "Add your first inventory item to get started."}</p></div>; }
-function InventorySkeleton({ mode }: { mode: Mode }) { return <div className="min-h-[calc(100vh-72px)] space-y-3 bg-[#3b2918] p-3 sm:p-4" aria-label={`Loading ${mode}`}><Skeleton className="ml-auto h-10 w-40 bg-[#513719]"/><Skeleton className="h-11 bg-[#513719]"/>{[0, 1, 2, 3, 4].map(value => <Skeleton key={value} className="h-[58px] bg-[#513719]"/>)}</div>; }
-function Thumbnail({ item, large }: { item: InventoryItem; large?: boolean }) { const size = large ? "h-16 w-16" : "h-9 w-9"; return <span className={`relative grid shrink-0 place-items-center overflow-hidden rounded bg-[#513719] ${size}`}><CigarImage src={item.image} alt={item.name || "Cigar"} fill sizes={large ? "64px" : "36px"} className="object-cover"/></span>; }
-function Cell({ children, gold }: { children: React.ReactNode; gold?: boolean }) { return <td className={`whitespace-nowrap px-4 ${gold ? "text-[#d5a744]" : "text-[#c6ad7e]"}`}>{children}</td>; }
-function StockBadge({ low, empty }: { low: boolean; empty: boolean }) { return <span className={`rounded-full border px-2 py-0.5 text-[9px] ${empty ? "border-red-500/40 bg-red-500/10 text-red-300" : low ? "border-amber-500/40 bg-amber-500/10 text-amber-300" : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"}`}>{empty ? "Out of Stock" : low ? "Low Stock" : "In Stock"}</span>; }
-function StatusBadge({ status }: { status?: InventoryItem["status"] }) { return <span className="rounded-full border border-[#80602f] bg-[#513719] px-2 py-0.5 text-[9px] capitalize text-[#d8bc84]">{statusLabel(status)}</span>; }
-function IconButton({ label, onClick, danger, disabled, children }: { label: string; onClick: () => void; danger?: boolean; disabled?: boolean; children: React.ReactNode }) { return <button type="button" aria-label={label} title={disabled ? "Out of stock" : label} onClick={onClick} disabled={disabled} className={`grid h-8 w-8 place-items-center rounded transition hover:bg-[#513719] disabled:cursor-not-allowed disabled:opacity-30 ${danger ? "text-red-300 hover:bg-red-500/10" : "text-[#efd89b]"}`}>{children}</button>; }
-function Actions({ pending, close, action }: { pending: boolean; close: () => void; action: string }) { return <DialogFooter className="mt-5 flex-row gap-2 sm:space-x-0"><button disabled={pending} type="button" onClick={close} className="h-9 flex-1 rounded border border-[#c8983b] text-[10px] disabled:opacity-60">Cancel</button><button disabled={pending} className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded bg-[#d1a23f] text-[10px] font-semibold text-[#2e1a09] disabled:opacity-60">{pending && <LoaderCircle size={13} className="animate-spin"/>}{pending ? "Saving..." : action}</button></DialogFooter>; }
-function DateField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const selected = parseDateInput(value);
-  return <div className="flex flex-col gap-1.5 text-[11px]"><span>{label}</span><Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><button type="button" aria-label={`${label}: ${selected ? formatDisplayDate(selected) : "Choose a date"}`} className={`${inputClass} flex items-center justify-between text-left`}><span className={selected ? "text-[#eadcb9]" : "text-[#bca37b]"}>{selected ? formatDisplayDate(selected) : "Choose a date"}</span><CalendarDays size={15} className="text-[#d5a744]"/></button></PopoverTrigger><PopoverContent align="start" sideOffset={6} className="w-auto border-[#9c7b49] bg-[#2d1a08] p-0 text-[#eadcb9] shadow-xl shadow-black/40"><Calendar mode="single" selected={selected} defaultMonth={selected} onSelect={date => { if (!date) return; onChange(formatDateInput(date)); setOpen(false); }} className="bg-[#2d1a08] p-3 text-[#eadcb9] [--cell-size:2.25rem] [&_button]:text-[#eadcb9] [&_button:hover]:bg-[#68462f] [&_button[data-selected-single=true]]:!bg-[#d1a23f] [&_button[data-selected-single=true]]:!text-[#2e1a09]" classNames={{ month_caption: "flex h-[--cell-size] w-full items-center justify-center px-[--cell-size] font-playfair text-sm text-[#f4dfa8]", weekday: "flex-1 select-none rounded-md text-[0.7rem] font-medium text-[#bca37b]", outside: "text-[#806d52] opacity-60", today: "rounded-md bg-[#513719] text-[#f3dda4]" }}/></PopoverContent></Popover></div>;
+function MasterCigarPicker({
+  token,
+  selectedId,
+  selectedLabel,
+  onSelect,
+}: {
+  token: string
+  selectedId: string
+  selectedLabel?: string
+  onSelect: (cigar?: MasterCigar) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const optionRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const deferredSearch = useDeferredValue(search.trim())
+  const canSearch = deferredSearch.length >= 2
+  const query = useQuery({
+    queryKey: ['master-cigars', deferredSearch],
+    queryFn: ({ signal }) => getMasterCigars(token, deferredSearch, signal),
+    enabled: open && canSearch,
+    staleTime: 60_000,
+  })
+  const results = canSearch ? query.data || [] : []
+  const optionCount = results.length + 1
+  useEffect(() => {
+    setActiveIndex(0)
+  }, [deferredSearch])
+  useEffect(() => {
+    setActiveIndex(index => Math.min(index, Math.max(0, optionCount - 1)))
+  }, [optionCount])
+  useEffect(() => {
+    optionRefs.current[activeIndex]?.scrollIntoView({ block: 'nearest' })
+  }, [activeIndex, open])
+  const choose = (cigar?: MasterCigar) => {
+    onSelect(cigar)
+    setOpen(false)
+    setSearch('')
+    setActiveIndex(0)
+  }
+  const activeCigar = activeIndex > 0 ? results[activeIndex - 1] : undefined
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setActiveIndex(index => (index + 1) % optionCount)
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActiveIndex(index => (index - 1 + optionCount) % optionCount)
+    } else if (event.key === 'Enter') {
+      event.preventDefault()
+      if (activeIndex === 0) choose()
+      else if (activeCigar) choose(activeCigar)
+    } else if (event.key === 'Escape') {
+      setOpen(false)
+    }
+  }
+  return (
+    <div className="rounded border border-[#80602f] bg-[#34200e] p-3">
+      <span className="mb-1.5 block text-[11px] text-[#f4dfa8]">
+        Master Database Cigar
+      </span>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            role="combobox"
+            aria-controls="master-cigar-suggestions"
+            aria-expanded={open}
+            className={`${inputClass} flex items-center justify-between text-left shadow-none`}
+          >
+            <span
+              className={`truncate ${selectedId ? 'text-[#eadcb9]' : 'text-[#bca37b]'}`}
+            >
+              {selectedLabel || 'Search by product line or brand'}
+            </span>
+            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-60" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="w-[var(--radix-popover-trigger-width)] border-[#9c7b49] bg-[#573621] p-0 text-[#eadcb9]"
+        >
+          <label className="flex h-11 items-center gap-2 border-b border-[#80602f] px-3">
+            <Search size={15} className="shrink-0 text-[#d5a744]" />
+            <span className="sr-only">Search master database</span>
+            <input
+              autoFocus
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder="Type at least 2 characters..."
+              className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-[#bca37b]"
+            />
+          </label>
+          <div
+            id="master-cigar-suggestions"
+            role="listbox"
+            onWheel={event => event.stopPropagation()}
+            className="dashboard-scrollbar max-h-56 overflow-y-auto p-1"
+          >
+            <button
+              ref={node => {
+                optionRefs.current[0] = node
+              }}
+              role="option"
+              aria-selected={activeIndex === 0}
+              type="button"
+              onClick={() => choose()}
+              className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left text-xs transition ${activeIndex === 0 ? 'bg-[#68462f]' : 'hover:bg-[#68462f]'}`}
+            >
+              <Check
+                className={`h-4 w-4 text-[#d5a744] ${selectedId ? 'opacity-0' : 'opacity-100'}`}
+              />
+              <span>Custom cigar — keep entered details</span>
+            </button>
+            {!canSearch ? (
+              <p className="px-3 py-5 text-center text-[10px] text-[#bca37b]">
+                Enter at least 2 characters to see suggestions.
+              </p>
+            ) : query.isLoading ? (
+              <p className="flex items-center justify-center gap-2 px-3 py-5 text-[10px] text-[#bca37b]">
+                <LoaderCircle size={13} className="animate-spin" />
+                Searching master database...
+              </p>
+            ) : query.isError ? (
+              <div className="px-3 py-4 text-center">
+                <p className="text-[10px] text-red-200">
+                  Couldn’t load suggestions.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => query.refetch()}
+                  className="mt-2 text-[10px] font-medium text-[#d5a744]"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : results.length ? (
+              results.map((cigar, index) => (
+                <button
+                  ref={node => {
+                    optionRefs.current[index + 1] = node
+                  }}
+                  role="option"
+                  aria-selected={activeIndex === index + 1}
+                  type="button"
+                  key={cigar._id}
+                  onClick={() => choose(cigar)}
+                  className={`flex w-full items-start gap-2 rounded px-2.5 py-2 text-left transition ${activeIndex === index + 1 ? 'bg-[#68462f]' : 'hover:bg-[#68462f]'}`}
+                >
+                  <Check
+                    className={`mt-0.5 h-4 w-4 shrink-0 text-[#d5a744] ${selectedId === cigar._id ? 'opacity-100' : 'opacity-0'}`}
+                  />
+                  <span className="min-w-0">
+                    <strong className="block truncate text-xs font-medium text-[#f1dbac]">
+                      {cigar.productLine}
+                    </strong>
+                    <small className="mt-0.5 block truncate text-[10px] text-[#bca37b]">
+                      {[cigar.brand, cigar.strength, cigar.wrapper]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </small>
+                  </span>
+                </button>
+              ))
+            ) : (
+              <p className="px-3 py-5 text-center text-[10px] text-[#bca37b]">
+                No active cigar matches “{deferredSearch}”.
+              </p>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+      <p className="mt-1.5 text-[9px] text-[#bca37b]">
+        Selecting a master cigar fills every available master field. You can
+        edit both retail prices and remaining details before saving.
+      </p>
+    </div>
+  )
 }
-function Field({ label, value, onChange, type = "text", required }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean }) { return <label className="flex flex-col gap-1.5 text-[11px]"><span>{label}</span><input required={required} type={type} min={type === "number" ? 0 : undefined} step={type === "number" ? "0.01" : undefined} value={value} onChange={event => onChange(event.target.value)} className={inputClass}/></label>; }
-function GridPositionField({ label, value, max, onChange }: { label: string; value: string; max?: number; onChange: (value: string) => void }) { return <label className="flex flex-col gap-1.5 text-[11px]"><span>{label}</span><input required type="number" min="1" max={max} step="1" inputMode="numeric" value={value} onChange={event => onChange(event.target.value)} className={inputClass}/><small className="text-[9px] text-[#bca37b]">{max ? `Choose 1–${max}` : "Configure the wall first"}</small></label>; }
-function Select({ label, value, onChange, options, required }: { label: string; value: string; onChange: (value: string) => void; options: string[] | { value: string; label: string }[]; required?: boolean }) { const mapped = options.map(option => ({ value: typeof option === "string" ? option : option.value, label: typeof option === "string" ? option : option.label })).filter(option => option.value); const items = value && !mapped.some(option => option.value === value) ? [{ value, label: value }, ...mapped] : mapped; return <div className="flex flex-col gap-1.5 text-[11px]"><span>{label}{required && <i className="ml-1 not-italic text-red-300">*</i>}</span><ShadcnSelect value={value || undefined} onValueChange={onChange}><SelectTrigger aria-label={label} aria-required={required} className={`${inputClass} shadow-none`}><SelectValue placeholder="Choose one" /></SelectTrigger><SelectContent className="border-[#9c7b49] bg-[#573621] text-[#eadcb9]">{items.map(option => <SelectItem className="capitalize focus:bg-[#68462f] focus:text-[#f3dda4]" key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></ShadcnSelect>{(label === "Wall" || label === "Shelf Row") && items.length === 0 && <p className="text-[9px] leading-relaxed text-amber-200">No {label.toLowerCase()} configured. <Link href="/retailer-dashboard/humidors" className="font-semibold text-[#e0b653] underline underline-offset-2">Open Humidor Management</Link>.</p>}</div>; }
-function TextArea({ label, value, onChange, placeholder, helper }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; helper?: string }) { return <label className="flex flex-col gap-1.5 text-[11px]"><span>{label}</span><textarea value={value} placeholder={placeholder} onChange={event => onChange(event.target.value)} className={`${inputClass} h-20 resize-none py-2`}/>{helper && <small className="text-[9px] text-[#bca37b]">{helper}</small>}</label>; }
-function PairingSuggestionsInput({ values, onChange }: { values: string[]; onChange: (values: string[]) => void }) {
-  const available = pairingOptions.filter(option => !values.includes(option.value));
-  return <div className="space-y-1.5 text-[11px]"><span>Pairing Suggestions</span>{values.length > 0 && <div className="flex flex-wrap gap-1.5">{values.map(value => <span key={value} className="inline-flex items-center gap-1 rounded-full border border-[#d1a23f]/50 bg-[#513719] px-2.5 py-1 text-[10px] text-[#f1dbac]">{value}<button type="button" aria-label={`Remove ${value}`} onClick={() => onChange(values.filter(item => item !== value))} className="text-[#bca37b] transition hover:text-red-300"><X size={12}/></button></span>)}</div>}{available.length ? <ShadcnSelect key={values.join("|")} onValueChange={value => onChange([...values, value])}><SelectTrigger aria-label="Add pairing suggestion" className={`${inputClass} shadow-none`}><SelectValue placeholder="Choose a pairing" /></SelectTrigger><SelectContent className="border-[#9c7b49] bg-[#573621] text-[#eadcb9]">{available.map(option => <SelectItem className="focus:bg-[#68462f] focus:text-[#f3dda4]" key={option.value} value={option.value}><span className="block text-xs">{option.value}</span><small className="block text-[9px] text-[#bca37b]">{option.description}</small></SelectItem>)}</SelectContent></ShadcnSelect> : <p className="rounded border border-[#80602f] bg-[#513719] p-2 text-[9px] text-[#bca37b]">All pairing options selected.</p>}<small className="text-[9px] text-[#bca37b]">Choose one or more. Selected pairings can be removed above.</small></div>;
+
+function FeatureFields({
+  values,
+  setValues,
+}: {
+  values: InventoryInput
+  setValues: React.Dispatch<React.SetStateAction<InventoryInput>>
+}) {
+  return (
+    <div className="space-y-3 rounded border border-[#80602f] bg-[#34200e] p-3">
+      <p className="text-[10px] font-semibold text-[#d5a744]">
+        Optional customer features
+      </p>
+      <div className="flex flex-wrap gap-4 text-[10px]">
+        {[
+          ['isStaffPick', 'Staff Pick'],
+          ['isDailyFeatured', 'Daily Featured'],
+        ].map(([key, label]) => (
+          <label key={key} className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={Boolean(values[key as keyof InventoryInput])}
+              onChange={event =>
+                setValues(current => ({
+                  ...current,
+                  [key]: event.target.checked,
+                }))
+              }
+              className="accent-[#d1a23f]"
+            />
+            {label}
+          </label>
+        ))}
+      </div>
+      {values.isStaffPick && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            label="Staff Pick By"
+            value={values.staffPickBy}
+            onChange={staffPickBy =>
+              setValues(current => ({ ...current, staffPickBy }))
+            }
+          />
+          <Field
+            label="Staff Pick Note"
+            value={values.staffPickNote}
+            onChange={staffPickNote =>
+              setValues(current => ({ ...current, staffPickNote }))
+            }
+          />
+        </div>
+      )}
+      {values.isNewArrival && (
+        <DateField
+          label="Arrival Date"
+          value={values.arrivalDate}
+          onChange={arrivalDate =>
+            setValues(current => ({ ...current, arrivalDate }))
+          }
+        />
+      )}{' '}
+      {values.isDailyFeatured && (
+        <Field
+          label="Featured Note"
+          value={values.featuredNote}
+          onChange={featuredNote =>
+            setValues(current => ({ ...current, featuredNote }))
+          }
+        />
+      )}
+    </div>
+  )
 }
-function InventoryImageField({ name, preview, onChange }: { name: string; preview: string; onChange: (file?: File) => void }) {
-  return <div className="flex flex-col gap-1.5 text-[11px]"><span>Image</span><div className="flex items-center gap-3 rounded border border-[#9c7b49] bg-[#68462f] p-2"><span className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded bg-[#513719]"><CigarImage src={preview} alt={`${name || "Cigar"} preview`} fill sizes="64px" unoptimized={preview.startsWith("blob:")} className="object-cover"/></span><div className="min-w-0 flex-1"><label className="inline-flex h-8 cursor-pointer items-center rounded bg-[#d1a23f] px-3 text-[10px] font-semibold text-[#2e1a09] transition hover:bg-[#e0b653]"><input type="file" accept="image/*" className="sr-only" onChange={event => onChange(event.target.files?.[0])}/>{preview ? "Replace image" : "Choose image"}</label><p className="mt-1.5 text-[9px] text-[#bca37b]">The master image is used by default. Upload an image to replace it for this inventory item.</p></div></div></div>;
+function InventoryDetails({
+  item,
+  humidors,
+}: {
+  item: InventoryItem
+  humidors: Humidor[]
+}) {
+  const humidor = humidors.find(value => value._id === item.humidorId)
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="font-playfair text-lg text-[#d5a744]">
+          Inventory Details
+        </DialogTitle>
+        <DialogDescription className="text-[10px] text-[#bca37b]">
+          Current API data for this inventory item.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex items-center gap-3">
+        <Thumbnail item={item} large />
+        <div>
+          <h3 className="font-playfair text-lg text-[#ead8ae]">
+            {item.name || 'Unnamed cigar'}
+          </h3>
+          <p className="text-[10px] text-[#a98b5c]">
+            {item.brand || 'Brand not set'}
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3 rounded border border-[#80602f] bg-[#34200e] p-3 text-[10px] sm:grid-cols-3">
+        {[
+          ['Strength', item.strength],
+          ['Wrapper', item.wrapper],
+          ['Size', item.size],
+          ['Smoking Time', formatSmokingTime(item.smokingTime)],
+          ['Quantity', item.quantity],
+          ['Minimum', item.lowStockThreshold ?? 5],
+          ['Retail (Each)', formatPrice(item.price)],
+          ['Retail (Box)', formatPrice(item.pricePerBox)],
+          ['Humidor Room', humidor?.name],
+          ['Wall', item.wallName],
+          ['Shelf Row', item.shelfName],
+          ['Column', item.shelfColumn],
+          ['Status', statusLabel(item.status)],
+        ].map(([label, value]) => (
+          <div key={String(label)}>
+            <span className="block text-[9px] text-[#a98b5c]">{label}</span>
+            <strong className="mt-0.5 block font-medium capitalize text-[#ead8ae]">
+              {value ?? '—'}
+            </strong>
+          </div>
+        ))}
+      </div>
+      {item.description && (
+        <p className="text-[10px] leading-relaxed text-[#bca37b]">
+          {item.description}
+        </p>
+      )}
+      {item.pairingSuggestions?.length ? (
+        <div className="rounded border border-[#80602f] bg-[#34200e] p-3">
+          <span className="text-[9px] text-[#a98b5c]">Pairing Suggestions</span>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {item.pairingSuggestions.map(suggestion => (
+              <span
+                key={suggestion}
+                className="rounded-full border border-[#9d6d18] bg-[#5a3d10] px-2.5 py-1 text-[9px] text-[#efbd43]"
+              >
+                {suggestion}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </>
+  )
 }
-function formatPrice(value?: number) { return typeof value === "number" ? `$${value.toFixed(2)}` : "—"; }
-function statusLabel(value?: string) { return (value || "unknown").replaceAll("_", " "); }
-function dateInput(value?: string) { return value ? value.slice(0, 10) : ""; }
-function parseDateInput(value: string) { const [year, month, day] = value.split("-").map(Number); return year && month && day ? new Date(year, month - 1, day) : undefined; }
-function formatDateInput(value: Date) { return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`; }
-function formatDisplayDate(value: Date) { return new Intl.DateTimeFormat("en-US", { month: "short", day: "2-digit", year: "numeric" }).format(value); }
-function normalizeStrength(value?: string): InventoryInput["strength"] { const normalized = value?.trim().toLowerCase().replaceAll("_", "-").replaceAll(" ", "-"); return normalized === "mild" || normalized === "mild-medium" || normalized === "medium" || normalized === "medium-full" || normalized === "full" ? normalized : ""; }
-function normalizeSmokingTime(value?: string): InventoryInput["smokingTime"] { if (!value) return ""; const normalized = value.trim().toLowerCase(); const amount = Number(normalized.match(/\d+(?:\.\d+)?/)?.[0]); if (!Number.isFinite(amount)) return ""; const minutes = normalized.includes("hour") ? amount * 60 : amount; if (normalized.includes("+") || minutes >= 120) return "120+"; if (minutes >= 90) return "90"; if (minutes >= 60) return "60"; return "30"; }
-function formatSmokingTime(value?: InventoryItem["smokingTime"]) { return value === "120+" ? "2+ hours" : value === "90" ? "1.5 hours" : value === "60" ? "1 hour" : value === "30" ? "30 minutes" : "—"; }
-function showError(error: unknown) { toast.error(error instanceof Error ? error.message : "Inventory request failed"); }
+function RecordSaleDialog({
+  item,
+  pending,
+  close,
+  confirm,
+}: {
+  item: InventoryItem
+  pending: boolean
+  close: () => void
+  confirm: (quantitySold: number) => void
+}) {
+  const [quantity, setQuantity] = useState('1')
+  const [error, setError] = useState('')
+  const quantitySold = Number(quantity)
+  const valid =
+    Number.isInteger(quantitySold) &&
+    quantitySold >= 1 &&
+    quantitySold <= item.quantity
+  const remaining = valid ? item.quantity - quantitySold : item.quantity
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    if (!Number.isInteger(quantitySold) || quantitySold < 1)
+      return setError('Enter a whole number of at least 1.')
+    if (quantitySold > item.quantity)
+      return setError(
+        `Only ${item.quantity} ${item.quantity === 1 ? 'unit is' : 'units are'} currently in stock.`,
+      )
+    confirm(quantitySold)
+  }
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="font-playfair text-lg text-[#d5a744]">
+          Record Sale
+        </DialogTitle>
+        <DialogDescription className="text-xs text-[#c6ad7e]">
+          Record a sale of{' '}
+          <strong className="text-[#f1dbac]">
+            {item.name || 'this inventory item'}
+          </strong>
+          . Current stock:{' '}
+          <strong className="text-[#d5a744]">{item.quantity}</strong>
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={submit} className="mt-2 space-y-4">
+        <label className="block text-[11px]">
+          <span className="mb-1.5 block uppercase tracking-[0.12em] text-[#bca37b]">
+            Quantity Sold
+          </span>
+          <input
+            autoFocus
+            disabled={pending}
+            type="number"
+            min="1"
+            max={item.quantity}
+            step="1"
+            inputMode="numeric"
+            value={quantity}
+            onChange={event => {
+              setQuantity(event.target.value)
+              setError('')
+            }}
+            aria-invalid={Boolean(error)}
+            className={inputClass}
+          />
+        </label>
+        <div className="flex items-center justify-between rounded-md border border-[#76552b] bg-[#34200e] px-3 py-3 text-xs">
+          <span className="text-[#bca37b]">New stock after sale</span>
+          <strong
+            className={
+              remaining <= (item.lowStockThreshold ?? 5)
+                ? 'text-amber-300'
+                : 'text-[#f1dbac]'
+            }
+          >
+            {remaining}
+          </strong>
+        </div>
+        {error && (
+          <p
+            role="alert"
+            className="rounded border border-red-400/30 bg-red-500/10 p-2.5 text-[10px] text-red-200"
+          >
+            {error}
+          </p>
+        )}
+        <DialogFooter className="flex-row gap-2 sm:space-x-0">
+          <button
+            disabled={pending}
+            type="button"
+            onClick={close}
+            className="h-10 flex-1 rounded border border-[#9c7b49] text-xs font-medium transition hover:bg-[#68462f] disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={pending || !valid}
+            type="submit"
+            className="flex h-10 flex-1 items-center justify-center gap-2 rounded bg-[#d1a23f] text-xs font-semibold text-[#2e1a09] transition hover:bg-[#e0b653] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {pending && <LoaderCircle size={14} className="animate-spin" />}
+            {pending ? 'Recording...' : 'Confirm Sale'}
+          </button>
+        </DialogFooter>
+      </form>
+    </>
+  )
+}
+function DeleteDialog({
+  item,
+  pending,
+  close,
+  confirm,
+}: {
+  item: InventoryItem
+  pending: boolean
+  close: () => void
+  confirm: () => void
+}) {
+  return (
+    <>
+      <DialogHeader>
+        <span className="mb-2 grid h-10 w-10 place-items-center rounded-full bg-red-500/10 text-red-400">
+          <TriangleAlert size={18} />
+        </span>
+        <DialogTitle className="font-playfair text-lg text-[#d5a744]">
+          Delete Inventory
+        </DialogTitle>
+        <DialogDescription className="text-xs text-[#c6ad7e]">
+          Permanently delete{' '}
+          <strong className="text-[#f1dbac]">
+            {item.name || 'this inventory item'}
+          </strong>
+          ? This cannot be undone.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter className="mt-3 flex-row gap-2 sm:space-x-0">
+        <button
+          disabled={pending}
+          type="button"
+          onClick={close}
+          className="h-9 flex-1 rounded border border-[#c8983b] text-[10px] disabled:opacity-60"
+        >
+          Cancel
+        </button>
+        <button
+          disabled={pending}
+          type="button"
+          onClick={confirm}
+          className="h-9 flex-1 rounded bg-red-500 text-[10px] font-semibold text-white disabled:opacity-60"
+        >
+          {pending ? 'Deleting...' : 'Delete'}
+        </button>
+      </DialogFooter>
+    </>
+  )
+}
+
+function Empty({ mode, searching }: { mode: Mode; searching: boolean }) {
+  return (
+    <div className="mt-4 flex min-h-80 flex-col items-center justify-center rounded-lg border border-[#76552b] bg-[#2d1a08] px-5 text-center">
+      <PackageOpen size={28} className="text-[#d5a744]" />
+      <h2 className="mt-3 font-playfair text-lg">
+        {mode === 'opportunities'
+          ? 'No inventory opportunities'
+          : searching
+            ? 'No matching inventory'
+            : 'No inventory yet'}
+      </h2>
+      <p className="mt-1 text-xs text-[#a98b5c]">
+        {mode === 'opportunities'
+          ? 'No active cigar currently matches this slow-moving window.'
+          : searching
+            ? 'Try a different search term.'
+            : 'Add your first inventory item to get started.'}
+      </p>
+    </div>
+  )
+}
+function InventorySkeleton({ mode }: { mode: Mode }) {
+  return (
+    <div
+      className="min-h-[calc(100vh-72px)] space-y-3 bg-[#3b2918] p-3 sm:p-4"
+      aria-label={`Loading ${mode}`}
+    >
+      <Skeleton className="ml-auto h-10 w-40 bg-[#513719]" />
+      <Skeleton className="h-11 bg-[#513719]" />
+      {[0, 1, 2, 3, 4].map(value => (
+        <Skeleton key={value} className="h-[58px] bg-[#513719]" />
+      ))}
+    </div>
+  )
+}
+function Thumbnail({ item, large }: { item: InventoryItem; large?: boolean }) {
+  const size = large ? 'h-16 w-16' : 'h-9 w-9'
+  return (
+    <span
+      className={`relative grid shrink-0 place-items-center overflow-hidden rounded bg-[#513719] ${size}`}
+    >
+      <CigarImage
+        src={item.image}
+        alt={item.name || 'Cigar'}
+        fill
+        sizes={large ? '64px' : '36px'}
+        className="object-cover"
+      />
+    </span>
+  )
+}
+function Cell({
+  children,
+  gold,
+}: {
+  children: React.ReactNode
+  gold?: boolean
+}) {
+  return (
+    <td
+      className={`whitespace-nowrap px-4 ${gold ? 'text-[#d5a744]' : 'text-[#c6ad7e]'}`}
+    >
+      {children}
+    </td>
+  )
+}
+function StockBadge({ low, empty }: { low: boolean; empty: boolean }) {
+  return (
+    <span
+      className={`rounded-full border px-2 py-0.5 text-[9px] ${empty ? 'border-red-500/40 bg-red-500/10 text-red-300' : low ? 'border-amber-500/40 bg-amber-500/10 text-amber-300' : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'}`}
+    >
+      {empty ? 'Out of Stock' : low ? 'Low Stock' : 'In Stock'}
+    </span>
+  )
+}
+function StatusBadge({ status }: { status?: InventoryItem['status'] }) {
+  return (
+    <span className="rounded-full border border-[#80602f] bg-[#513719] px-2 py-0.5 text-[9px] capitalize text-[#d8bc84]">
+      {statusLabel(status)}
+    </span>
+  )
+}
+function IconButton({
+  label,
+  onClick,
+  danger,
+  disabled,
+  children,
+}: {
+  label: string
+  onClick: () => void
+  danger?: boolean
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={disabled ? 'Out of stock' : label}
+      onClick={onClick}
+      disabled={disabled}
+      className={`grid h-8 w-8 place-items-center rounded transition hover:bg-[#513719] disabled:cursor-not-allowed disabled:opacity-30 ${danger ? 'text-red-300 hover:bg-red-500/10' : 'text-[#efd89b]'}`}
+    >
+      {children}
+    </button>
+  )
+}
+function Actions({
+  pending,
+  close,
+  action,
+}: {
+  pending: boolean
+  close: () => void
+  action: string
+}) {
+  return (
+    <DialogFooter className="mt-5 flex-row gap-2 sm:space-x-0">
+      <button
+        disabled={pending}
+        type="button"
+        onClick={close}
+        className="h-9 flex-1 rounded border border-[#c8983b] text-[10px] disabled:opacity-60"
+      >
+        Cancel
+      </button>
+      <button
+        disabled={pending}
+        className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded bg-[#d1a23f] text-[10px] font-semibold text-[#2e1a09] disabled:opacity-60"
+      >
+        {pending && <LoaderCircle size={13} className="animate-spin" />}
+        {pending ? 'Saving...' : action}
+      </button>
+    </DialogFooter>
+  )
+}
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const selected = parseDateInput(value)
+  return (
+    <div className="flex flex-col gap-1.5 text-[11px]">
+      <span>{label}</span>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label={`${label}: ${selected ? formatDisplayDate(selected) : 'Choose a date'}`}
+            className={`${inputClass} flex items-center justify-between text-left`}
+          >
+            <span className={selected ? 'text-[#eadcb9]' : 'text-[#bca37b]'}>
+              {selected ? formatDisplayDate(selected) : 'Choose a date'}
+            </span>
+            <CalendarDays size={15} className="text-[#d5a744]" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          sideOffset={6}
+          className="w-auto border-[#9c7b49] bg-[#2d1a08] p-0 text-[#eadcb9] shadow-xl shadow-black/40"
+        >
+          <Calendar
+            mode="single"
+            selected={selected}
+            defaultMonth={selected}
+            onSelect={date => {
+              if (!date) return
+              onChange(formatDateInput(date))
+              setOpen(false)
+            }}
+            className="bg-[#2d1a08] p-3 text-[#eadcb9] [--cell-size:2.25rem] [&_button]:text-[#eadcb9] [&_button:hover]:bg-[#68462f] [&_button[data-selected-single=true]]:!bg-[#d1a23f] [&_button[data-selected-single=true]]:!text-[#2e1a09]"
+            classNames={{
+              month_caption:
+                'flex h-[--cell-size] w-full items-center justify-center px-[--cell-size] font-playfair text-sm text-[#f4dfa8]',
+              weekday:
+                'flex-1 select-none rounded-md text-[0.7rem] font-medium text-[#bca37b]',
+              outside: 'text-[#806d52] opacity-60',
+              today: 'rounded-md bg-[#513719] text-[#f3dda4]',
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}
+function Field({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  required,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  type?: string
+  required?: boolean
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-[11px]">
+      <span>{label}</span>
+      <input
+        required={required}
+        type={type}
+        min={type === 'number' ? 0 : undefined}
+        step={type === 'number' ? '0.01' : undefined}
+        value={value}
+        onChange={event => onChange(event.target.value)}
+        className={inputClass}
+      />
+    </label>
+  )
+}
+function GridPositionField({
+  label,
+  value,
+  max,
+  onChange,
+}: {
+  label: string
+  value: string
+  max?: number
+  onChange: (value: string) => void
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-[11px]">
+      <span>{label}</span>
+      <input
+        required
+        type="number"
+        min="1"
+        max={max}
+        step="1"
+        inputMode="numeric"
+        value={value}
+        onChange={event => onChange(event.target.value)}
+        className={inputClass}
+      />
+      <small className="text-[9px] text-[#bca37b]">
+        {max ? `Choose 1–${max}` : 'Configure the wall first'}
+      </small>
+    </label>
+  )
+}
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+  required,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  options: string[] | { value: string; label: string }[]
+  required?: boolean
+}) {
+  const mapped = options
+    .map(option => ({
+      value: typeof option === 'string' ? option : option.value,
+      label: typeof option === 'string' ? option : option.label,
+    }))
+    .filter(option => option.value)
+  const items =
+    value && !mapped.some(option => option.value === value)
+      ? [{ value, label: value }, ...mapped]
+      : mapped
+  return (
+    <div className="flex flex-col gap-1.5 text-[11px]">
+      <span>
+        {label}
+        {required && <i className="ml-1 not-italic text-red-300">*</i>}
+      </span>
+      <ShadcnSelect value={value || undefined} onValueChange={onChange}>
+        <SelectTrigger
+          aria-label={label}
+          aria-required={required}
+          className={`${inputClass} shadow-none`}
+        >
+          <SelectValue placeholder="Choose one" />
+        </SelectTrigger>
+        <SelectContent className="border-[#9c7b49] bg-[#573621] text-[#eadcb9]">
+          {items.map(option => (
+            <SelectItem
+              className="capitalize focus:bg-[#68462f] focus:text-[#f3dda4]"
+              key={option.value}
+              value={option.value}
+            >
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </ShadcnSelect>
+      {(label === 'Wall' || label === 'Shelf Row') && items.length === 0 && (
+        <p className="text-[9px] leading-relaxed text-amber-200">
+          No {label.toLowerCase()} configured.{' '}
+          <Link
+            href="/retailer-dashboard/humidors"
+            className="font-semibold text-[#e0b653] underline underline-offset-2"
+          >
+            Open Humidor Management
+          </Link>
+          .
+        </p>
+      )}
+    </div>
+  )
+}
+function TextArea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  helper,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  helper?: string
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-[11px]">
+      <span>{label}</span>
+      <textarea
+        value={value}
+        placeholder={placeholder}
+        onChange={event => onChange(event.target.value)}
+        className={`${inputClass} h-20 resize-none py-2`}
+      />
+      {helper && <small className="text-[9px] text-[#bca37b]">{helper}</small>}
+    </label>
+  )
+}
+function PairingSuggestionsInput({
+  values,
+  onChange,
+}: {
+  values: string[]
+  onChange: (values: string[]) => void
+}) {
+  const available = pairingOptions.filter(
+    option => !values.includes(option.value),
+  )
+  return (
+    <div className="space-y-1.5 text-[11px]">
+      <span>Pairing Suggestions</span>
+      {values.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {values.map(value => (
+            <span
+              key={value}
+              className="inline-flex items-center gap-1 rounded-full border border-[#d1a23f]/50 bg-[#513719] px-2.5 py-1 text-[10px] text-[#f1dbac]"
+            >
+              {value}
+              <button
+                type="button"
+                aria-label={`Remove ${value}`}
+                onClick={() => onChange(values.filter(item => item !== value))}
+                className="text-[#bca37b] transition hover:text-red-300"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      {available.length ? (
+        <ShadcnSelect
+          key={values.join('|')}
+          onValueChange={value => onChange([...values, value])}
+        >
+          <SelectTrigger
+            aria-label="Add pairing suggestion"
+            className={`${inputClass} shadow-none`}
+          >
+            <SelectValue placeholder="Choose a pairing" />
+          </SelectTrigger>
+          <SelectContent className="border-[#9c7b49] bg-[#573621] text-[#eadcb9]">
+            {available.map(option => (
+              <SelectItem
+                className="focus:bg-[#68462f] focus:text-[#f3dda4]"
+                key={option.value}
+                value={option.value}
+              >
+                <span className="block text-xs">{option.value}</span>
+                <small className="block text-[9px] text-[#bca37b]">
+                  {option.description}
+                </small>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </ShadcnSelect>
+      ) : (
+        <p className="rounded border border-[#80602f] bg-[#513719] p-2 text-[9px] text-[#bca37b]">
+          All pairing options selected.
+        </p>
+      )}
+      <small className="text-[9px] text-[#bca37b]">
+        Choose one or more. Selected pairings can be removed above.
+      </small>
+    </div>
+  )
+}
+function InventoryImageField({
+  name,
+  preview,
+  onChange,
+}: {
+  name: string
+  preview: string
+  onChange: (file?: File) => void
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 text-[11px]">
+      <span>Image</span>
+      <div className="flex items-center gap-3 rounded border border-[#9c7b49] bg-[#68462f] p-2">
+        <span className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded bg-[#513719]">
+          <CigarImage
+            src={preview}
+            alt={`${name || 'Cigar'} preview`}
+            fill
+            sizes="64px"
+            unoptimized={preview.startsWith('blob:')}
+            className="object-cover"
+          />
+        </span>
+        <div className="min-w-0 flex-1">
+          <label className="inline-flex h-8 cursor-pointer items-center rounded bg-[#d1a23f] px-3 text-[10px] font-semibold text-[#2e1a09] transition hover:bg-[#e0b653]">
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={event => onChange(event.target.files?.[0])}
+            />
+            {preview ? 'Replace image' : 'Choose image'}
+          </label>
+          <p className="mt-1.5 text-[9px] text-[#bca37b]">
+            The master image is used by default. Upload an image to replace it
+            for this inventory item.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+function formatPrice(value?: number) {
+  return typeof value === 'number' ? `$${value.toFixed(2)}` : '—'
+}
+function statusLabel(value?: string) {
+  return (value || 'unknown').replaceAll('_', ' ')
+}
+function dateInput(value?: string) {
+  return value ? value.slice(0, 10) : ''
+}
+function parseDateInput(value: string) {
+  const [year, month, day] = value.split('-').map(Number)
+  return year && month && day ? new Date(year, month - 1, day) : undefined
+}
+function formatDateInput(value: Date) {
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
+}
+function formatDisplayDate(value: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }).format(value)
+}
+function normalizeStrength(value?: string): InventoryInput['strength'] {
+  const normalized = value
+    ?.trim()
+    .toLowerCase()
+    .replaceAll('_', '-')
+    .replaceAll(' ', '-')
+  return normalized === 'mild' ||
+    normalized === 'mild-medium' ||
+    normalized === 'medium' ||
+    normalized === 'medium-full' ||
+    normalized === 'full'
+    ? normalized
+    : ''
+}
+function normalizeSmokingTime(value?: string): InventoryInput['smokingTime'] {
+  if (!value) return ''
+  const normalized = value.trim().toLowerCase()
+  const amount = Number(normalized.match(/\d+(?:\.\d+)?/)?.[0])
+  if (!Number.isFinite(amount)) return ''
+  const minutes = normalized.includes('hour') ? amount * 60 : amount
+  if (normalized.includes('+') || minutes >= 120) return '120+'
+  if (minutes >= 90) return '90'
+  if (minutes >= 60) return '60'
+  return '30'
+}
+function formatSmokingTime(value?: InventoryItem['smokingTime']) {
+  return value === '120+'
+    ? '2+ hours'
+    : value === '90'
+      ? '1.5 hours'
+      : value === '60'
+        ? '1 hour'
+        : value === '30'
+          ? '30 minutes'
+          : '—'
+}
+function showError(error: unknown) {
+  toast.error(
+    error instanceof Error ? error.message : 'Inventory request failed',
+  )
+}
