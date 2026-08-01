@@ -14,7 +14,7 @@ import {
   type CustomerSearchFilters,
   type CustomerSearchItem,
 } from '@/lib/customerSearch'
-import { CIGAR_SIZE_OPTIONS, CIGAR_STRENGTH_OPTIONS } from '@/lib/cigarOptions'
+import { CIGAR_STRENGTH_OPTIONS } from '@/lib/cigarOptions'
 import { getMyRetailer } from '@/lib/retailer'
 import { useQuery } from '@tanstack/react-query'
 import {
