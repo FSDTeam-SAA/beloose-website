@@ -58,7 +58,7 @@ const HowItWorks = () => {
       }));
 
   return (
-    <section className="border-t border-[#3d230d]/45 bg-[#0d0904] py-16 text-[#d7c08c] sm:py-20 lg:py-[86px]">
+    <section id="how-it-works" className="border-t border-[#3d230d]/45 bg-[#0d0904] py-16 text-[#d7c08c] sm:py-20 lg:py-[86px]">
       <div className="container px-4 sm:px-6 lg:px-8 xl:px-10">
         <div className="">
           <div className="text-center">

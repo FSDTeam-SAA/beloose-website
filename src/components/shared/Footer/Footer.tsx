@@ -1,42 +1,22 @@
 "use client";
 
 import { Mail, MapPin, Phone } from "lucide-react";
+import { getContactInfo, getSocialMedia } from "@/lib/retailerLanding";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTwitter } from "react-icons/fa";
 
-export interface ContactInfoResponse {
-  status: boolean;
-  message: string;
-  data: ContactInfo[];
-  pagination: Pagination;
-}
-
-export interface ContactInfo {
-  _id: string;
-  address: string;
-  email: string;
-  openingHours: string;
-  phoneNumbers: string[];
-  __v: number;
-}
-
-export interface Pagination {
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  itemsPerPage: number;
-}
-
 const platformLinks = [
   { label: "Home", href: "/" },
-  { label: "Map", href: "/services" },
-  { label: "Shelf", href: "/account" },
-  { label: "Product Details", href: "/services/businesses" },
+  { label: "For Retailers", href: "/#for-retailers" },
+  { label: "THE PLATFORM", href: "/#the-platform" },
+  { label: "How It Works", href: "/#how-it-works" },
+  { label: "Business Benefits", href: "/#business-benefits" },
 ];
 
-const socialLinks = [
+const fallbackSocialLinks = [
   {
     label: "Facebook",
     href: "https://www.facebook.com",
@@ -59,8 +39,47 @@ const socialLinks = [
   },
 ];
 
+const socialIcons = {
+  facebook: <FaFacebookF className="h-[15px] w-[15px]" />,
+  instagram: <FaInstagram className="h-[15px] w-[15px]" />,
+  linkedin: <FaLinkedinIn className="h-[15px] w-[15px]" />,
+  twitter: <FaTwitter className="h-[15px] w-[15px]" />,
+  x: <FaTwitter className="h-[15px] w-[15px]" />,
+};
+
 const Footer = () => {
   const pathname = usePathname();
+  const contactQuery = useQuery({
+    queryKey: ["contact-info"],
+    queryFn: ({ signal }) => getContactInfo(signal),
+    staleTime: 5 * 60_000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const socialQuery = useQuery({
+    queryKey: ["social-media"],
+    queryFn: ({ signal }) => getSocialMedia(signal),
+    staleTime: 5 * 60_000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const contact = contactQuery.data;
+  const socialMedia = socialQuery.data;
+  const email = contact?.email?.trim() || "support@humidor411.com";
+  const phone = contact?.phone?.trim() || "+1 (555) 123-4567";
+  const address = contact?.address?.trim() || "123 Cidre Street, City, State, ZIP";
+  const phoneHref = `tel:${phone.replace(/[^+\d]/g, "")}`;
+  const description = socialMedia?.description?.trim() || "The digital operating platform for premium cigar retailers. Digitizing the humidor experience, one shop at a time.";
+  const socialLinks = socialMedia?.isActive
+    ? socialMedia.socialLinks
+        ?.filter((item) => item.isActive && item.platform && item.url)
+        .map((item) => ({
+          label: item.platform!,
+          href: item.url!,
+          icon: socialIcons[item.platform!.toLowerCase() as keyof typeof socialIcons],
+        }))
+        .filter((item) => item.icon) || fallbackSocialLinks
+    : fallbackSocialLinks;
 
   if (pathname.startsWith("/store/")) return null;
 
@@ -103,12 +122,11 @@ const Footer = () => {
           </Link>
 
             <p className="mt-4 max-w-[330px] text-sm md:text-base leading-normal text-[#BFBFBF]">
-              The digital operating platform for premium cigar retailers.
-              Digitizing the humidor experience, one shop at a time.
+              {description}
             </p>
 
-            <ul className="mt-8 flex flex-wrap items-center gap-5">
-              {socialLinks?.map((item) => (
+            <ul className="mt-8 flex flex-wrap items-center gap-5" aria-busy={socialQuery.isLoading}>
+              {socialLinks.map((item) => (
                 <li key={item.label}>
                   <Link
                     href={item.href}
@@ -146,30 +164,29 @@ const Footer = () => {
             <h3 className="text-base md:text-lg xl:text-xl font-semibold leading-normal text-[#F7E4B3]">
               Contact Us
             </h3>
-            <ul className="mt-5 space-y-4 text-[13px] leading-5 text-[#d5c7b5]/78">
+            <ul className="mt-5 space-y-4 text-[13px] leading-5 text-[#d5c7b5]/78" aria-busy={contactQuery.isLoading}>
               <li className="flex gap-2">
                 <Mail className="mt-0.5 h-4 w-4 flex-none text-[#BFBFBF]" />
                 <Link
-                  href="mailto:support@humidor411.com"
+                  href={`mailto:${email}`}
                   className="text-xs md:text-sm leading-normal text-[#BFBFBF] transition hover:text-[#f0d49e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d6a629]"
                 >
-                  support@humidor411.com
+                  {email}
                 </Link>
               </li>
               <li className="flex gap-2">
                 <Phone className="mt-0.5 h-4 w-4 flex-none text-[#BFBFBF]" />
                 <Link
-                  href="tel:+15551234567"
+                  href={phoneHref}
                   className="text-xs md:text-sm leading-normal text-[#BFBFBF] transition hover:text-[#f0d49e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d6a629]"
                 >
-                  +1 (555) 123-4567FGHJ
+                  {phone}
                 </Link>
               </li>
               <li className="flex max-w-[270px] gap-2">
                 <MapPin   className="mt-0.5 h-4 w-4 flex-none text-[#BFBFBF]" />
-                <span className="text-xs md:text-sm leading-normal text-[#BFBFBF] transition hover:text-[#f0d49e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d6a629] cursor-pointer">
-                  123 Cidre Street, City, State, ZIP Address: 123 Cidre Street,
-                  City, State, ZIP
+                <span className="text-xs md:text-sm leading-normal text-[#BFBFBF]">
+                  {address}
                 </span>
               </li>
             </ul>

@@ -131,7 +131,7 @@ const ThePlatform = () => {
   }
 
   return (
-    <section className="bg-[#150b04] py-16 text-[#d7c08c] sm:py-20 lg:py-[88px]">
+    <section id="the-platform" className="bg-[#150b04] py-16 text-[#d7c08c] sm:py-20 lg:py-[88px]">
       <div className="container px-4 sm:px-6 lg:px-8 xl:px-10">
         <div className="grid gap-8 md:grid-cols-[1.05fr_0.95fr] md:items-start lg:gap-16">
           <div>

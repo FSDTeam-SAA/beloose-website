@@ -42,7 +42,7 @@ const BusinessBenefits = () => {
   };
 
   return (
-    <section className="bg-[#1b1006] py-16 text-[#d7c08c] sm:py-20 lg:py-[92px]">
+    <section id="business-benefits" className="bg-[#1b1006] py-16 text-[#d7c08c] sm:py-20 lg:py-[92px]">
       <div className="container px-4 sm:px-6 lg:px-8 xl:px-10">
         <div className="grid items-center gap-9 md:grid-cols-[0.92fr_1.08fr] lg:gap-12 xl:gap-14">
           <div className="mx-auto w-full max-w-[520px] md:mx-0">
