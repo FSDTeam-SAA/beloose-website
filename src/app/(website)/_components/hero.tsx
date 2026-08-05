@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { landingText } from "@/lib/landingText";
 import { getRetailerBanner } from "@/lib/retailerLanding";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 
 const fallbackBanner = {
   banner: "/assets/images/hero.png",
@@ -45,16 +46,24 @@ const Hero = () => {
         fill
         priority
         sizes="100vw"
-        className="z-[-3] object-cover object-[52%_48%]"
+        className="z-[-3] object-cover object-[52%_48%] brightness-110 contrast-110 saturate-110"
       />
 
-      <div className="absolute inset-0 z-[-2] bg-[#1a0902]/55" />
-      <div className="absolute inset-0 z-[-1] bg-[radial-gradient(circle_at_center,rgba(120,63,18,0.16)_0%,rgba(18,8,5,0.10)_34%,rgba(18,8,5,0.58)_100%)]" />
-      <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-[#090402]/55 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#090402]/55 to-transparent" />
+      <div className="absolute inset-0 z-[-2] bg-[#1a0902]/30" />
+      <div className="absolute inset-0 z-[-1] bg-[radial-gradient(circle_at_center,rgba(120,63,18,0.08)_0%,rgba(18,8,5,0.02)_36%,rgba(18,8,5,0.32)_100%)]" />
+      <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-[#090402]/35 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#090402]/35 to-transparent" />
 
       <div className="container flex min-h-[640px] flex-col items-center justify-center px-4 pb-16 pt-32 text-center sm:min-h-[720px] sm:pt-36 lg:min-h-[840px] lg:pt-40">
         <div className="mx-auto max-w-[1024px]">
+          <Image
+            src="/assets/images/logo.svg"
+            alt="Humidor411"
+            width={180}
+            height={180}
+            priority
+            className="mx-auto mb-5 h-20 w-20 drop-shadow-[0_8px_18px_rgba(0,0,0,0.52)] sm:h-24 sm:w-24"
+          />
           <p className="mb-2 text-xs font-normal uppercase leading-relaxed tracking-[0.14em] text-[#F7E4B3] md:text-sm">
             {content.title}
           </p>

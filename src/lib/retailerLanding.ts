@@ -47,6 +47,27 @@ export type RetailerBenefits = {
   features?: string[];
 };
 
+export type ContactInfo = {
+  _id: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+};
+
+export type SocialLink = {
+  platform?: string;
+  url?: string;
+  icon?: string;
+  isActive?: boolean;
+};
+
+export type SocialMedia = {
+  _id: string;
+  description?: string;
+  socialLinks?: SocialLink[];
+  isActive?: boolean;
+};
+
 type CollectionResponse<T> = {
   data?: T[];
   message?: string;
@@ -101,3 +122,9 @@ export const getRetailerHowItWorks = (signal?: AbortSignal) =>
 
 export const getRetailerBenefits = (signal?: AbortSignal) =>
   getLatest<RetailerBenefits>("/retailer-benefits", signal);
+
+export const getContactInfo = (signal?: AbortSignal) =>
+  getLatest<ContactInfo>("/contact-info", signal);
+
+export const getSocialMedia = (signal?: AbortSignal) =>
+  getLatest<SocialMedia>("/social-media", signal);

@@ -46,7 +46,7 @@ const ForRetailers = () => {
   const highlightedTitle = titleParts.pop()
 
   return (
-    <section className="bg-[#150b04] py-14 text-[#d4bd86] sm:py-16 lg:py-[76px]">
+    <section id="for-retailers" className="bg-[#150b04] py-14 text-[#d4bd86] sm:py-16 lg:py-[76px]">
       <div className="container px-4 sm:px-6 lg:px-8 xl:px-10">
         <div className="grid items-center gap-9 md:grid-cols-[1.08fr_0.92fr] lg:gap-12 xl:gap-14">
           <div className="relative overflow-hidden rounded-[5px] bg-[#241408] shadow-[0_28px_60px_rgba(0,0,0,0.22)]">
