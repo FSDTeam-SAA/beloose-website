@@ -79,15 +79,13 @@ async function getCollection<T>(
   signal?: AbortSignal,
   sortOrder: "asc" | "desc" = "desc",
 ) {
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
   const query = new URLSearchParams({
     page: "1",
     limit: String(limit),
     sortBy: "createdAt",
     sortOrder,
   });
-  const response = await fetch(`${apiUrl}${path}?${query}`, {
+  const response = await fetch(`/api/landing${path}?${query}`, {
     headers: { Accept: "application/json" },
     signal,
   });
