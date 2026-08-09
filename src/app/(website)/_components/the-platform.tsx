@@ -13,7 +13,7 @@ import {
   // ArrowRight,
   BarChart3,
   Box,
-  Crown,
+  // Crown,
   Grid2X2,
   Package,
   QrCode,
@@ -21,7 +21,7 @@ import {
   Warehouse,
   type LucideIcon,
 } from 'lucide-react'
-import Image from 'next/image'
+// import Image from 'next/image'
 // import Link from "next/link";
 
 const fallbackPlatform = {
@@ -207,34 +207,7 @@ const ThePlatform = () => {
           />
         )}
 
-        <div className="relative mt-20 overflow-hidden rounded-[10px] border border-[#c79a42] bg-[#211207] sm:mt-[78px]">
-          <Image
-            src="/assets/images/subscribe-now.jpg"
-            alt="Premium cigar bundles"
-            fill
-            sizes="(min-width: 1024px) 1010px, 100vw"
-            className="object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-[#120804]/58" />
-          <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-[#160904]/45 to-transparent" />
-          <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-[#160904]/55 to-transparent" />
-          <div className="relative flex min-h-[142px] flex-col items-center justify-center px-5 py-8 text-center">
-            <Crown className="mb-4 h-8 w-8 fill-[#d5a33d] text-[#d5a33d]" />
-            <p className="mb-2 text-[8px] font-medium uppercase leading-none tracking-[0.12em] text-[#dbc48d]/80">
-              Designed for the Discerning Retailer
-            </p>
-            <h3 className="max-w-[720px] font-serif text-[22px] font-bold leading-tight text-[#f4dfad] sm:text-[24px]">
-              Subscribe To Our Monthly Package to Get The Best Experience
-            </h3>
-            {/* <Link
-              href="/subscription"
-              className="mt-5 inline-flex h-8 min-w-[162px] items-center justify-center gap-3 rounded-[3px] bg-[#d5a33d] px-5 text-[11px] font-semibold text-[#1c1006] transition hover:bg-[#e0b657] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f0cf76]"
-            >
-              Subscribe Now
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link> */}
-          </div>
-        </div>
+        
       </div>
     </section>
   )

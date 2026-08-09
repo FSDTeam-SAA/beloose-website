@@ -3,7 +3,7 @@ import ForRetailers from "./_components/for-retailers";
 import TrustedBy from "./_components/trusted-by";
 import ThePlatform from "./_components/the-platform";
 import HowItWorks from "./_components/how-it-works";
-import BusinessBenefits from "./_components/business-benefits";
+// import BusinessBenefits from "./_components/business-benefits";
 
 const WebsiteHomePage = () => {
   return (
@@ -13,7 +13,7 @@ const WebsiteHomePage = () => {
       <ForRetailers />
       <ThePlatform />
       <HowItWorks />
-      <BusinessBenefits />
+      {/* <BusinessBenefits /> */}
     </main>
   );
 };
