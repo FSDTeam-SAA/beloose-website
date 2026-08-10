@@ -7,7 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 
 const fallbackBenefits = {
-  images: ["/assets/images/business-benefits.png"],
+  media: [
+    { type: "image" as const, src: "/assets/images/business-benefits.png" },
+  ],
   title: "Built to Help Retailers Sell More Cigars",
   subTitle:
     "Humidor411 is not inventory software — it is a revenue-generating operating platform that makes your store smarter, your team more productive, and your customers more satisfied.",
@@ -32,21 +34,31 @@ const BusinessBenefits = () => {
   });
   const live = query.data;
   const liveImages = live?.images?.filter((image) => image?.trim()) || [];
+  const liveVideos = live?.video?.filter((video) => video?.trim()) || [];
+  const liveMedia = [
+    ...liveImages.map((src) => ({ type: "image" as const, src })),
+    ...liveVideos.map((src) => ({ type: "video" as const, src })),
+  ].slice(0, 3);
   const liveFeatures =
     live?.features?.map(landingText).filter(Boolean) || [];
   const content = {
-    images: liveImages.length ? liveImages : fallbackBenefits.images,
+    media: liveMedia.length ? liveMedia : fallbackBenefits.media,
     title: landingText(live?.title) || fallbackBenefits.title,
     subTitle: landingText(live?.subTitle) || fallbackBenefits.subTitle,
     features: liveFeatures.length ? liveFeatures : fallbackBenefits.features,
   };
 
+  if (live?.isActive === false) return null;
+
   return (
-    <section id="business-benefits" className="bg-[#1b1006] py-16 text-[#d7c08c] sm:py-20 lg:py-[92px]">
+    <section
+      id="business-benefits"
+      className="bg-[#1b1006] py-16 text-[#d7c08c] sm:py-20 lg:py-[92px]"
+    >
       <div className="container px-4 sm:px-6 lg:px-8 xl:px-10">
         <div className="grid items-center gap-9 md:grid-cols-[0.92fr_1.08fr] lg:gap-12 xl:gap-14">
           <div className="mx-auto w-full max-w-[520px] md:mx-0">
-            <BenefitsGallery images={content.images} />
+            <BenefitsGallery media={content.media} />
           </div>
 
           <div className="mx-auto w-full max-w-[560px] md:mx-0">
@@ -80,50 +92,71 @@ const BusinessBenefits = () => {
   );
 };
 
-function BenefitsGallery({ images }: { images: string[] }) {
-  if (images.length === 1) {
-    return (
-      <LandingImage
-        src={images[0]}
-        fallbackSrc={fallbackBenefits.images[0]}
-        alt="Premium cigar retail spaces and cigar presentation"
-        width={648}
-        height={520}
-        sizes="(min-width: 1024px) 520px, (min-width: 768px) 48vw, 100vw"
-        className="aspect-[648/520] h-auto w-full object-cover"
-      />
-    );
+type BenefitMedia = { type: "image" | "video"; src: string };
+
+function BenefitsGallery({ media }: { media: BenefitMedia[] }) {
+  if (media.length === 1) {
+    return <MediaItem item={media[0]} index={0} single />;
   }
 
-  const visibleImages = images.slice(0, 4);
   return (
     <div className="grid aspect-[648/520] grid-cols-2 grid-rows-2 gap-2 overflow-hidden rounded-[5px]">
-      {visibleImages.map((image, index) => (
+      {media.map((item, index) => (
         <div
-          key={`${image}-${index}`}
+          key={`${item.type}-${item.src}-${index}`}
           className={`relative overflow-hidden ${
-            visibleImages.length === 2 ||
-            (visibleImages.length === 3 && index === 0)
+            media.length === 2 || (media.length === 3 && index === 0)
               ? "row-span-2"
               : ""
           }`}
         >
-          <LandingImage
-            src={image}
-            fallbackSrc={fallbackBenefits.images[0]}
-            alt={`Premium cigar retail space ${index + 1}`}
-            fill
-            sizes="(min-width: 1024px) 260px, (min-width: 768px) 24vw, 50vw"
-            className="object-cover"
-          />
-          {index === visibleImages.length - 1 && images.length > 4 && (
-            <span className="absolute inset-0 grid place-items-center bg-black/60 font-serif text-2xl text-[#f4dfad]">
-              +{images.length - 4}
-            </span>
-          )}
+          <MediaItem item={item} index={index} />
         </div>
       ))}
     </div>
+  );
+}
+
+function MediaItem({
+  item,
+  index,
+  single = false,
+}: {
+  item: BenefitMedia;
+  index: number;
+  single?: boolean;
+}) {
+  const className = single
+    ? "aspect-[648/520] h-auto w-full rounded-[5px] object-cover"
+    : "h-full w-full object-cover";
+
+  if (item.type === "video") {
+    return (
+      <video
+        src={item.src}
+        controls
+        playsInline
+        preload="metadata"
+        aria-label={`Business benefit video ${index + 1}`}
+        className={className}
+      />
+    );
+  }
+
+  return (
+    <LandingImage
+      src={item.src}
+      fallbackSrc={fallbackBenefits.media[0].src}
+      alt={`Premium cigar retail space ${index + 1}`}
+      width={single ? 648 : 324}
+      height={single ? 520 : 260}
+      sizes={
+        single
+          ? "(min-width: 1024px) 520px, (min-width: 768px) 48vw, 100vw"
+          : "(min-width: 1024px) 260px, (min-width: 768px) 24vw, 50vw"
+      }
+      className={className}
+    />
   );
 }
 

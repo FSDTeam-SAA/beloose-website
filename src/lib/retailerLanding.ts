@@ -39,12 +39,19 @@ export type RetailerHowItWork = {
   description?: string;
 };
 
+export type RetailerHowItWorkTitle = {
+  _id: string;
+  title?: string;
+};
+
 export type RetailerBenefits = {
   _id: string;
   images?: string[];
+  video?: string[];
   title?: string;
   subTitle?: string;
   features?: string[];
+  isActive?: boolean;
 };
 
 export type ContactInfo = {
@@ -72,6 +79,30 @@ type CollectionResponse<T> = {
   data?: T[];
   message?: string;
 };
+
+type ItemResponse<T> = {
+  data?: T;
+  message?: string;
+};
+
+async function getItem<T>(path: string, signal?: AbortSignal) {
+  const response = await fetch(`/api/landing${path}`, {
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | ItemResponse<T>
+    | null;
+
+  if (!response.ok) {
+    throw new Error(payload?.message || "Live landing content is unavailable.");
+  }
+  if (!payload?.data) {
+    throw new Error("The landing content response is invalid.");
+  }
+
+  return payload.data;
+}
 
 async function getCollection<T>(
   path: string,
@@ -117,6 +148,12 @@ export const getRetailerPlatform = (signal?: AbortSignal) =>
 
 export const getRetailerHowItWorks = (signal?: AbortSignal) =>
   getCollection<RetailerHowItWork>("/retailer-howitwork", 3, signal, "asc");
+
+export const getRetailerHowItWorkTitle = (signal?: AbortSignal) =>
+  getItem<RetailerHowItWorkTitle>(
+    "/retailer-howitwork-title/6a79367720bc1500f3227a2d",
+    signal,
+  );
 
 export const getRetailerBenefits = (signal?: AbortSignal) =>
   getLatest<RetailerBenefits>("/retailer-benefits", signal);
