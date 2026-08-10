@@ -27,7 +27,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Beloose",
+  title: "Humidor411 || Website",
   description: "The digital operating platform for premium cigar retailers. Digitizing the humidor experience, one shop at a time.",
 };
 

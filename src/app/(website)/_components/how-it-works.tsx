@@ -3,6 +3,7 @@
 import LandingImage from "@/components/website/landing-image";
 import { landingText } from "@/lib/landingText";
 import {
+  getRetailerHowItWorkTitle,
   getRetailerHowItWorks,
   type RetailerHowItWork,
 } from "@/lib/retailerLanding";
@@ -40,6 +41,15 @@ const HowItWorks = () => {
     retry: 1,
     refetchOnWindowFocus: false,
   });
+  const titleQuery = useQuery({
+    queryKey: ["retailer-landing", "how-it-works-title"],
+    queryFn: ({ signal }) => getRetailerHowItWorkTitle(signal),
+    staleTime: 5 * 60_000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const heading =
+    landingText(titleQuery.data?.title) || "Three Steps, Infinite Value.";
   const liveSteps = query.data?.filter(hasStepContent) || [];
   const steps = liveSteps.length
     ? liveSteps.map((step, index) => {
@@ -54,7 +64,7 @@ const HowItWorks = () => {
       })
     : fallbackSteps.map((step) => ({
         ...step,
-        fallbackImage: step.image,
+        fallbackImage: step.image,   
       }));
 
   return (
@@ -66,12 +76,12 @@ const HowItWorks = () => {
               How It Works
             </p>
             <h2 className="font-serif text-[38px] font-bold leading-tight text-[#f3dfaf] sm:text-[48px] lg:text-[54px]">
-              Three Steps, Infinite Value.
+              {heading}
             </h2>
           </div>
 
           <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {steps.map((step) => (
+            {steps?.map((step) => (
               <article
                 key={step.title}
                 className="overflow-hidden rounded-[3px] border border-[#3d260e] bg-[#1c1006] shadow-[0_18px_38px_rgba(0,0,0,0.14)]"
