@@ -253,14 +253,31 @@ export default function QuizContainer() {
                         </div>
 
                         <div className="min-w-0">
-                          <h2 className="truncate font-playfair text-lg text-[#F3DEB5]">
-                            {item.name}
-                          </h2>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="truncate font-playfair text-lg text-[#F3DEB5]">
+                              {item.name}
+                            </h2>
+                            {item.label && (
+                              <span className="shrink-0 rounded bg-[#D9AD4A]/15 px-2 py-0.5 text-[10px] font-semibold text-[#E5C37A] border border-[#D9AD4A]/30">
+                                {item.label}
+                              </span>
+                            )}
+                            {item.matchScore ? (
+                              <span className="shrink-0 rounded bg-emerald-950/60 px-2 py-0.5 text-[10px] font-medium text-emerald-400 border border-emerald-600/40">
+                                {item.matchScore}% Match
+                              </span>
+                            ) : null}
+                          </div>
                           <p className="mt-0.5 truncate text-[11px] text-[#A88E6D]">
                             {[item.brand, item.wrapper, item.strength]
                               .filter(Boolean)
                               .join(" · ")}
                           </p>
+                          {item.matchReason && (
+                            <p className="mt-1.5 text-xs text-[#E5C37A] bg-[#1E140B] rounded px-2.5 py-1 border border-[#6B4B22]/50">
+                              ✦ {item.matchReason}
+                            </p>
+                          )}
                           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
                             <span className="font-semibold text-[#D9AD4A]">
                               ${Number(item.price).toLocaleString(undefined, {
