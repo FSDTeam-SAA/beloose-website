@@ -3,11 +3,12 @@
 import {
   getMyRetailer,
   updateRetailerProfile,
+  updateRetailerLocation,
   type RetailerProfile,
   type RetailerProfileInput,
 } from "@/lib/retailer";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, CheckCircle2, CreditCard, Pencil } from "lucide-react";
+import { CalendarDays, CheckCircle2, CreditCard, MapPin, Navigation, Pencil } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -86,6 +87,17 @@ function ProfileEditor({
   const [logoPreview, setLogoPreview] = useState<string>();
   const [bannerPreview, setBannerPreview] = useState<string>();
   const [validationError, setValidationError] = useState("");
+  const [lat, setLat] = useState<string>(
+    retailer.location?.coordinates?.[1] !== undefined
+      ? String(retailer.location.coordinates[1])
+      : ""
+  );
+  const [lng, setLng] = useState<string>(
+    retailer.location?.coordinates?.[0] !== undefined
+      ? String(retailer.location.coordinates[0])
+      : ""
+  );
+  const [locSaving, setLocSaving] = useState(false);
   const queryClient = useQueryClient();
   const verificationStatus =
     retailer.userId?.verified || retailer.userId?.verfied;
@@ -281,6 +293,101 @@ function ProfileEditor({
             </label>
           </div>
         </FormSection>
+
+        {/* Store GPS Coordinates Section */}
+        <div className="rounded-lg border border-[#d5c39b]/30 bg-[#291809]/80 p-4 text-[#f0ddb0]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#d5c39b]/20 pb-3">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-[#d2a13d]" />
+              <h3 className="font-playfair text-sm font-semibold text-[#f0ddb0]">
+                Store GPS Location (Mobile App Discovery)
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!navigator.geolocation) {
+                  toast.error("Geolocation is not supported by your browser.");
+                  return;
+                }
+                toast.info("Fetching your GPS coordinates...");
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    setLat(pos.coords.latitude.toFixed(6));
+                    setLng(pos.coords.longitude.toFixed(6));
+                    toast.success("Coordinates updated from your device location.");
+                  },
+                  (err) => toast.error(`Unable to retrieve location: ${err.message}`)
+                );
+              }}
+              className="flex items-center gap-1.5 rounded border border-[#d2a13d] px-2.5 py-1 text-[11px] font-medium text-[#d2a13d] hover:bg-[#d2a13d]/10 cursor-pointer"
+            >
+              <Navigation className="h-3 w-3" /> Use Current Location
+            </button>
+          </div>
+
+          <p className="mt-2 text-[10px] text-[#aa8e5b]">
+            Setting precise latitude and longitude enables mobile customers to find your store when entering Store Mode or discovering nearby retailers.
+          </p>
+
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1 text-[11px]">
+              <span>Latitude (Decimal)</span>
+              <input
+                type="text"
+                value={lat}
+                onChange={(e) => setLat(e.target.value)}
+                placeholder="e.g. 25.761681"
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-[11px]">
+              <span>Longitude (Decimal)</span>
+              <input
+                type="text"
+                value={lng}
+                onChange={(e) => setLng(e.target.value)}
+                placeholder="e.g. -80.191788"
+                className={inputClass}
+              />
+            </label>
+          </div>
+
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              disabled={locSaving || !lat || !lng}
+              onClick={async () => {
+                const latitude = Number(lat);
+                const longitude = Number(lng);
+                if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                  toast.error("Please enter valid decimal coordinates.");
+                  return;
+                }
+                setLocSaving(true);
+                try {
+                  await updateRetailerLocation(token, { latitude, longitude });
+                  setRetailer((curr) => ({
+                    ...curr,
+                    location: {
+                      type: "Point",
+                      coordinates: [longitude, latitude],
+                    },
+                  }));
+                  toast.success("Store GPS location saved successfully.");
+                  queryClient.invalidateQueries({ queryKey: ["retailer", "me"] });
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Failed to save location.");
+                } finally {
+                  setLocSaving(false);
+                }
+              }}
+              className="flex h-9 items-center justify-center rounded bg-[#d2a13d] px-4 text-xs font-semibold text-[#291806] hover:bg-[#e0b653] disabled:opacity-50 cursor-pointer"
+            >
+              {locSaving ? "Saving..." : "Save Store Location"}
+            </button>
+          </div>
+        </div>
 
         {(validationError || mutation.isError) && (
           <p

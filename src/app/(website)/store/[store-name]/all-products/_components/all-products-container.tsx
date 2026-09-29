@@ -55,11 +55,14 @@ function productBadges(item: StoreInventoryItem): ProductBadge[] {
 }
 
 function toProductCard(item: StoreInventoryItem): ProductCardData {
+  const upc = item.masterCigarId?.upcCodes?.[0] || item.upcCodes?.[0];
   return {
     id: item._id,
     name: item.name,
     brand: item.brand,
     price: item.price,
+    pricePerBox: item.pricePerBox,
+    upc: upc,
     strength: item.strength,
     image: item.image,
     origin: item.wrapper,

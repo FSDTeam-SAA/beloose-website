@@ -7,9 +7,14 @@ export type CustomerSearchItem = {
   size?: string;
   image?: string;
   price?: number;
+  pricePerBox?: number;
   pairingSuggestions?: string[];
   quantity: number;
   inStock: boolean;
+  upcCodes?: string[];
+  masterCigarId?: {
+    upcCodes?: string[];
+  };
   shelfName?: string;
   wallName?: string;
   shelfRow?: number;

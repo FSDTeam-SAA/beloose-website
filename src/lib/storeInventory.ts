@@ -15,6 +15,20 @@ export type StoreInventoryItem = {
   shelfColumn?: number;
   quantity: number;
   price: number;
+  pricePerBox?: number;
+  upcCodes?: string[];
+  masterCigarId?: {
+    _id?: string;
+    productLine?: string;
+    brand?: string;
+    name?: string;
+    upcCodes?: string[];
+    manufacturer?: string;
+    country?: string;
+    vitola?: string;
+    strength?: string;
+    wrapper?: string;
+  };
   isStaffPick: boolean;
   isNewArrival: boolean;
   isDailyFeatured: boolean;

@@ -28,9 +28,31 @@ export type InventoryDetails = {
   isDailyFeatured: boolean;
   featuredNote?: string;
   recommendationNote?: string;
-  status: string;
   lowStockThreshold: number;
   isOnDiscount: boolean;
+  upcCodes?: string[];
+  masterCigarId?: {
+    _id?: string;
+    productLine?: string;
+    brand?: string;
+    name?: string;
+    upcCodes?: string[];
+    manufacturer?: string;
+    country?: string;
+    originRegion?: string;
+    vitola?: string;
+    strength?: string;
+    wrapper?: string;
+    binder?: string;
+    filler?: string[];
+    flavorNotes?: string[];
+    description?: string;
+    whyYoullLikeThis?: string;
+    image?: string;
+    estimatedSmokingTime?: string;
+    suggestedRetailPriceEach?: number;
+    suggestedRetailPricePerBox?: number;
+  };
 };
 
 type InventoryDetailsResponse = {

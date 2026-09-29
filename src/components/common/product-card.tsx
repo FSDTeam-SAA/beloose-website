@@ -16,6 +16,8 @@ export type ProductCardData = {
   name: string;
   brand: string;
   price: number;
+  pricePerBox?: number;
+  upc?: string;
   strength?: string;
   image?: string;
   origin?: string;
@@ -114,9 +116,16 @@ export default function ProductCard({
       </div>
 
       <div className="flex flex-1 flex-col border-t border-black/15 bg-[#191715] p-4">
-        <p className="truncate text-[10px] uppercase tracking-[0.12em] text-[#99938A]">
-          {product.brand || "Premium selection"}
-        </p>
+        <div className="flex items-center justify-between gap-1">
+          <p className="truncate text-[10px] uppercase tracking-[0.12em] text-[#99938A]">
+            {product.brand || "Premium selection"}
+          </p>
+          {product.upc && (
+            <span className="shrink-0 font-mono text-[9px] text-[#CBA24A]">
+              UPC: {product.upc}
+            </span>
+          )}
+        </div>
         {href ? (
           <Link href={href} className="mt-1 truncate font-playfair text-base text-[#E8E3DD] transition hover:text-[#D7AA46]">
             {product.name}
@@ -138,11 +147,20 @@ export default function ProductCard({
           >
             {titleCase(product.strength || "Medium")}
           </span>
-          <p className="text-base font-semibold text-[#D4A94A]">
-            ${Number(product.price).toLocaleString(undefined, {
-              maximumFractionDigits: 2,
-            })}
-          </p>
+          <div className="text-right">
+            <p className="text-base font-semibold text-[#D4A94A]">
+              ${Number(product.price).toLocaleString(undefined, {
+                maximumFractionDigits: 2,
+              })}
+            </p>
+            {typeof product.pricePerBox === "number" && product.pricePerBox > 0 && (
+              <p className="text-[10px] text-[#99938A]">
+                ${Number(product.pricePerBox).toLocaleString(undefined, {
+                  maximumFractionDigits: 2,
+                })}/box
+              </p>
+            )}
+          </div>
         </div>
 
         <button

@@ -49,6 +49,7 @@ import {
   ChevronsUpDown,
   CircleMinus,
   Eye,
+  FileUp,
   LoaderCircle,
   PackageOpen,
   Pencil,
@@ -63,6 +64,7 @@ import { useSession } from 'next-auth/react'
 import { FormEvent, useDeferredValue, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import DashboardState from './DashboardState'
+import BulkInventoryModal from './BulkInventoryModal'
 
 type Mode = 'inventory' | 'opportunities'
 type Modal =
@@ -97,6 +99,7 @@ export default function InventoryManager({
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [days, setDays] = useState(90)
   const [modal, setModal] = useState<Modal>(null)
+  const [bulkOpen, setBulkOpen] = useState(false)
   const queryClient = useQueryClient()
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -227,11 +230,19 @@ export default function InventoryManager({
     <div className="min-h-[calc(100vh-72px)] bg-[#3b2918] p-3 sm:p-4">
       {mode === 'inventory' ? (
         <>
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setBulkOpen(true)}
+              className="flex h-10 items-center justify-center gap-2 rounded border border-[#d3a440] px-4 text-xs font-semibold text-[#f4dfa8] transition hover:bg-[#d3a440]/10 cursor-pointer"
+            >
+              <FileUp size={16} />
+              Bulk Upload
+            </button>
             <button
               type="button"
               onClick={() => setModal({ type: 'add' })}
-              className="flex h-10 min-w-40 items-center justify-center gap-2 rounded bg-[#d3a440] px-5 text-xs font-semibold text-[#291806] transition hover:-translate-y-0.5 hover:bg-[#e0b653]"
+              className="flex h-10 min-w-40 items-center justify-center gap-2 rounded bg-[#d3a440] px-5 text-xs font-semibold text-[#291806] transition hover:-translate-y-0.5 hover:bg-[#e0b653] cursor-pointer"
             >
               <Plus size={16} />
               Add Inventory
@@ -386,6 +397,15 @@ export default function InventoryManager({
           )}
         </DialogContent>
       </Dialog>
+
+      {token && (
+        <BulkInventoryModal
+          open={bulkOpen}
+          token={token}
+          onOpenChange={setBulkOpen}
+          onSuccess={refresh}
+        />
+      )}
     </div>
   )
 }
@@ -444,9 +464,16 @@ function InventoryTable({
                 <td className="h-[58px] px-4">
                   <div className="flex items-center gap-2">
                     <Thumbnail item={item} />
-                    <strong className="max-w-52 truncate text-xs font-medium text-[#ead8ae]">
-                      {item.name || 'Unnamed cigar'}
-                    </strong>
+                    <div className="max-w-52 min-w-0">
+                      <strong className="block truncate text-xs font-medium text-[#ead8ae]">
+                        {item.name || 'Unnamed cigar'}
+                      </strong>
+                      {Boolean((typeof item.masterCigarId === 'object' && item.masterCigarId?.upcCodes?.[0]) || item.upcCodes?.[0]) && (
+                        <span className="block font-mono text-[9px] text-[#CBA24A]">
+                          UPC: {(typeof item.masterCigarId === 'object' && item.masterCigarId?.upcCodes?.[0]) || item.upcCodes?.[0]}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </td>
                 <Cell>{item.brand || '—'}</Cell>
@@ -454,7 +481,7 @@ function InventoryTable({
                   <span className="block text-[10px] text-[#d8bc84]">
                     {[humidor?.name, item.wallName, item.shelfName]
                       .filter(Boolean)
-                      .join(' · ') || 'Not set'}
+                      .join(' → ') || 'Not set'}
                   </span>
                   <small className="mt-0.5 block text-[9px] text-[#8d7651]">
                     {item.shelfColumn
@@ -464,7 +491,14 @@ function InventoryTable({
                 </td>
                 <Cell>{item.quantity}</Cell>
                 <Cell>{item.lowStockThreshold ?? 5}</Cell>
-                <Cell gold>{formatPrice(item.price)}</Cell>
+                <td className="px-4 text-[#d5a744]">
+                  <span className="block font-medium">{formatPrice(item.price)}</span>
+                  {typeof item.pricePerBox === 'number' && item.pricePerBox > 0 && (
+                    <span className="block text-[9px] text-[#a98b5c]">
+                      Box: {formatPrice(item.pricePerBox)}
+                    </span>
+                  )}
+                </td>
                 <td className="px-4">
                   <StockBadge low={low} empty={item.quantity === 0} />
                 </td>
@@ -589,7 +623,10 @@ function InventoryForm({
   const initialShelves =
     initialWalls.find(wall => wall._id === initialWall)?.shelves || []
   const [values, setValues] = useState<InventoryInput>({
-    masterCigarId: item?.masterCigarId || '',
+    masterCigarId:
+      typeof item?.masterCigarId === 'object'
+        ? item.masterCigarId._id
+        : item?.masterCigarId || '',
     name: item?.name || '',
     brand: item?.brand || '',
     strength: item?.strength || '',
@@ -1029,7 +1066,7 @@ function MasterCigarPicker({
             <span
               className={`truncate ${selectedId ? 'text-[#eadcb9]' : 'text-[#bca37b]'}`}
             >
-              {selectedLabel || 'Search by product line or brand'}
+              {selectedLabel || 'Search by product line, brand, or barcode / UPC'}
             </span>
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-60" />
           </button>
@@ -1046,7 +1083,7 @@ function MasterCigarPicker({
               value={search}
               onChange={event => setSearch(event.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Type at least 2 characters..."
+              placeholder="Type product line, brand, name or barcode / UPC..."
               className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-[#bca37b]"
             />
           </label>
@@ -1111,13 +1148,18 @@ function MasterCigarPicker({
                   />
                   <span className="min-w-0">
                     <strong className="block truncate text-xs font-medium text-[#f1dbac]">
-                      {cigar.productLine}
+                      {cigar.productLine} {cigar.name ? `— ${cigar.name}` : ''}
                     </strong>
                     <small className="mt-0.5 block truncate text-[10px] text-[#bca37b]">
                       {[cigar.brand, cigar.strength, cigar.wrapper]
                         .filter(Boolean)
                         .join(' · ')}
                     </small>
+                    {Boolean(cigar.upcCodes?.length) && (
+                      <span className="mt-0.5 block font-mono text-[9px] text-[#d5a744]">
+                        UPC: {cigar.upcCodes?.join(', ')}
+                      </span>
+                    )}
                   </span>
                 </button>
               ))
@@ -1252,6 +1294,7 @@ function InventoryDetails({
           ['Wall', item.wallName],
           ['Shelf Row', item.shelfName],
           ['Column', item.shelfColumn],
+          ['UPC Barcode', (typeof item.masterCigarId === 'object' && item.masterCigarId?.upcCodes?.join(', ')) || item.upcCodes?.join(', ') || '—'],
           ['Status', statusLabel(item.status)],
         ].map(([label, value]) => (
           <div key={String(label)}>

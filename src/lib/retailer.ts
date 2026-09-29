@@ -32,6 +32,10 @@ export type RetailerProfile = {
   rejectionReason?: string;
   subscriptionPlan?: "none" | "monthly" | "yearly";
   subscriptionStatus?: "inactive" | "active" | "overdue" | "cancelled";
+  location?: {
+    type?: string;
+    coordinates?: [number, number]; // [lng, lat]
+  };
 };
 
 export type RetailerProfileInput = Pick<
@@ -134,5 +138,16 @@ export async function updateRetailerProfile(
   return retailerRequest<RetailerProfile>(`/retailer/${id}`, token, {
     method: "PUT",
     body,
+  });
+}
+
+export async function updateRetailerLocation(
+  token: string,
+  coords: { latitude: number; longitude: number },
+) {
+  return retailerRequest<RetailerProfile>("/retailer/me/location", token, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(coords),
   });
 }

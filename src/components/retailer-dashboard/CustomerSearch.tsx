@@ -19,6 +19,7 @@ import { getMyRetailer } from '@/lib/retailer'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowRight,
+  Barcode,
   Compass,
   Filter,
   PackageSearch,
@@ -114,15 +115,15 @@ export default function CustomerSearch() {
       <div className="flex items-start gap-3 rounded-lg border border-[#76552b] bg-[#34200e] p-4">
         <Compass size={19} className="mt-0.5 shrink-0 text-[#d5a744]" />
         <p className="text-[11px] leading-relaxed text-[#a98b5c]">
-          Search by product name or brand. Use API-supported filters for
+          Search by product name, brand, or scan barcode / UPC. Use API-supported filters for
           strength, size, price, and current stock availability. Results include
-          the exact humidor and shelf location.
+          the exact humidor, wall, shelf, and column location.
         </p>
       </div>
 
       <div className="mt-4 flex gap-2">
         <label className="relative flex-1">
-          <span className="sr-only">Search inventory by name or brand</span>
+          <span className="sr-only">Search inventory by name, brand, or barcode / UPC</span>
           <Search
             className="absolute left-4 top-1/2 -translate-y-1/2 text-[#a98b5c]"
             size={18}
@@ -131,7 +132,7 @@ export default function CustomerSearch() {
             value={filters.searchTerm || ''}
             onChange={event => update('searchTerm', event.target.value)}
             className="h-14 w-full rounded-lg border border-[#76552b] bg-[#2d1a08] pl-12 pr-4 text-sm text-[#eadcb9] outline-none placeholder:text-[#8d7651] focus:border-[#d2a13d]"
-            placeholder="Search by product name or brand..."
+            placeholder="Search by cigar name, brand, notes, or scan barcode / UPC..."
           />
         </label>
         <button
@@ -301,6 +302,17 @@ function SearchResultCard({
   item: CustomerSearchItem
   storeName: string
 }) {
+  const upc = item.masterCigarId?.upcCodes?.[0] || item.upcCodes?.[0]
+  const locationText =
+    [
+      item.humidorName,
+      item.wallName,
+      item.shelfName,
+      item.shelfColumn ? `Column ${item.shelfColumn}` : undefined,
+    ]
+      .filter(Boolean)
+      .join(' → ') || 'Location not set'
+
   return (
     <Link
       href={`/store/${encodeURIComponent(storeName)}/${encodeURIComponent(item._id)}`}
@@ -316,9 +328,16 @@ function SearchResultCard({
         />
       </span>
       <span className="min-w-0 flex-1">
-        <small className="block truncate text-[9px] uppercase tracking-wider text-[#8d7651]">
-          {item.brand || 'Brand not set'}
-        </small>
+        <div className="flex items-center gap-2">
+          <small className="block truncate text-[9px] uppercase tracking-wider text-[#8d7651]">
+            {item.brand || 'Brand not set'}
+          </small>
+          {upc && (
+            <span className="inline-flex items-center gap-1 font-mono text-[9px] text-[#d5a744]">
+              <Barcode className="h-3 w-3" /> {upc}
+            </span>
+          )}
+        </div>
         <strong className="mt-0.5 block truncate font-playfair text-sm font-medium text-[#ead8ae]">
           {item.name || 'Unnamed cigar'}
         </strong>
@@ -341,20 +360,18 @@ function SearchResultCard({
         <strong className="block text-sm text-[#d5a744]">
           {formatPrice(item.price)}
         </strong>
+        {typeof item.pricePerBox === 'number' && item.pricePerBox > 0 && (
+          <small className="block text-[9px] text-[#a98b5c]">
+            Box: {formatPrice(item.pricePerBox)}
+          </small>
+        )}
         <span
           className={`mt-1 block text-[9px] ${item.inStock ? 'text-emerald-400' : 'text-red-400'}`}
         >
           {item.inStock ? `${item.quantity} in stock` : 'Out of stock'}
         </span>
         <span className="mt-0.5 hidden text-[9px] text-[#a98b5c] sm:block">
-          {[
-            item.humidorName,
-            item.wallName,
-            item.shelfName,
-            item.shelfColumn ? `C${item.shelfColumn}` : undefined,
-          ]
-            .filter(Boolean)
-            .join(' · ') || 'Location not set'}
+          {locationText}
         </span>
       </span>
       <ArrowRight

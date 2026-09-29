@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Barcode,
   Beer,
   Check,
   Coffee,
@@ -143,9 +144,14 @@ const ProductDetailsContainer = () => {
   }
 
   const product = query.data!;
-  const shelfLocation = [product.humidorName, product.wallName, product.shelfName]
+  const shelfLocation = [
+    product.humidorName,
+    product.wallName,
+    product.shelfName,
+    product.shelfColumn ? `Column ${product.shelfColumn}` : undefined,
+  ]
     .filter(Boolean)
-    .join(" · ") || undefined;
+    .join(" → ") || undefined;
   const displayPrice =
     product.displayPrice ??
     product.featuredPrice ??
@@ -160,6 +166,12 @@ const ProductDetailsContainer = () => {
     product.quantity > 0
       ? `${product.quantity} ${product.quantity === 1 ? "item" : "items"} available`
       : "Currently unavailable";
+
+  const upcList = product.masterCigarId?.upcCodes?.length
+    ? product.masterCigarId.upcCodes
+    : product.upcCodes?.length
+      ? product.upcCodes
+      : [];
 
   return (
     <main className="min-h-screen bg-[#0F0E0D] px-4 py-16 text-white sm:px-6">
@@ -176,6 +188,16 @@ const ProductDetailsContainer = () => {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#CBA24A]">{product.brand}</p>
             <h1 className="mt-2 font-playfair text-4xl text-[#F5E7D0] sm:text-5xl">{product.name}</h1>
+
+            {upcList.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-[#CBA24A]/40 bg-[#CBA24A]/10 px-2.5 py-1 font-mono text-xs font-medium text-[#EFE2C7]">
+                  <Barcode className="h-4 w-4 text-[#D7AA46]" />
+                  UPC: {upcList.join(", ")}
+                </span>
+              </div>
+            )}
+
             {product.description && <p className="mt-4 text-sm leading-7 text-[#A9A095]">{product.description}</p>}
 
             {(product.isStaffPick ||
@@ -206,20 +228,31 @@ const ProductDetailsContainer = () => {
               </div>
             )}
 
-            <dl className="mt-6 grid grid-cols-2 gap-3">
+            <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {[
                 ["Strength", titleCase(product.strength)],
                 ["Size", product.size],
                 ["Wrapper", product.wrapper],
-                ["Location", shelfLocation],
-                ["Shelf Column", product.shelfColumn],
-              ].map(([label, value]) => (
+                ["Manufacturer", product.masterCigarId?.manufacturer],
+                ["Origin / Region", [product.masterCigarId?.country, product.masterCigarId?.originRegion].filter(Boolean).join(", ") || product.masterCigarId?.country],
+                ["Smoking Time", product.smokingTime ? `${product.smokingTime} mins` : product.masterCigarId?.estimatedSmokingTime ? `${product.masterCigarId.estimatedSmokingTime} mins` : undefined],
+                ["Binder", product.masterCigarId?.binder],
+                ["Filler", product.masterCigarId?.filler?.join(", ")],
+                ["Exact Location", shelfLocation],
+              ].filter(([, value]) => Boolean(value)).map(([label, value]) => (
                 <div key={label} className="rounded-xl border border-white/[0.09] bg-[#191715] p-3">
                   <dt className="text-[10px] text-[#837C74]">{label}</dt>
                   <dd className="mt-1 text-xs text-[#E2DCD5]">{value || "Not specified"}</dd>
                 </div>
               ))}
             </dl>
+
+            {product.masterCigarId?.whyYoullLikeThis && (
+              <div className="mt-4 rounded-xl border border-[#CBA24A]/25 bg-[#CBA24A]/5 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#D7AA46]">Why You&apos;ll Like This</p>
+                <p className="mt-1 text-xs text-[#E2DCD5]">{product.masterCigarId.whyYoullLikeThis}</p>
+              </div>
+            )}
 
             {!!product.flavorNotes?.length && (
               <div className="mt-5">
