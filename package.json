@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "CI=1 next build",
-    "start": "next start",
+    "dev": "node init && next dev",
+    "build": "node init && CI=1 next build",
+    "start": "node init && next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -33,7 +33,7 @@
     "gsap": "^3.15.0",
     "lucide-react": "^0.548.0",
     "motion": "^12.23.24",
-    "next": "14.2.33",
+    "next": "16.4.4",
     "next-auth": "^4.24.13",
     "next-share": "^0.27.0",
     "react": "^18",
